@@ -50,9 +50,9 @@ contract DeliveryContract is EventDelivery {
         uint64 _delay
     )
     public
+    isActor(msg.sender, _buyer, _seller, _deliver)
     returns (uint)
     {
-        require(msg.sender == _buyer || msg.sender == _seller || msg.sender == _deliver, "Should be an actor of the order");
         require(_delay >= 1 hours, "Delay should be at least one hour");
         Order memory _order = Order({
             buyer : _buyer,
@@ -73,6 +73,25 @@ contract DeliveryContract is EventDelivery {
         uint256 orderId = orders.length - 1;
         emit NewOrder(_buyer, _seller, _deliver, orderId);
         return orderId;
+    }
+
+    function validateBuyer(uint orderId, bytes32 hash)
+    payable
+    public
+    atStage(orderId, OrderStage.Initialization)
+    {
+        Order storage order = orders[orderId];
+
+        require(msg.sender == order.buyer, "Sender is not the buyer");
+        require(order.buyerValidation == false, "Buyer already validate");
+        require(order.deliverPrice + order.sellerPrice <= msg.value, "The value send isn't enough");
+
+        order.buyerValidation = true;
+        order.buyerHash = hash;
+
+        if (order.sellerValidation && order.deliverValidation) {
+            order.orderStage = OrderStage.Started;
+        }
     }
 
     function getOrder(uint orderId)
@@ -108,5 +127,15 @@ contract DeliveryContract is EventDelivery {
         deliverValidation = order.deliverValidation;
         sellerHash = order.sellerHash;
         buyerHash = order.buyerHash;
+    }
+
+    modifier isActor(address sender, address buyer, address seller, address deliver){
+        require(sender == buyer || sender == seller || sender == deliver, "Should be an actor of the order");
+        _;
+    }
+
+    modifier atStage(uint256 orderId, OrderStage expected) {
+        require(orders[orderId].orderStage == expected, "The order isn't at the required stage");
+        _;
     }
 }

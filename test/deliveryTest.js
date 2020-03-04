@@ -1,4 +1,5 @@
 const truffleAssert = require('truffle-assertions');
+const web3 = require('web3');
 const assert = require('assert');
 const DeliveryContract = artifacts.require("DeliveryContract");
 
@@ -78,6 +79,47 @@ contract("DeliveryContract", accounts => {
         );
     });
 
+    it("Buyer should validate the order", async () => {
+        let orderId = await deliveryInstance.createOrder.call(
+            buyer,
+            seller,
+            deliver,
+            SELLER_PRICE,
+            DELIVER_PRICE,
+            DELAY_ORDER,
+            {from: buyer}
+        );
+
+        assert.strictEqual(orderId.toNumber(), 0, "Order should be stored with this id");
+
+        let keyBuyer = web3.utils.randomHex(32);
+        // let hashBuyer = web3.utils.keccak256(keyBuyer);
+
+        // console.log(hashBuyer)
+
+
+        await deliveryInstance.validateBuyer(
+            0,
+            keyBuyer,
+            {from: buyer, value: 1000000}
+        );
+        //SELLER_PRICE + DELIVER_PRICE
+        //         console.log(tx);
+
+        // truffleAssert.eventEmitted(tx, 'NewOrder', (ev) => {
+        //     return ev.buyer === buyer
+        //         && ev.seller === seller
+        //         && ev.deliver === deliver
+        //         && ev.orderId.toNumber() === 0;
+        // }, 'NewOrder should be emitted with correct parameters');
+
+        // let order = await deliveryInstance.getOrder.call(orderId);
+        // assert.strictEqual(order.buyerValidation, true, "Should be true");
+        // assert.strictEqual(order.sellerValidation, false, "Should be false");
+        // assert.strictEqual(order.deliverValidation, false, "Should be false");
+        // assert.strictEqual(order.buyerHash, hashBuyer, "Buyer hash should be set");
+        // assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
+    });
 
     async function createOrder(sender) {
         let tx = await deliveryInstance.createOrder(
