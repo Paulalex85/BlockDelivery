@@ -9,6 +9,11 @@ contract EventDelivery {
         uint256 orderId
     );
 
+    event BuyerValidate(
+        uint256 indexed orderId,
+        bool isOrderStarted
+    );
+
 }
 
 contract DeliveryContract is EventDelivery {
@@ -80,6 +85,7 @@ contract DeliveryContract is EventDelivery {
     public
     atStage(orderId, OrderStage.Initialization)
     {
+        require(orders.length > orderId, "orders.length should be > than orderId ");
         Order storage order = orders[orderId];
 
         require(msg.sender == order.buyer, "Sender is not the buyer");
@@ -92,6 +98,8 @@ contract DeliveryContract is EventDelivery {
         if (order.sellerValidation && order.deliverValidation) {
             order.orderStage = OrderStage.Started;
         }
+
+        emit BuyerValidate(orderId, order.orderStage == OrderStage.Started);
     }
 
     function getOrder(uint orderId)

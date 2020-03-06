@@ -80,7 +80,7 @@ contract("DeliveryContract", accounts => {
     });
 
     it("Buyer should validate the order", async () => {
-        let orderId = await deliveryInstance.createOrder.call(
+        await deliveryInstance.createOrder(
             buyer,
             seller,
             deliver,
@@ -90,35 +90,28 @@ contract("DeliveryContract", accounts => {
             {from: buyer}
         );
 
-        assert.strictEqual(orderId.toNumber(), 0, "Order should be stored with this id");
+        await checkOrderCreationData(0, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER);
 
         let keyBuyer = web3.utils.randomHex(32);
-        // let hashBuyer = web3.utils.keccak256(keyBuyer);
+        let hashBuyer = web3.utils.keccak256(keyBuyer);
 
-        // console.log(hashBuyer)
-
-
-        await deliveryInstance.validateBuyer(
+        let tx = await deliveryInstance.validateBuyer(
             0,
-            keyBuyer,
-            {from: buyer, value: 1000000}
+            hashBuyer,
+            {from: buyer, value: SELLER_PRICE + DELIVER_PRICE}
         );
-        //SELLER_PRICE + DELIVER_PRICE
-        //         console.log(tx);
 
-        // truffleAssert.eventEmitted(tx, 'NewOrder', (ev) => {
-        //     return ev.buyer === buyer
-        //         && ev.seller === seller
-        //         && ev.deliver === deliver
-        //         && ev.orderId.toNumber() === 0;
-        // }, 'NewOrder should be emitted with correct parameters');
+        truffleAssert.eventEmitted(tx, 'BuyerValidate', (ev) => {
+            return ev.orderId.toNumber() === 0
+                && ev.isOrderStarted === false;
+        }, 'BuyerValidate should be emitted with correct parameters');
 
-        // let order = await deliveryInstance.getOrder.call(orderId);
-        // assert.strictEqual(order.buyerValidation, true, "Should be true");
-        // assert.strictEqual(order.sellerValidation, false, "Should be false");
-        // assert.strictEqual(order.deliverValidation, false, "Should be false");
-        // assert.strictEqual(order.buyerHash, hashBuyer, "Buyer hash should be set");
-        // assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
+        let order = await deliveryInstance.getOrder.call(0);
+        assert.strictEqual(order.buyerValidation, true, "Should be true");
+        assert.strictEqual(order.sellerValidation, false, "Should be false");
+        assert.strictEqual(order.deliverValidation, false, "Should be false");
+        assert.strictEqual(order.buyerHash, hashBuyer, "Buyer hash should be set");
+        assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
     });
 
     async function createOrder(sender) {
@@ -160,5 +153,26 @@ contract("DeliveryContract", accounts => {
         assert.strictEqual(order.sellerHash, DEFAULT_HASH, "Seller hash should be init to zero");
         assert.strictEqual(order.buyerHash, DEFAULT_HASH, "Buyer hash should be init to zero");
 
+    }
+
+    async function logContract(orderId) {
+        let order = await deliveryInstance.getOrder.call(orderId);
+
+        console.log("");
+        console.log("DeliveryContract:");
+        console.log("--------------");
+        console.log("Buyer : " + order.buyer);
+        console.log("Seller : " + order.seller);
+        console.log("Deliver : " + order.deliver);
+        console.log("Seller Price : " + order.sellerPrice);
+        console.log("Deliver Price : " + order.deliverPrice);
+        console.log("Order Stage : " + order.orderStage);
+        console.log("Date delay : " + order.dateDelay);
+        console.log("Buyer validation : " + order.buyerValidation);
+        console.log("Seller validation : " + order.sellerValidation);
+        console.log("Deliver validation : " + order.deliverValidation);
+        console.log("Seller hash : " + order.sellerHash);
+        console.log("Buyer hash : " + order.buyerHash);
+        console.log("--------------");
     }
 });
