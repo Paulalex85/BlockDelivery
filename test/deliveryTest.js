@@ -3,6 +3,7 @@ const web3 = require('web3');
 const assert = require('assert');
 const DeliveryContract = artifacts.require("DeliveryContract");
 
+
 contract("DeliveryContract", accounts => {
 
     let deliveryInstance, buyer, seller, deliver;
@@ -61,7 +62,8 @@ contract("DeliveryContract", accounts => {
                 DELIVER_PRICE,
                 DELAY_ORDER,
                 {from: buyer, value: 50}
-            )
+            ),
+            "revert"
         );
     });
 
@@ -75,44 +77,79 @@ contract("DeliveryContract", accounts => {
                 DELIVER_PRICE,
                 60 * 59, //59 minutes
                 {from: buyer}
-            )
+            ),
+            "Delay should be at least one hour"
         );
     });
 
     it("Buyer should validate the order", async () => {
-        await deliveryInstance.createOrder(
-            buyer,
-            seller,
-            deliver,
-            SELLER_PRICE,
-            DELIVER_PRICE,
-            DELAY_ORDER,
-            {from: buyer}
-        );
+        await createOrder(buyer);
+        await validateBuyer(SELLER_PRICE + DELIVER_PRICE);
+    });
 
-        await checkOrderCreationData(0, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER);
+    it("Seller and Deliver can't validateBuyer the order", async () => {
+        await createOrder(buyer);
 
         let keyBuyer = web3.utils.randomHex(32);
         let hashBuyer = web3.utils.keccak256(keyBuyer);
 
-        let tx = await deliveryInstance.validateBuyer(
-            0,
-            hashBuyer,
-            {from: buyer, value: SELLER_PRICE + DELIVER_PRICE}
+        await truffleAssert.reverts(
+            deliveryInstance.validateBuyer(
+                0,
+                hashBuyer,
+                {from: seller, value: SELLER_PRICE + DELIVER_PRICE}
+            ),
+            "Sender is not the buyer"
         );
 
-        truffleAssert.eventEmitted(tx, 'BuyerValidate', (ev) => {
-            return ev.orderId.toNumber() === 0
-                && ev.isOrderStarted === false;
-        }, 'BuyerValidate should be emitted with correct parameters');
-
-        let order = await deliveryInstance.getOrder.call(0);
-        assert.strictEqual(order.buyerValidation, true, "Should be true");
-        assert.strictEqual(order.sellerValidation, false, "Should be false");
-        assert.strictEqual(order.deliverValidation, false, "Should be false");
-        assert.strictEqual(order.buyerHash, hashBuyer, "Buyer hash should be set");
-        assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
+        await truffleAssert.reverts(
+            deliveryInstance.validateBuyer(
+                0,
+                hashBuyer,
+                {from: deliver, value: SELLER_PRICE + DELIVER_PRICE}
+            ),
+            "Sender is not the buyer"
+        );
     });
+
+    it("Buyer can't validate twice the order", async () => {
+        await createOrder(buyer);
+        let keyHashBuyer = await validateBuyer(SELLER_PRICE + DELIVER_PRICE);
+
+        await truffleAssert.reverts(
+            deliveryInstance.validateBuyer(
+                0,
+                keyHashBuyer.hash,
+                {from: buyer, value: SELLER_PRICE + DELIVER_PRICE}
+            ),
+            "Buyer already validate"
+        );
+    });
+
+    it("Buyer can't validate with not enough eth", async () => {
+        await createOrder(buyer);
+
+        let keyBuyer = web3.utils.randomHex(32);
+        let hashBuyer = web3.utils.keccak256(keyBuyer);
+
+        await truffleAssert.reverts(
+            deliveryInstance.validateBuyer(
+                0,
+                hashBuyer,
+                {from: buyer, value: (SELLER_PRICE + DELIVER_PRICE) - 1}
+            ),
+            "The value send isn't enough"
+        );
+    });
+
+    it("Buyer can validate the order with too much eth", async () => {
+        await createOrder(buyer);
+        await validateBuyer(SELLER_PRICE + DELIVER_PRICE + 1000000);
+    });
+
+
+    //TODO test order validate when not stage init
+    //TODO test order validate when pass to next stage
 
     async function createOrder(sender) {
         let tx = await deliveryInstance.createOrder(
@@ -135,6 +172,34 @@ contract("DeliveryContract", accounts => {
                 && ev.orderId.toNumber() === 0;
         }, 'NewOrder should be emitted with correct parameters');
         await checkOrderCreationData(0, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER);
+    }
+
+    async function validateBuyer(amountEth) {
+        let keyBuyer = web3.utils.randomHex(32);
+        let hashBuyer = web3.utils.keccak256(keyBuyer);
+
+        let tx = await deliveryInstance.validateBuyer(
+            0,
+            hashBuyer,
+            {from: buyer, value: amountEth}
+        );
+
+        truffleAssert.eventEmitted(tx, 'BuyerValidate', (ev) => {
+            return ev.orderId.toNumber() === 0
+                && ev.isOrderStarted === false;
+        }, 'BuyerValidate should be emitted with correct parameters');
+
+        let order = await deliveryInstance.getOrder.call(0);
+        assert.strictEqual(order.buyerValidation, true, "Should be true");
+        assert.strictEqual(order.sellerValidation, false, "Should be false");
+        assert.strictEqual(order.deliverValidation, false, "Should be false");
+        assert.strictEqual(order.buyerHash, hashBuyer, "Buyer hash should be set");
+        assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
+
+        return {
+            key: keyBuyer,
+            hash: hashBuyer
+        }
     }
 
     async function checkOrderCreationData(orderId, buyer, seller, deliver, sellerPrice, deliverPrice, delay) {

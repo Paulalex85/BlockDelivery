@@ -85,7 +85,6 @@ contract DeliveryContract is EventDelivery {
     public
     atStage(orderId, OrderStage.Initialization)
     {
-        require(orders.length > orderId, "orders.length should be > than orderId ");
         Order storage order = orders[orderId];
 
         require(msg.sender == order.buyer, "Sender is not the buyer");
