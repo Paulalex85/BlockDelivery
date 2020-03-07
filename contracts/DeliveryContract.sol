@@ -14,6 +14,11 @@ contract EventDelivery {
         bool isOrderStarted
     );
 
+    event SellerValidate(
+        uint256 indexed orderId,
+        bool isOrderStarted
+    );
+
 }
 
 contract DeliveryContract is EventDelivery {
@@ -99,6 +104,25 @@ contract DeliveryContract is EventDelivery {
         }
 
         emit BuyerValidate(orderId, order.orderStage == OrderStage.Started);
+    }
+
+    function validateSeller(uint orderId, bytes32 hash)
+    public
+    atStage(orderId, OrderStage.Initialization)
+    {
+        Order storage order = orders[orderId];
+
+        require(msg.sender == order.seller, "Sender is not the seller");
+        require(order.sellerValidation == false, "Seller already validate");
+
+        order.sellerValidation = true;
+        order.sellerHash = hash;
+
+        if (order.buyerValidation && order.deliverValidation) {
+            order.orderStage = OrderStage.Started;
+        }
+
+        emit SellerValidate(orderId, order.orderStage == OrderStage.Started);
     }
 
     function getOrder(uint orderId)
