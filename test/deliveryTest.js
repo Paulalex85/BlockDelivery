@@ -195,6 +195,46 @@ contract("DeliveryContract", accounts => {
         );
     });
 
+    //Deliver validate
+
+    it("Deliver should validate the order", async () => {
+        await createOrder(buyer);
+        await validateDeliver();
+    });
+
+    it("Buyer and Seller can't validateDeliver the order", async () => {
+        await createOrder(buyer);
+
+        await truffleAssert.reverts(
+            deliveryInstance.validateDeliver(
+                0,
+                {from: buyer}
+            ),
+            "Sender is not the deliver"
+        );
+
+        await truffleAssert.reverts(
+            deliveryInstance.validateDeliver(
+                0,
+                {from: seller}
+            ),
+            "Sender is not the deliver"
+        );
+    });
+
+    it("Deliver can't validate twice the order", async () => {
+        await createOrder(buyer);
+        await validateDeliver();
+
+        await truffleAssert.reverts(
+            deliveryInstance.validateDeliver(
+                0,
+                {from: deliver}
+            ),
+            "Deliver already validate"
+        );
+    });
+
     //TODO test order validate when not stage init
     //TODO test order validate when pass to next stage
 
@@ -275,6 +315,24 @@ contract("DeliveryContract", accounts => {
             key: key,
             hash: hash
         }
+    }
+
+    async function validateDeliver() {
+        let tx = await deliveryInstance.validateDeliver(
+            0,
+            {from: deliver}
+        );
+
+        truffleAssert.eventEmitted(tx, 'DeliverValidate', (ev) => {
+            return ev.orderId.toNumber() === 0
+                && ev.isOrderStarted === false;
+        }, 'DeliverValidate should be emitted with correct parameters');
+
+        let order = await deliveryInstance.getOrder.call(0);
+        assert.strictEqual(order.buyerValidation, false, "Should be false");
+        assert.strictEqual(order.sellerValidation, false, "Should be false");
+        assert.strictEqual(order.deliverValidation, true, "Should be true");
+        assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
     }
 
     async function checkOrderCreationData(orderId, buyer, seller, deliver, sellerPrice, deliverPrice, delay) {
