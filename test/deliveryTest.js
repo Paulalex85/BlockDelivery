@@ -321,30 +321,7 @@ contract("DeliveryContract", accounts => {
         await createOrder(buyer);
         let orderId = 0;
 
-        await validateOrder(actors.SELLER,
-            seller,
-            0,
-            orderId,
-            false,
-            false,
-            true,
-            false);
-        await validateOrder(actors.DELIVER,
-            deliver,
-            0,
-            orderId,
-            false,
-            false,
-            true,
-            true);
-        await validateOrder(actors.BUYER,
-            buyer,
-            DELIVER_PRICE + SELLER_PRICE,
-            orderId,
-            true,
-            true,
-            true,
-            true);
+        await completeValidationOrder(orderId);
     });
 
     it("Order to Started stage when seller ending ", async () => {
@@ -406,7 +383,50 @@ contract("DeliveryContract", accounts => {
             true);
     });
 
-    //TODO test order validate when not stage init
+    // test order validate when not stage init
+    it("Should fail when validate order and order is already started", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        await completeValidationOrder(orderId);
+
+        await truffleAssert.reverts(
+            validateOrder(actors.BUYER,
+                buyer,
+                SELLER_PRICE + DELIVER_PRICE,
+                0,
+                false,
+                true,
+                false,
+                false),
+            "The order isn't at the required stage"
+        );
+
+        await truffleAssert.reverts(
+            validateOrder(actors.SELLER,
+                seller,
+                0,
+                0,
+                false,
+                false,
+                true,
+                false),
+            "The order isn't at the required stage"
+        );
+
+        await truffleAssert.reverts(
+            validateOrder(actors.DELIVER,
+                deliver,
+                0,
+                0,
+                false,
+                false,
+                false,
+                true),
+            "The order isn't at the required stage"
+        );
+    });
+
 
     async function createOrder(sender) {
         let tx = await deliveryInstance.createOrder(
@@ -430,7 +450,6 @@ contract("DeliveryContract", accounts => {
         }, 'NewOrder should be emitted with correct parameters');
         await checkOrderCreationData(0, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER);
     }
-
 
     async function validateOrder(typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation) {
         let keyHash = generateKeyHash();
@@ -491,6 +510,33 @@ contract("DeliveryContract", accounts => {
             key: key,
             hash: hash
         }
+    }
+
+    async function completeValidationOrder(orderId) {
+        await validateOrder(actors.SELLER,
+            seller,
+            0,
+            orderId,
+            false,
+            false,
+            true,
+            false);
+        await validateOrder(actors.DELIVER,
+            deliver,
+            0,
+            orderId,
+            false,
+            false,
+            true,
+            true);
+        await validateOrder(actors.BUYER,
+            buyer,
+            DELIVER_PRICE + SELLER_PRICE,
+            orderId,
+            true,
+            true,
+            true,
+            true);
     }
 
     async function checkOrderCreationData(orderId, buyer, seller, deliver, sellerPrice, deliverPrice, delay) {
