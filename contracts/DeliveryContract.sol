@@ -24,6 +24,10 @@ contract EventDelivery {
         bool isOrderStarted
     );
 
+    event OrderTaken(
+        uint256 indexed orderId
+    );
+
 }
 
 contract DeliveryContract is EventDelivery {
@@ -31,7 +35,6 @@ contract DeliveryContract is EventDelivery {
     enum OrderStage {
         Initialization,
         Started,
-        Prepared,
         Taken,
         Delivered,
         Cancel_Initialization,
@@ -146,6 +149,19 @@ contract DeliveryContract is EventDelivery {
         }
 
         emit DeliverValidate(orderId, order.orderStage == OrderStage.Started);
+    }
+
+    function orderTaken(uint orderId, bytes memory sellerKey)
+    public
+    atStage(orderId, OrderStage.Started)
+    {
+        Order storage order = orders[orderId];
+
+        require(msg.sender == order.deliver, "Sender is not the deliver");
+        require(keccak256(sellerKey) == order.sellerHash, "The key doesn't match with the stored hash");
+
+        order.orderStage = OrderStage.Taken;
+        emit OrderTaken(orderId);
     }
 
     function getOrder(uint orderId)
