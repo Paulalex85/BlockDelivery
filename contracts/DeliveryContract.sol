@@ -28,6 +28,10 @@ contract EventDelivery {
         uint256 indexed orderId
     );
 
+    event OrderDelivered(
+        uint256 indexed orderId
+    );
+
 }
 
 contract DeliveryContract is EventDelivery {
@@ -162,6 +166,19 @@ contract DeliveryContract is EventDelivery {
 
         order.orderStage = OrderStage.Taken;
         emit OrderTaken(orderId);
+    }
+
+    function orderDelivered(uint orderId, bytes memory buyerKey)
+    public
+    atStage(orderId, OrderStage.Taken)
+    {
+        Order storage order = orders[orderId];
+
+        require(msg.sender == order.deliver, "Sender is not the deliver");
+        require(keccak256(buyerKey) == order.buyerHash, "The key doesn't match with the stored hash");
+
+        order.orderStage = OrderStage.Delivered;
+        emit OrderDelivered(orderId);
     }
 
     function getOrder(uint orderId)

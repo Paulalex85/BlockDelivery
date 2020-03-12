@@ -474,6 +474,17 @@ contract("DeliveryContract", accounts => {
         );
     });
 
+    // order delivered
+
+    it("Deliver should delivered the order ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await takeOrder(orderId, keyHashSeller.key, deliver);
+        await deliverOrder(orderId, keyHashBuyer.key, deliver);
+    });
+
 
     //utils
 
@@ -603,6 +614,21 @@ contract("DeliveryContract", accounts => {
 
         let order = await deliveryInstance.getOrder.call(orderId);
         assert.strictEqual(order.orderStage.toNumber(), 2, "Should be stage Taken");
+    }
+
+    async function deliverOrder(orderId, key, sender) {
+        let tx = await deliveryInstance.orderDelivered(
+            orderId,
+            key,
+            {from: sender}
+        );
+
+        truffleAssert.eventEmitted(tx, 'OrderDelivered', (ev) => {
+            return ev.orderId.toNumber() === orderId;
+        }, 'OrderDelivered should be emitted with correct parameters');
+
+        let order = await deliveryInstance.getOrder.call(orderId);
+        assert.strictEqual(order.orderStage.toNumber(), 3, "Should be stage Delivered");
     }
 
     async function checkOrderCreationData(orderId, buyer, seller, deliver, sellerPrice, deliverPrice, delay) {
