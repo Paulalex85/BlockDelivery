@@ -437,6 +437,44 @@ contract("DeliveryContract", accounts => {
         await takeOrder(orderId, keyHashSeller.key, deliver);
     });
 
+    it("TakeOrder fail with wrong key ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        await completeValidationOrder(orderId);
+        await truffleAssert.reverts(
+            takeOrder(orderId, generateKeyHash().key, deliver),
+            "The key doesn't match with the stored hash"
+        );
+    });
+
+    it("TakeOrder can't be call by seller or buyer ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await truffleAssert.reverts(
+            takeOrder(orderId, keyHashSeller.key, buyer),
+            "Sender is not the deliver"
+        );
+
+        await truffleAssert.reverts(
+            takeOrder(orderId, keyHashSeller.key, seller),
+            "Sender is not the deliver"
+        );
+    });
+
+    it("TakeOrder need started stage ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        await truffleAssert.reverts(
+            takeOrder(orderId, generateKeyHash().key, deliver),
+            "The order isn't at the required stage"
+        );
+    });
+
+
     //utils
 
     async function createOrder(sender) {
