@@ -485,6 +485,49 @@ contract("DeliveryContract", accounts => {
         await deliverOrder(orderId, keyHashBuyer.key, deliver);
     });
 
+    it("DeliverOrder fail with wrong key ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await takeOrder(orderId, keyHashSeller.key, deliver);
+        await truffleAssert.reverts(
+            deliverOrder(orderId, generateKeyHash().key, deliver),
+            "The key doesn't match with the stored hash"
+        );
+    });
+
+    it("DeliverOrder can't be call by seller or buyer ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await takeOrder(orderId, keyHashSeller.key, deliver);
+        await truffleAssert.reverts(
+            deliverOrder(orderId, keyHashSeller.key, buyer),
+            "Sender is not the deliver"
+        );
+
+        await truffleAssert.reverts(
+            deliverOrder(orderId, keyHashSeller.key, seller),
+            "Sender is not the deliver"
+        );
+    });
+
+    it("DeliverOrder need taken stage ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        await truffleAssert.reverts(
+            deliverOrder(orderId, generateKeyHash().key, deliver),
+            "The order isn't at the required stage"
+        );
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await truffleAssert.reverts(
+            deliverOrder(orderId, generateKeyHash().key, deliver),
+            "The order isn't at the required stage"
+        );
+    });
 
     //utils
 
