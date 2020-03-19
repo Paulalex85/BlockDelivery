@@ -61,7 +61,8 @@ contract DeliveryContract is EventDelivery {
         bytes32 buyerHash;
     }
 
-    Order[] public orders;
+    Order[] orders;
+    mapping(address => uint) public withdraws;
 
     function createOrder(
         address _buyer,
@@ -178,7 +179,18 @@ contract DeliveryContract is EventDelivery {
         require(keccak256(buyerKey) == order.buyerHash, "The key doesn't match with the stored hash");
 
         order.orderStage = OrderStage.Delivered;
+
+        withdraws[order.seller] += order.sellerPrice;
+        withdraws[order.deliver] += order.deliverPrice;
         emit OrderDelivered(orderId);
+    }
+
+    function withdrawBalance()
+    public
+    {
+        uint balance = withdraws[msg.sender];
+        withdraws[msg.sender] = 0;
+        msg.sender.transfer(balance);
     }
 
     function getOrder(uint orderId)

@@ -1,5 +1,4 @@
 const truffleAssert = require('truffle-assertions');
-const web3 = require('web3');
 const assert = require('assert');
 const DeliveryContract = artifacts.require("DeliveryContract");
 
@@ -8,8 +7,8 @@ contract("DeliveryContract", accounts => {
 
     let deliveryInstance, buyer, seller, deliver;
 
-    const SELLER_PRICE = 20;
-    const DELIVER_PRICE = 10;
+    const SELLER_PRICE = 800000000000;
+    const DELIVER_PRICE = 40000000000;
     const DELAY_ORDER = 60 * 60; // 1 hour
     const DEFAULT_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -161,7 +160,7 @@ contract("DeliveryContract", accounts => {
         await truffleAssert.reverts(
             validateOrder(actors.BUYER,
                 buyer,
-                SELLER_PRICE + DELIVER_PRICE - 1,
+                SELLER_PRICE + DELIVER_PRICE - 10,
                 0,
                 false,
                 true,
@@ -504,7 +503,7 @@ contract("DeliveryContract", accounts => {
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
         await takeOrder(orderId, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
-            deliverOrder(orderId, keyHashSeller.key, buyer),
+            deliverOrder(orderId, keyHashBuyer.key, buyer),
             "Sender is not the deliver"
         );
 
@@ -524,14 +523,48 @@ contract("DeliveryContract", accounts => {
         );
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
         await truffleAssert.reverts(
-            deliverOrder(orderId, generateKeyHash().key, deliver),
+            deliverOrder(orderId, keyHashSeller.key, deliver),
             "The order isn't at the required stage"
         );
     });
 
+    //use withdraw balance
+    it("Deliver and Seller can withdraw balance after delivery ", async () => {
+        await createOrder(buyer);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await takeOrder(orderId, keyHashSeller.key, deliver);
+        await deliverOrder(orderId, keyHashBuyer.key, deliver);
+        await withdrawBalance(buyer);
+        await withdrawBalance(deliver);
+    });
+
+    it("Withdraw balance increase after multiple orders ", async () => {
+        await fullDeliveredOrder(0);
+        await fullDeliveredOrder(1);
+
+        let withdrawBalanceSeller = await deliveryInstance.withdraws.call(seller);
+        let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
+
+        assert.strictEqual(parseInt(withdrawBalanceSeller), SELLER_PRICE * 2, "Seller withdraw balance should increase");
+        assert.strictEqual(parseInt(withdrawBalanceDeliver), DELIVER_PRICE * 2, "Deliver withdraw balance should increase");
+
+        await withdrawBalance(buyer);
+        await withdrawBalance(deliver);
+    });
+
+
     //utils
 
-    async function createOrder(sender) {
+    async function fullDeliveredOrder(orderId) {
+        await createOrder(buyer, orderId);
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(orderId);
+        await takeOrder(orderId, keyHashSeller.key, deliver);
+        await deliverOrder(orderId, keyHashBuyer.key, deliver);
+    }
+
+    async function createOrder(sender, orderId = 0) {
         let tx = await deliveryInstance.createOrder(
             buyer,
             seller,
@@ -549,9 +582,9 @@ contract("DeliveryContract", accounts => {
             return ev.buyer === buyer
                 && ev.seller === seller
                 && ev.deliver === deliver
-                && ev.orderId.toNumber() === 0;
+                && ev.orderId.toNumber() === orderId;
         }, 'NewOrder should be emitted with correct parameters');
-        await checkOrderCreationData(0, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER);
+        await checkOrderCreationData(orderId, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER);
     }
 
     async function validateOrder(typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation) {
@@ -660,6 +693,10 @@ contract("DeliveryContract", accounts => {
     }
 
     async function deliverOrder(orderId, key, sender) {
+
+        let withdrawBalanceSellerBefore = await deliveryInstance.withdraws.call(seller);
+        let withdrawBalanceDeliverBefore = await deliveryInstance.withdraws.call(deliver);
+
         let tx = await deliveryInstance.orderDelivered(
             orderId,
             key,
@@ -672,6 +709,23 @@ contract("DeliveryContract", accounts => {
 
         let order = await deliveryInstance.getOrder.call(orderId);
         assert.strictEqual(order.orderStage.toNumber(), 3, "Should be stage Delivered");
+
+        let withdrawBalanceSeller = await deliveryInstance.withdraws.call(seller);
+        let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
+
+        assert.strictEqual(parseInt(order.sellerPrice) + parseInt(withdrawBalanceSellerBefore), parseInt(withdrawBalanceSeller), "Withdraw balance for the seller is wrong");
+        assert.strictEqual(parseInt(order.deliverPrice) + parseInt(withdrawBalanceDeliverBefore), parseInt(withdrawBalanceDeliver), "Withdraw balance for the deliver is wrong");
+    }
+
+    async function withdrawBalance(sender) {
+        await deliveryInstance.withdrawBalance(
+            {from: sender}
+        );
+
+        let withdrawBalance = await deliveryInstance.withdraws.call(
+            sender
+        );
+        assert.strictEqual(parseInt(withdrawBalance), 0, "Withdraw balance should be 0");
     }
 
     async function checkOrderCreationData(orderId, buyer, seller, deliver, sellerPrice, deliverPrice, delay) {
