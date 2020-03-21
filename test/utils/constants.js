@@ -1,0 +1,18 @@
+const SELLER_PRICE = 800000000000;
+const DELIVER_PRICE = 40000000000;
+const DELAY_ORDER = 60 * 60; // 1 hour
+const DEFAULT_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+const actors = {
+    BUYER: "buyer",
+    SELLER: "seller",
+    DELIVER: "deliver"
+};
+
+Object.assign(exports, {
+    SELLER_PRICE,
+    DELIVER_PRICE,
+    DELAY_ORDER,
+    DEFAULT_HASH,
+    actors,
+});
