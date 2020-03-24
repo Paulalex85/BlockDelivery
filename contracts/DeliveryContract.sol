@@ -32,6 +32,11 @@ contract EventDelivery {
         uint256 indexed orderId
     );
 
+    event CancelOrder(
+        uint256 indexed orderId,
+        bool startedOrder
+    );
+
 }
 
 contract DeliveryContract is EventDelivery {
@@ -183,6 +188,22 @@ contract DeliveryContract is EventDelivery {
         withdraws[order.seller] += order.sellerPrice;
         withdraws[order.deliver] += order.deliverPrice;
         emit OrderDelivered(orderId);
+    }
+
+    function initializationCancel(uint orderId)
+    public
+    atStage(orderId, OrderStage.Initialization)
+    {
+        Order storage order = orders[orderId];
+
+        require(msg.sender == order.buyer || msg.sender == order.seller || msg.sender == order.deliver, "Should be an actor of the order");
+
+        order.orderStage = OrderStage.Cancel_Initialization;
+
+        if (order.buyerValidation) {
+            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice;
+        }
+        emit CancelOrder(orderId, false);
     }
 
     function withdrawBalance()

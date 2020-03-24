@@ -168,6 +168,30 @@ async function withdrawBalance(deliveryInstance, sender) {
     assert.strictEqual(parseInt(withdrawBalance), 0, "Withdraw balance should be 0");
 }
 
+async function initCancelOrder(deliveryInstance, sender, buyer, orderId = 0) {
+    let tx = await deliveryInstance.initializationCancel(
+        orderId,
+        {from: sender}
+    );
+
+    truffleAssert.eventEmitted(tx, 'CancelOrder', (ev) => {
+        return ev.orderId.toNumber() === orderId &&
+            ev.startedOrder === false;
+    }, 'CancelOrder should be emitted with correct parameters');
+
+    let order = await deliveryInstance.getOrder.call(orderId);
+    assert.strictEqual(order.orderStage.toNumber(), 4, "Should be stage to order cancel init");
+
+    let withdrawBalance = await deliveryInstance.withdraws.call(
+        buyer
+    );
+    if (order.buyerValidation === true) {
+        assert.strictEqual(parseInt(withdrawBalance), SELLER_PRICE + DELIVER_PRICE, "Withdraw balance should be the amount paid by the buyer");
+    } else {
+        assert.strictEqual(parseInt(withdrawBalance), 0, "Withdraw balance should be 0");
+    }
+}
+
 async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, delay) {
     let order = await deliveryInstance.getOrder.call(orderId);
 
@@ -192,5 +216,6 @@ Object.assign(exports, {
     takeOrder,
     deliverOrder,
     fullDeliveredOrder,
-    withdrawBalance
+    withdrawBalance,
+    initCancelOrder
 });
