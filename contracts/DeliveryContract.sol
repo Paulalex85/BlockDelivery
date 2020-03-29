@@ -9,6 +9,10 @@ contract EventDelivery {
         uint256 orderId
     );
 
+    event OrderUpdated(
+        uint256 indexed orderId
+    );
+
     event BuyerValidate(
         uint256 indexed orderId,
         bool isOrderStarted
@@ -58,7 +62,7 @@ contract DeliveryContract is EventDelivery {
         uint128 sellerPrice;
         OrderStage orderStage;
         uint64 dateCreation;
-        uint64 dateDelay;
+        uint64 delayEscrow;
         bool buyerValidation;
         bool sellerValidation;
         bool deliverValidation;
@@ -75,13 +79,13 @@ contract DeliveryContract is EventDelivery {
         address _deliver,
         uint128 _sellerPrice,
         uint128 _deliverPrice,
-        uint64 _delay
+        uint64 _delayEscrow
     )
     public
     isActor(msg.sender, _buyer, _seller, _deliver)
     returns (uint)
     {
-        require(_delay >= 1 hours, "Delay should be at least one hour");
+        require(_delayEscrow >= 1 hours, "Delay should be at least one hour");
         Order memory _order = Order({
             buyer : _buyer,
             seller : _seller,
@@ -90,7 +94,7 @@ contract DeliveryContract is EventDelivery {
             sellerPrice : _sellerPrice,
             orderStage : OrderStage.Initialization,
             dateCreation : uint64(now),
-            dateDelay : _delay,
+            delayEscrow : _delayEscrow,
             buyerValidation : false,
             sellerValidation : false,
             deliverValidation : false,
@@ -101,6 +105,30 @@ contract DeliveryContract is EventDelivery {
         uint256 orderId = orders.length - 1;
         emit NewOrder(_buyer, _seller, _deliver, orderId);
         return orderId;
+    }
+
+    function updateInitializeOrder(uint orderId, uint128 _sellerPrice, uint128 _deliverPrice, uint64 _delayEscrow)
+    public
+    atStage(orderId, OrderStage.Initialization)
+    checkDelayMinimum(_delayEscrow)
+    {
+        Order storage order = orders[orderId];
+
+        require(msg.sender == order.buyer || msg.sender == order.seller || msg.sender == order.deliver, "Should be an actor of the order");
+
+        order.delayEscrow = _delayEscrow;
+        order.sellerValidation = false;
+        order.deliverValidation = false;
+
+        if (order.buyerValidation) {
+            order.buyerValidation = false;
+            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice;
+        }
+
+        order.sellerPrice = _sellerPrice;
+        order.deliverPrice = _deliverPrice;
+
+        emit OrderUpdated(orderId);
     }
 
     function validateBuyer(uint orderId, bytes32 hash)
@@ -225,7 +253,7 @@ contract DeliveryContract is EventDelivery {
         uint128 sellerPrice,
         OrderStage orderStage,
         uint64 dateCreation,
-        uint64 dateDelay,
+        uint64 delayEscrow,
         bool buyerValidation,
         bool sellerValidation,
         bool deliverValidation,
@@ -241,7 +269,7 @@ contract DeliveryContract is EventDelivery {
         sellerPrice = order.sellerPrice;
         orderStage = order.orderStage;
         dateCreation = order.dateCreation;
-        dateDelay = order.dateDelay;
+        delayEscrow = order.delayEscrow;
         buyerValidation = order.buyerValidation;
         sellerValidation = order.sellerValidation;
         deliverValidation = order.deliverValidation;
@@ -251,6 +279,11 @@ contract DeliveryContract is EventDelivery {
 
     modifier isActor(address sender, address buyer, address seller, address deliver){
         require(sender == buyer || sender == seller || sender == deliver, "Should be an actor of the order");
+        _;
+    }
+
+    modifier checkDelayMinimum(uint64 delay){
+        require(delay >= 1 hours, "Delay should be at least one hour");
         _;
     }
 

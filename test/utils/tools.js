@@ -19,7 +19,7 @@ async function logContract(deliveryInstance, orderId) {
     console.log("Seller Price : " + order.sellerPrice);
     console.log("Deliver Price : " + order.deliverPrice);
     console.log("Order Stage : " + order.orderStage);
-    console.log("Date delay : " + order.dateDelay);
+    console.log("Date delay : " + order.delayEscrow);
     console.log("Buyer validation : " + order.buyerValidation);
     console.log("Seller validation : " + order.sellerValidation);
     console.log("Deliver validation : " + order.deliverValidation);

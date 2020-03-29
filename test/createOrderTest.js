@@ -49,7 +49,7 @@ contract("createOrder method of DeliveryContract", accounts => {
 
     it("Shouldn't send eth to orderCreate", async () => {
         await truffleAssert.reverts(
-            deliveryInstance.createOrder.call(
+            deliveryInstance.createOrder(
                 buyer,
                 seller,
                 deliver,
@@ -64,7 +64,7 @@ contract("createOrder method of DeliveryContract", accounts => {
 
     it("Shouldn't create order with delay under one hour", async () => {
         await truffleAssert.reverts(
-            deliveryInstance.createOrder.call(
+            deliveryInstance.createOrder(
                 buyer,
                 seller,
                 deliver,
