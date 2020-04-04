@@ -25,7 +25,7 @@ contract("deliverOrder method of DeliveryContract", accounts => {
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, seller, deliver, orderId, generateKeyHash().key, deliver),
+            deliverOrder(deliveryInstance,buyer, seller, deliver, orderId, generateKeyHash().key, deliver),
             "The key doesn't match with the stored hash"
         );
     });
@@ -37,12 +37,12 @@ contract("deliverOrder method of DeliveryContract", accounts => {
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, seller, deliver, orderId, keyHashBuyer.key, buyer),
+            deliverOrder(deliveryInstance,buyer, seller, deliver, orderId, keyHashBuyer.key, buyer),
             "Sender is not the deliver"
         );
 
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, seller, deliver, orderId, keyHashSeller.key, seller),
+            deliverOrder(deliveryInstance, buyer,seller, deliver, orderId, keyHashSeller.key, seller),
             "Sender is not the deliver"
         );
     });
@@ -52,12 +52,12 @@ contract("deliverOrder method of DeliveryContract", accounts => {
         let orderId = 0;
 
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, seller, deliver, orderId, generateKeyHash().key, deliver),
+            deliverOrder(deliveryInstance,buyer, seller, deliver, orderId, generateKeyHash().key, deliver),
             "The order isn't at the required stage"
         );
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, seller, deliver, orderId, keyHashSeller.key, deliver),
+            deliverOrder(deliveryInstance,buyer, seller, deliver, orderId, keyHashSeller.key, deliver),
             "The order isn't at the required stage"
         );
     });

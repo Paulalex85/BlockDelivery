@@ -2,15 +2,15 @@ const truffleAssert = require('truffle-assertions');
 const assert = require('assert');
 const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, DEFAULT_HASH, actors} = require('./constants');
 const {generateKeyHash} = require('./tools');
+const DEFAULT_ESCROW_VALUE = SELLER_PRICE + DELIVER_PRICE;
 
-async function createOrder(deliveryInstance, buyer, seller, deliver, sender, orderId = 0) {
+async function createOrder(deliveryInstance, buyer, seller, deliver, sender, orderId = 0, sellerPrice = SELLER_PRICE, deliverPrice = DELIVER_PRICE, delayEscrow = DELAY_ORDER, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3) {
     let tx = await deliveryInstance.createOrder(
-        buyer,
-        seller,
-        deliver,
-        SELLER_PRICE,
-        DELIVER_PRICE,
-        DELAY_ORDER,
+        [buyer, seller, deliver],
+        sellerPrice,
+        deliverPrice,
+        delayEscrow,
+        [escrowBuyer, escrowSeller, escrowDeliver],
         {from: sender}
     );
 
@@ -20,17 +20,23 @@ async function createOrder(deliveryInstance, buyer, seller, deliver, sender, ord
             && ev.deliver === deliver
             && ev.orderId.toNumber() === orderId;
     }, 'NewOrder should be emitted with correct parameters');
-    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, SELLER_PRICE, DELIVER_PRICE, DEFAULT_HASH, DEFAULT_HASH, DELAY_ORDER);
+    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, DEFAULT_HASH, DEFAULT_HASH);
+    await checkEscrowCreationData(deliveryInstance, orderId, delayEscrow, escrowBuyer, escrowSeller, escrowDeliver);
 }
 
-async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, sellerPrice, deliverPrice, delayEscrow, sender, orderId = 0) {
-    let order = await deliveryInstance.getOrder.call(orderId);
 
+async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, sellerPrice, deliverPrice, delayEscrow = DELAY_ORDER, sender, orderId = 0, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3) {
+    let order = await deliveryInstance.getOrder.call(orderId);
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let withdrawBefore = await getWithdraw(deliveryInstance, buyer, seller, deliver);
     let tx = await deliveryInstance.updateInitializeOrder(
         orderId,
         sellerPrice,
         deliverPrice,
         delayEscrow,
+        escrowBuyer,
+        escrowSeller,
+        escrowDeliver,
         {from: sender}
     );
 
@@ -38,16 +44,9 @@ async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, s
         return ev.orderId.toNumber() === orderId;
     }, 'OrderUpdated should be emitted with correct parameters');
 
-    let withdrawBalance = await deliveryInstance.withdraws.call(
-        sender
-    );
-    if (order.buyerValidation) {
-        assert.strictEqual(parseInt(withdrawBalance), parseInt(order.sellerPrice) + parseInt(order.deliverPrice), "Withdraw balance should be filled");
-    } else {
-        assert.strictEqual(parseInt(withdrawBalance), 0, "Withdraw balance should be 0");
-    }
-
-    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, order.sellerHash, order.buyerHash, delayEscrow);
+    await checkWithdrawUpdate(deliveryInstance, buyer, seller, deliver, order, withdrawBefore, escrow);
+    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, order.sellerHash, order.buyerHash);
+    await checkEscrowCreationData(deliveryInstance, orderId, delayEscrow, escrowBuyer, escrowSeller, escrowDeliver);
 }
 
 async function validateOrder(deliveryInstance, typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation) {
@@ -59,7 +58,7 @@ async function validateOrder(deliveryInstance, typeValidation, sender, amountEth
         tx = await deliveryInstance.validateSeller(
             orderId,
             keyHash.hash,
-            {from: sender}
+            {from: sender, value: amountEth}
         );
         eventType = "SellerValidate";
     } else if (typeValidation === actors.BUYER) {
@@ -72,7 +71,7 @@ async function validateOrder(deliveryInstance, typeValidation, sender, amountEth
     } else if (typeValidation === actors.DELIVER) {
         tx = await deliveryInstance.validateDeliver(
             orderId,
-            {from: sender}
+            {from: sender, value: amountEth}
         );
         eventType = "DeliverValidate";
     }
@@ -121,7 +120,7 @@ async function completeValidationOrder(deliveryInstance, buyer, seller, deliver,
     let keyHashSeller = await validateOrder(deliveryInstance,
         actors.SELLER,
         seller,
-        0,
+        DEFAULT_ESCROW_VALUE * 2,
         orderId,
         false,
         false,
@@ -130,7 +129,7 @@ async function completeValidationOrder(deliveryInstance, buyer, seller, deliver,
     await validateOrder(deliveryInstance,
         actors.DELIVER,
         deliver,
-        0,
+        DEFAULT_ESCROW_VALUE * 3,
         orderId,
         false,
         false,
@@ -139,7 +138,7 @@ async function completeValidationOrder(deliveryInstance, buyer, seller, deliver,
     let keyHashBuyer = await validateOrder(deliveryInstance,
         actors.BUYER,
         buyer,
-        DELIVER_PRICE + SELLER_PRICE,
+        DELIVER_PRICE + SELLER_PRICE + DEFAULT_ESCROW_VALUE,
         orderId,
         true,
         true,
@@ -149,10 +148,11 @@ async function completeValidationOrder(deliveryInstance, buyer, seller, deliver,
     return {keyHashSeller, keyHashBuyer};
 }
 
-async function deliverOrder(deliveryInstance, seller, deliver, orderId, key, sender) {
-
+async function deliverOrder(deliveryInstance, buyer, seller, deliver, orderId, key, sender) {
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
     let withdrawBalanceSellerBefore = await deliveryInstance.withdraws.call(seller);
     let withdrawBalanceDeliverBefore = await deliveryInstance.withdraws.call(deliver);
+    let withdrawBalanceBuyerBefore = await deliveryInstance.withdraws.call(buyer);
 
     let tx = await deliveryInstance.orderDelivered(
         orderId,
@@ -169,16 +169,18 @@ async function deliverOrder(deliveryInstance, seller, deliver, orderId, key, sen
 
     let withdrawBalanceSeller = await deliveryInstance.withdraws.call(seller);
     let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
+    let withdrawBalanceBuyer = await deliveryInstance.withdraws.call(buyer);
 
-    assert.strictEqual(parseInt(order.sellerPrice) + parseInt(withdrawBalanceSellerBefore), parseInt(withdrawBalanceSeller), "Withdraw balance for the seller is wrong");
-    assert.strictEqual(parseInt(order.deliverPrice) + parseInt(withdrawBalanceDeliverBefore), parseInt(withdrawBalanceDeliver), "Withdraw balance for the deliver is wrong");
+    assert.strictEqual(parseInt(order.sellerPrice) + parseInt(escrow.escrowSeller) + parseInt(withdrawBalanceSellerBefore), parseInt(withdrawBalanceSeller), "Withdraw balance for the seller is wrong");
+    assert.strictEqual(parseInt(order.deliverPrice) + parseInt(escrow.escrowDeliver) + parseInt(withdrawBalanceDeliverBefore), parseInt(withdrawBalanceDeliver), "Withdraw balance for the deliver is wrong");
+    assert.strictEqual(parseInt(escrow.escrowBuyer) + parseInt(withdrawBalanceBuyerBefore), parseInt(withdrawBalanceBuyer), "Withdraw balance for the buyer is wrong");
 }
 
 async function fullDeliveredOrder(deliveryInstance, buyer, seller, deliver, orderId) {
     await createOrder(deliveryInstance, buyer, seller, deliver, buyer, orderId);
     let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
     await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
-    await deliverOrder(deliveryInstance, seller, deliver, orderId, keyHashBuyer.key, deliver);
+    await deliverOrder(deliveryInstance, buyer, seller, deliver, orderId, keyHashBuyer.key, deliver);
 }
 
 async function withdrawBalance(deliveryInstance, sender) {
@@ -192,7 +194,10 @@ async function withdrawBalance(deliveryInstance, sender) {
     assert.strictEqual(parseInt(withdrawBalance), 0, "Withdraw balance should be 0");
 }
 
-async function initCancelOrder(deliveryInstance, sender, buyer, orderId = 0) {
+async function initCancelOrder(deliveryInstance, buyer, seller, deliver, sender, orderId = 0) {
+    let order = await deliveryInstance.getOrder.call(orderId);
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let withdrawBefore = await getWithdraw(deliveryInstance, buyer, seller, deliver);
     let tx = await deliveryInstance.initializationCancel(
         orderId,
         {from: sender}
@@ -203,34 +208,72 @@ async function initCancelOrder(deliveryInstance, sender, buyer, orderId = 0) {
             ev.startedOrder === false;
     }, 'CancelOrder should be emitted with correct parameters');
 
-    let order = await deliveryInstance.getOrder.call(orderId);
-    assert.strictEqual(order.orderStage.toNumber(), 4, "Should be stage to order cancel init");
+    let orderAfter = await deliveryInstance.getOrder.call(orderId);
+    assert.strictEqual(parseInt(orderAfter.orderStage), 4, "Should be stage to order cancel init");
 
-    let withdrawBalance = await deliveryInstance.withdraws.call(
-        buyer
-    );
-    if (order.buyerValidation === true) {
-        assert.strictEqual(parseInt(withdrawBalance), SELLER_PRICE + DELIVER_PRICE, "Withdraw balance should be the amount paid by the buyer");
-    } else {
-        assert.strictEqual(parseInt(withdrawBalance), 0, "Withdraw balance should be 0");
-    }
+    await checkWithdrawUpdate(deliveryInstance, buyer, seller, deliver, order, withdrawBefore, escrow);
 }
 
-async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash, delay) {
+async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash) {
     let order = await deliveryInstance.getOrder.call(orderId);
 
     assert.strictEqual(order.buyer, buyer, "Should be this buyer : " + buyer);
     assert.strictEqual(order.seller, seller, "Should be this seller : " + seller);
     assert.strictEqual(order.deliver, deliver, "Should be this deliver : " + deliver);
-    assert.strictEqual(order.sellerPrice.toNumber(), sellerPrice, "Should be this sellerPrice : " + sellerPrice);
-    assert.strictEqual(order.deliverPrice.toNumber(), deliverPrice, "Should be this deliverPrice : " + deliverPrice);
-    assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage to initialization");
-    assert.strictEqual(order.delayEscrow.toNumber(), delay, "Should be this delay : " + delay);
+    assert.strictEqual(parseInt(order.sellerPrice), sellerPrice, "Should be this sellerPrice : " + sellerPrice);
+    assert.strictEqual(parseInt(order.deliverPrice), deliverPrice, "Should be this deliverPrice : " + deliverPrice);
+    assert.strictEqual(parseInt(order.orderStage), 0, "Should be stage to initialization");
     assert.strictEqual(order.buyerValidation, false, "Should be false");
     assert.strictEqual(order.sellerValidation, false, "Should be false");
     assert.strictEqual(order.deliverValidation, false, "Should be false");
     assert.strictEqual(order.sellerHash, sellerHash, "Seller hash is wrong");
     assert.strictEqual(order.buyerHash, buyerHash, "Buyer hash is wrong");
+}
+
+async function checkEscrowCreationData(deliveryInstance, orderId, delay, escrowBuyer, escrowSeller, escrowDeliver) {
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
+
+    assert.strictEqual(parseInt(escrow.delayEscrow), delay, "Should be this delay : " + delay);
+    assert.strictEqual(parseInt(escrow.escrowBuyer), escrowBuyer, "Wrong escrow buyer : " + escrowBuyer);
+    assert.strictEqual(parseInt(escrow.escrowSeller), escrowSeller, "Wrong escrow seller : " + escrowSeller);
+    assert.strictEqual(parseInt(escrow.escrowDeliver), escrowDeliver, "Wrong escrow deliver : " + escrowDeliver);
+}
+
+async function getWithdraw(deliveryInstance, buyer, seller, deliver) {
+    let withdrawBalanceSeller = await deliveryInstance.withdraws.call(seller);
+    let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
+    let withdrawBalanceBuyer = await deliveryInstance.withdraws.call(buyer);
+
+    withdrawBalanceDeliver = parseInt(withdrawBalanceDeliver);
+    withdrawBalanceSeller = parseInt(withdrawBalanceSeller);
+    withdrawBalanceBuyer = parseInt(withdrawBalanceBuyer);
+
+    return {
+        buyer: withdrawBalanceBuyer,
+        seller: withdrawBalanceSeller,
+        deliver: withdrawBalanceDeliver
+    }
+}
+
+async function checkWithdrawUpdate(deliveryInstance, buyer, seller, deliver, order, withdrawBefore, escrow) {
+    let withdrawAfter = await getWithdraw(deliveryInstance, buyer, seller, deliver);
+    if (order.buyerValidation) {
+        assert.strictEqual(parseInt(withdrawAfter.buyer), withdrawBefore.buyer + parseInt(order.sellerPrice) + parseInt(order.deliverPrice) + parseInt(escrow.escrowBuyer), "Withdraw balance should be filled");
+    } else {
+        assert.strictEqual(parseInt(withdrawAfter.buyer), withdrawBefore.buyer, "Buyer Withdraw balance should be 0");
+    }
+
+    if (order.sellerValidation) {
+        assert.strictEqual(parseInt(withdrawAfter.seller), withdrawBefore.seller + parseInt(escrow.escrowSeller), "Withdraw balance should be filled");
+    } else {
+        assert.strictEqual(parseInt(withdrawAfter.seller), withdrawBefore.seller, "Seller Withdraw balance should be 0");
+    }
+
+    if (order.deliverValidation) {
+        assert.strictEqual(parseInt(withdrawAfter.deliver), withdrawBefore.deliver + parseInt(escrow.escrowDeliver), "Withdraw balance should be filled");
+    } else {
+        assert.strictEqual(parseInt(withdrawAfter.deliver), withdrawBefore.deliver, "Deliver Withdraw balance should be 0");
+    }
 }
 
 Object.assign(exports, {

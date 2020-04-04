@@ -2,6 +2,7 @@ const assert = require('assert');
 const {fullDeliveredOrder, withdrawBalance} = require("./utils/orderMethods");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE} = require('./utils/constants');
+const ESCROW = SELLER_PRICE + DELIVER_PRICE;
 
 contract("withdraw balance method of DeliveryContract", accounts => {
 
@@ -16,8 +17,9 @@ contract("withdraw balance method of DeliveryContract", accounts => {
 
     it("Deliver and Seller can withdraw balance after delivery ", async () => {
         await fullDeliveredOrder(deliveryInstance, buyer, seller, deliver, 0);
-        await withdrawBalance(deliveryInstance, buyer);
+        await withdrawBalance(deliveryInstance, seller);
         await withdrawBalance(deliveryInstance, deliver);
+        await withdrawBalance(deliveryInstance, buyer);
     });
 
     it("Withdraw balance increase after multiple orders ", async () => {
@@ -26,11 +28,14 @@ contract("withdraw balance method of DeliveryContract", accounts => {
 
         let withdrawBalanceSeller = await deliveryInstance.withdraws.call(seller);
         let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
+        let withdrawBalanceBuyer = await deliveryInstance.withdraws.call(buyer);
 
-        assert.strictEqual(parseInt(withdrawBalanceSeller), SELLER_PRICE * 2, "Seller withdraw balance should increase");
-        assert.strictEqual(parseInt(withdrawBalanceDeliver), DELIVER_PRICE * 2, "Deliver withdraw balance should increase");
+        assert.strictEqual(parseInt(withdrawBalanceSeller), SELLER_PRICE * 2 + ESCROW * 4, "Seller withdraw balance should increase");
+        assert.strictEqual(parseInt(withdrawBalanceDeliver), DELIVER_PRICE * 2 + ESCROW * 6, "Deliver withdraw balance should increase");
+        assert.strictEqual(parseInt(withdrawBalanceBuyer), ESCROW * 2, "Buyer withdraw balance should increase");
 
         await withdrawBalance(deliveryInstance, buyer);
         await withdrawBalance(deliveryInstance, deliver);
+        await withdrawBalance(deliveryInstance, seller);
     });
 });

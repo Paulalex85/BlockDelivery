@@ -3,6 +3,7 @@ const {createOrder, validateOrder, initCancelOrder, completeValidationOrder, tak
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {generateKeyHash} = require('./utils/tools');
 const {SELLER_PRICE, DELIVER_PRICE, actors} = require('./utils/constants');
+const ESCROW = SELLER_PRICE + DELIVER_PRICE;
 
 contract("cancel order method of DeliveryContract", accounts => {
 
@@ -17,7 +18,7 @@ contract("cancel order method of DeliveryContract", accounts => {
 
     it("Buyer can init cancel order ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-        await initCancelOrder(deliveryInstance, buyer, buyer);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, buyer);
     });
 
     it("Buyer can validate order and init cancel order ", async () => {
@@ -25,28 +26,56 @@ contract("cancel order method of DeliveryContract", accounts => {
         await validateOrder(deliveryInstance,
             actors.BUYER,
             buyer,
-            DELIVER_PRICE + SELLER_PRICE,
+            DELIVER_PRICE + SELLER_PRICE + ESCROW,
             0,
             false,
             true,
             false,
             false);
-        await initCancelOrder(deliveryInstance, buyer, buyer);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, buyer);
     });
 
     it("Seller can init cancel order ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-        await initCancelOrder(deliveryInstance, seller, buyer);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, seller);
+    });
+
+    it("Seller can validate order and init cancel order ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await validateOrder(deliveryInstance,
+            actors.SELLER,
+            seller,
+            ESCROW * 2,
+            0,
+            false,
+            false,
+            true,
+            false);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, seller);
     });
 
     it("Deliver can init cancel order ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-        await initCancelOrder(deliveryInstance, deliver, buyer);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver);
+    });
+
+    it("Deliver can validate order and init cancel order ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await validateOrder(deliveryInstance,
+            actors.DELIVER,
+            deliver,
+            ESCROW * 3,
+            0,
+            false,
+            false,
+            false,
+            true);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver);
     });
 
     it("Can't change stage when cancel stage", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-        await initCancelOrder(deliveryInstance, deliver, buyer);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver);
 
         await truffleAssert.reverts(
             completeValidationOrder(deliveryInstance, buyer, seller, deliver, 0),
@@ -59,7 +88,7 @@ contract("cancel order method of DeliveryContract", accounts => {
         );
 
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, seller, deliver, 0, generateKeyHash().key, deliver),
+            deliverOrder(deliveryInstance, buyer, seller, deliver, 0, generateKeyHash().key, deliver),
             "The order isn't at the required stage"
         );
     });
@@ -69,19 +98,19 @@ contract("cancel order method of DeliveryContract", accounts => {
 
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, 0);
         await truffleAssert.reverts(
-            initCancelOrder(deliveryInstance, deliver, buyer),
+            initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver),
             "The order isn't at the required stage"
         );
 
         await takeOrder(deliveryInstance, 0, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
-            initCancelOrder(deliveryInstance, deliver, buyer),
+            initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver),
             "The order isn't at the required stage"
         );
 
-        await deliverOrder(deliveryInstance, seller, deliver, 0, keyHashBuyer.key, deliver);
+        await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
-            initCancelOrder(deliveryInstance, deliver, buyer),
+            initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver),
             "The order isn't at the required stage"
         );
     });

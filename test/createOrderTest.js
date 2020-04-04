@@ -33,46 +33,9 @@ contract("createOrder method of DeliveryContract", accounts => {
         );
     });
 
-    it("Should return an integer when orderCreate", async () => {
-        let orderId = await deliveryInstance.createOrder.call(
-            buyer,
-            seller,
-            deliver,
-            SELLER_PRICE,
-            DELIVER_PRICE,
-            DELAY_ORDER,
-            {from: buyer}
-        );
-
-        assert.strictEqual(orderId.toNumber(), 0, "Order should be stored with this id");
-    });
-
-    it("Shouldn't send eth to orderCreate", async () => {
-        await truffleAssert.reverts(
-            deliveryInstance.createOrder(
-                buyer,
-                seller,
-                deliver,
-                SELLER_PRICE,
-                DELIVER_PRICE,
-                DELAY_ORDER,
-                {from: buyer, value: 50}
-            ),
-            "revert"
-        );
-    });
-
     it("Shouldn't create order with delay under one hour", async () => {
         await truffleAssert.reverts(
-            deliveryInstance.createOrder(
-                buyer,
-                seller,
-                deliver,
-                SELLER_PRICE,
-                DELIVER_PRICE,
-                60 * 59, //59 minutes
-                {from: buyer}
-            ),
+            createOrder(deliveryInstance, buyer, seller, deliver, buyer, undefined, undefined, undefined, 60 * 59, undefined, undefined, undefined),
             "Delay should be at least one hour"
         );
     });
