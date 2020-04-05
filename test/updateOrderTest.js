@@ -237,25 +237,25 @@ contract("update order method of DeliveryContract", accounts => {
             "The order isn't at the required stage"
         );
 
-        await deliverOrder(deliveryInstance,buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
+        await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             updateInitializeOrder(deliveryInstance, buyer, seller, deliver, NEW_SELLER_PRICE, NEW_DELIVER_PRICE, DELAY_ORDER * 2, buyer),
             "The order isn't at the required stage"
         );
 
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer, 1);
-        await initCancelOrder(deliveryInstance,buyer,seller, deliver, buyer, 1);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, buyer, 1);
         await truffleAssert.reverts(
             updateInitializeOrder(deliveryInstance, buyer, seller, deliver, NEW_SELLER_PRICE, NEW_DELIVER_PRICE, DELAY_ORDER * 2, buyer),
             "The order isn't at the required stage"
         );
     });
 
-    it("Shouldn't update order with delay under one hour", async () => {
+    it("Shouldn't update order with delay under one day", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         await truffleAssert.reverts(
-            updateInitializeOrder(deliveryInstance, buyer, seller, deliver, NEW_SELLER_PRICE, NEW_DELIVER_PRICE, 59 * 60, buyer),
-            "Delay should be at least one hour"
+            updateInitializeOrder(deliveryInstance, buyer, seller, deliver, NEW_SELLER_PRICE, NEW_DELIVER_PRICE, 59 * 60 * 24, buyer),
+            "Delay should be at least one day"
         );
     });
 });

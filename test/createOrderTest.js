@@ -33,10 +33,10 @@ contract("createOrder method of DeliveryContract", accounts => {
         );
     });
 
-    it("Shouldn't create order with delay under one hour", async () => {
+    it("Shouldn't create order with delay under one day", async () => {
         await truffleAssert.reverts(
-            createOrder(deliveryInstance, buyer, seller, deliver, buyer, undefined, undefined, undefined, 60 * 59, undefined, undefined, undefined),
-            "Delay should be at least one hour"
+            createOrder(deliveryInstance, buyer, seller, deliver, buyer, undefined, undefined, undefined, 60 * 59 * 24, undefined, undefined, undefined),
+            "Delay should be at least one day"
         );
     });
 });

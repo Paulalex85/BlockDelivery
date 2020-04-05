@@ -340,7 +340,7 @@ contract DeliveryContract is EventDelivery {
     }
 
     modifier checkDelayMinimum(uint64 delay){
-        require(delay >= 1 hours, "Delay should be at least one hour");
+        require(delay >= 1 days, "Delay should be at least one day");
         _;
     }
 
