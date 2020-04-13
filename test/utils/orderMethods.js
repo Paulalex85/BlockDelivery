@@ -1,7 +1,7 @@
 const truffleAssert = require('truffle-assertions');
 const assert = require('assert');
 const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, DEFAULT_HASH, actors} = require('./constants');
-const {generateKeyHash} = require('./tools');
+const {generateKeyHash, logContract} = require('./tools');
 const DEFAULT_ESCROW_VALUE = SELLER_PRICE + DELIVER_PRICE;
 
 async function createOrder(deliveryInstance, buyer, seller, deliver, sender, orderId = 0, sellerPrice = SELLER_PRICE, deliverPrice = DELIVER_PRICE, delayEscrow = DELAY_ORDER, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3) {
@@ -209,9 +209,95 @@ async function initCancelOrder(deliveryInstance, buyer, seller, deliver, sender,
     }, 'CancelOrder should be emitted with correct parameters');
 
     let orderAfter = await deliveryInstance.getOrder.call(orderId);
-    assert.strictEqual(parseInt(orderAfter.orderStage), 4, "Should be stage to order cancel init");
+    assert.strictEqual(parseInt(orderAfter.orderStage), 5, "Should be stage to order cancel init");
 
     await checkWithdrawUpdate(deliveryInstance, buyer, seller, deliver, order, withdrawBefore, escrow);
+}
+
+async function createDispute(deliveryInstance, sender, buyerReceive = SELLER_PRICE + DELIVER_PRICE, orderId = 0) {
+    let tx = await deliveryInstance.createDispute(
+        orderId,
+        buyerReceive,
+        {from: sender}
+    );
+
+    truffleAssert.eventEmitted(tx, 'DisputeStarted', (ev) => {
+        return ev.orderId.toNumber() === orderId &&
+            ev.buyerProposal.toNumber() === buyerReceive;
+    }, 'DisputeStarted should be emitted with correct parameters');
+
+    let order = await deliveryInstance.getOrder.call(orderId);
+    assert.strictEqual(parseInt(order.orderStage), 6, "Should be stage to Dispute_Refund_Determination");
+
+    if (sender === order.buyer) {
+        await checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, true, false, false);
+    } else if (sender === order.seller) {
+        await checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, false, true, false);
+    } else {
+        await checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, false, false, true);
+    }
+}
+
+async function refundProposalDispute(deliveryInstance, sender, buyerReceive = SELLER_PRICE + DELIVER_PRICE, orderId = 0) {
+    let tx = await deliveryInstance.refundProposalDispute(
+        orderId,
+        buyerReceive,
+        {from: sender}
+    );
+
+    truffleAssert.eventEmitted(tx, 'DisputeRefundProposal', (ev) => {
+        return ev.orderId.toNumber() === orderId &&
+            ev.buyerProposal.toNumber() === buyerReceive;
+    }, 'DisputeRefundProposal should be emitted with correct parameters');
+
+    let order = await deliveryInstance.getOrder.call(orderId);
+    assert.strictEqual(parseInt(order.orderStage), 6, "Should be stage to Dispute_Refund_Determination");
+
+    if (sender === order.buyer) {
+        await checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, true, false, false);
+    } else if (sender === order.seller) {
+        await checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, false, true, false);
+    } else {
+        await checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, false, false, true);
+    }
+}
+
+async function acceptDisputeProposal(deliveryInstance, shouldBeCostRepartition, sender, orderId = 0) {
+    let dispute = await deliveryInstance.getDispute.call(orderId);
+    let order = await deliveryInstance.getOrder.call(orderId);
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let withdrawBalanceBuyerBefore = await deliveryInstance.withdraws.call(order.buyer);
+    let tx = await deliveryInstance.acceptDisputeProposal(
+        orderId,
+        {from: sender}
+    );
+
+    let proposalAccepted = false;
+    order = await deliveryInstance.getOrder.call(orderId);
+    if (shouldBeCostRepartition) {
+        assert.strictEqual(parseInt(order.orderStage), 7, "Should be stage to Dispute_Cost_Repartition");
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, false);
+
+        let withdrawBalanceBuyerAfter = await deliveryInstance.withdraws.call(order.buyer);
+        assert.strictEqual(parseInt(escrow.escrowBuyer) + parseInt(dispute.buyerReceive) + parseInt(withdrawBalanceBuyerBefore), parseInt(withdrawBalanceBuyerAfter), "Buyer Withdraw balance after the refund is wrong");
+
+        proposalAccepted = true;
+    } else {
+        assert.strictEqual(parseInt(order.orderStage), 6, "Should be stage to Dispute_Refund_Determination");
+        if (sender === order.buyer) {
+            await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, dispute.sellerAcceptEscrow, dispute.deliverAcceptEscrow);
+        } else if (sender === order.seller) {
+            await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), dispute.buyerAcceptEscrow, true, dispute.deliverAcceptEscrow);
+        } else {
+            await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), dispute.buyerAcceptEscrow, dispute.sellerAcceptEscrow, true);
+        }
+    }
+
+    truffleAssert.eventEmitted(tx, 'AcceptProposal', (ev) => {
+        return ev.orderId.toNumber() === orderId &&
+            ev.user === sender &&
+            ev.proposalAccepted === proposalAccepted;
+    }, 'AcceptProposal should be emitted with correct parameters');
 }
 
 async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash) {
@@ -237,6 +323,18 @@ async function checkEscrowCreationData(deliveryInstance, orderId, delay, escrowB
     assert.strictEqual(parseInt(escrow.escrowBuyer), escrowBuyer, "Wrong escrow buyer : " + escrowBuyer);
     assert.strictEqual(parseInt(escrow.escrowSeller), escrowSeller, "Wrong escrow seller : " + escrowSeller);
     assert.strictEqual(parseInt(escrow.escrowDeliver), escrowDeliver, "Wrong escrow deliver : " + escrowDeliver);
+}
+
+
+async function checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, buyerAcceptEscrow, sellerAcceptEscrow, deliverAcceptEscrow) {
+    let dispute = await deliveryInstance.getDispute.call(orderId);
+
+    assert.strictEqual(parseInt(dispute.buyerReceive), buyerReceive, "Should be this buyerReceive : " + buyerReceive);
+    assert.strictEqual(parseInt(dispute.sellerPay), 0, "Should be this sellerPay : " + 0);
+    assert.strictEqual(parseInt(dispute.deliverPay), 0, "Should be this deliverPay : " + 0);
+    assert.strictEqual(dispute.buyerAcceptEscrow, buyerAcceptEscrow, "buyerAcceptEscrow should be : " + buyerAcceptEscrow);
+    assert.strictEqual(dispute.sellerAcceptEscrow, sellerAcceptEscrow, "sellerAcceptEscrow should be : " + sellerAcceptEscrow);
+    assert.strictEqual(dispute.deliverAcceptEscrow, deliverAcceptEscrow, "deliverAcceptEscrow should be : " + deliverAcceptEscrow);
 }
 
 async function getWithdraw(deliveryInstance, buyer, seller, deliver) {
@@ -285,5 +383,8 @@ Object.assign(exports, {
     fullDeliveredOrder,
     withdrawBalance,
     initCancelOrder,
-    updateInitializeOrder
+    updateInitializeOrder,
+    createDispute,
+    refundProposalDispute,
+    acceptDisputeProposal
 });

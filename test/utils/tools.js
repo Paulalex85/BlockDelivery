@@ -10,6 +10,7 @@ function generateKeyHash() {
 async function logContract(deliveryInstance, orderId) {
     let order = await deliveryInstance.getOrder.call(orderId);
     let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let dispute = await deliveryInstance.getDispute.call(orderId);
 
     console.log("");
     console.log("DeliveryContract:");
@@ -30,6 +31,13 @@ async function logContract(deliveryInstance, orderId) {
     console.log("Escrow Buyer : " + escrow.escrowBuyer);
     console.log("Escrow Seller : " + escrow.escrowSeller);
     console.log("Escrow Deliver : " + escrow.escrowDeliver);
+    console.log("--------------");
+    console.log("Dispute buyerReceive : " + dispute.buyerReceive);
+    console.log("Dispute sellerPay : " + dispute.sellerPay);
+    console.log("Dispute deliverPay : " + dispute.deliverPay);
+    console.log("Dispute buyerAcceptEscrow : " + dispute.buyerAcceptEscrow);
+    console.log("Dispute sellerAcceptEscrow : " + dispute.sellerAcceptEscrow);
+    console.log("Dispute deliverAcceptEscrow : " + dispute.deliverAcceptEscrow);
 
 }
 
