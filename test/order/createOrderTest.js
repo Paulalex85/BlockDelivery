@@ -1,5 +1,5 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder} = require("./utils/orderMethods");
+const {createOrder} = require("../utils/orderMethods");
 const DeliveryContract = artifacts.require("DeliveryContract");
 
 contract("createOrder method of DeliveryContract", accounts => {
@@ -23,6 +23,11 @@ contract("createOrder method of DeliveryContract", accounts => {
 
     it("Deliver Should use orderCreate", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, deliver);
+    });
+
+    it("Can create 2 order", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, 0);
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, 1);
     });
 
     it("Other account can't create account if the're not actor", async () => {
