@@ -300,6 +300,30 @@ async function acceptDisputeProposal(deliveryInstance, shouldBeCostRepartition, 
     }, 'AcceptProposal should be emitted with correct parameters');
 }
 
+async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalance, sender, orderId = 0) {
+    let dispute = await deliveryInstance.getDispute.call(orderId);
+    let order = await deliveryInstance.getOrder.call(orderId);
+    // let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let tx = await deliveryInstance.costDisputeProposal(
+        orderId,
+        sellerBalance,
+        deliverBalance,
+        {from: sender}
+    );
+
+    if (sender === order.deliver) {
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, true);
+    } else if (sender === order.seller) {
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, false);
+    }
+
+    truffleAssert.eventEmitted(tx, 'DisputeCostProposal', (ev) => {
+        return ev.orderId.toNumber() === orderId &&
+            parseInt(ev.sellerBalance) === sellerBalance &&
+            parseInt(ev.deliverBalance) === deliverBalance;
+    }, 'DisputeCostProposal should be emitted with correct parameters');
+}
+
 async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash) {
     let order = await deliveryInstance.getOrder.call(orderId);
 
