@@ -135,7 +135,7 @@ contract("costDisputeProposal method of DeliveryContract", accounts => {
 
         await truffleAssert.reverts(
             costDisputeProposal(deliveryInstance, -(SELLER_PRICE + DELIVER_PRICE) * 3, (SELLER_PRICE + DELIVER_PRICE) * 2, seller, undefined, SELLER_PRICE + DELIVER_PRICE, undefined),
-            "Seller need to send additional cost"
+            "User need to send additional cost"
         );
 
         await costDisputeProposal(deliveryInstance, -(SELLER_PRICE + DELIVER_PRICE) * 3, (SELLER_PRICE + DELIVER_PRICE) * 2, seller, undefined, SELLER_PRICE + DELIVER_PRICE, SELLER_PRICE + DELIVER_PRICE);
@@ -152,7 +152,7 @@ contract("costDisputeProposal method of DeliveryContract", accounts => {
 
         await truffleAssert.reverts(
             costDisputeProposal(deliveryInstance, (SELLER_PRICE + DELIVER_PRICE) * 3, -(SELLER_PRICE + DELIVER_PRICE) * 4, deliver, undefined, SELLER_PRICE + DELIVER_PRICE, undefined),
-            "Deliver need to send additional cost"
+            "User need to send additional cost"
         );
 
         await costDisputeProposal(deliveryInstance, (SELLER_PRICE + DELIVER_PRICE) * 3, -(SELLER_PRICE + DELIVER_PRICE) * 4, deliver, undefined, SELLER_PRICE + DELIVER_PRICE, SELLER_PRICE + DELIVER_PRICE);

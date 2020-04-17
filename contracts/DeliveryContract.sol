@@ -416,7 +416,6 @@ contract DeliveryContract is EventDelivery {
         Order storage order = orders[orderId];
         Dispute storage dispute = disputes[orderId];
         EscrowOrder storage escrow = escrows[orderId];
-        require(msg.sender == order.seller || msg.sender == order.deliver, "Should be the seller or the deliver of the order");
         require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
         require(sellerBalance + deliverBalance + int128(dispute.buyerReceive) == 0, "Cost repartition should be equal to 0");
 
@@ -424,21 +423,19 @@ contract DeliveryContract is EventDelivery {
         dispute.sellerBalance = sellerBalance;
 
         if (msg.sender == order.seller) {
-            int128 currentBalance = int128(order.sellerPrice) + int128(escrow.escrowSeller) + sellerBalance;
-            if (currentBalance < 0) {
-                require(msg.value >= uint(- currentBalance), "Seller need to send additional cost");
+            if (checkBalanceEscrow(int128(order.sellerPrice), int128(escrow.escrowSeller), sellerBalance)) {
                 escrow.escrowSeller += uint128(msg.value);
             }
             dispute.sellerAcceptEscrow = true;
             dispute.deliverAcceptEscrow = false;
         } else if (msg.sender == order.deliver) {
-            int128 currentBalance = int128(order.deliverPrice) + int128(escrow.escrowDeliver) + deliverBalance;
-            if (currentBalance < 0) {
-                require(msg.value >= uint128(- currentBalance), "Deliver need to send additional cost");
+            if (checkBalanceEscrow(int128(order.deliverPrice), int128(escrow.escrowDeliver), deliverBalance)) {
                 escrow.escrowDeliver += uint128(msg.value);
             }
             dispute.deliverAcceptEscrow = true;
             dispute.sellerAcceptEscrow = false;
+        } else {
+            revert("Should be the seller or the deliver of the order");
         }
 
         emit DisputeCostProposal(orderId, sellerBalance, deliverBalance);
@@ -527,6 +524,18 @@ contract DeliveryContract is EventDelivery {
     internal
     {
         require(buyerReceive <= orderAmount, "Buyer can't receive more than he has paid");
+    }
+
+    function checkBalanceEscrow(int128 price, int128 escrow, int128 balance)
+    internal
+    returns (bool)
+    {
+        int128 currentBalance = price + escrow + balance;
+        if (currentBalance < 0) {
+            require(msg.value >= uint(- currentBalance), "User need to send additional cost");
+            return true;
+        }
+        return false;
     }
 
     modifier checkDelayMinimum(uint64 delay){
