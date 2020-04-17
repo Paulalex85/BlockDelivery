@@ -300,21 +300,29 @@ async function acceptDisputeProposal(deliveryInstance, shouldBeCostRepartition, 
     }, 'AcceptProposal should be emitted with correct parameters');
 }
 
-async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalance, sender, orderId = 0) {
+async function createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver) {
+    await createDispute(deliveryInstance, seller);
+    await acceptDisputeProposal(deliveryInstance, false, deliver);
+    await acceptDisputeProposal(deliveryInstance, true, buyer);
+}
+
+async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalance, sender, orderId = 0, shouldAddEscrow = 0, msgValue = 0) {
     let dispute = await deliveryInstance.getDispute.call(orderId);
     let order = await deliveryInstance.getOrder.call(orderId);
-    // let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
     let tx = await deliveryInstance.costDisputeProposal(
         orderId,
         sellerBalance,
         deliverBalance,
-        {from: sender}
+        {from: sender, value: msgValue}
     );
 
     if (sender === order.deliver) {
-        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, true);
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, true, sellerBalance, deliverBalance);
+        await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller), parseInt(escrow.escrowDeliver) + shouldAddEscrow);
     } else if (sender === order.seller) {
-        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, false);
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, false, sellerBalance, deliverBalance);
+        await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller) + shouldAddEscrow, parseInt(escrow.escrowDeliver));
     }
 
     truffleAssert.eventEmitted(tx, 'DisputeCostProposal', (ev) => {
@@ -350,12 +358,12 @@ async function checkEscrowCreationData(deliveryInstance, orderId, delay, escrowB
 }
 
 
-async function checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, buyerAcceptEscrow, sellerAcceptEscrow, deliverAcceptEscrow) {
+async function checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, buyerAcceptEscrow, sellerAcceptEscrow, deliverAcceptEscrow, sellerBalance = 0, deliverBalance = 0) {
     let dispute = await deliveryInstance.getDispute.call(orderId);
 
     assert.strictEqual(parseInt(dispute.buyerReceive), buyerReceive, "Should be this buyerReceive : " + buyerReceive);
-    assert.strictEqual(parseInt(dispute.sellerPay), 0, "Should be this sellerPay : " + 0);
-    assert.strictEqual(parseInt(dispute.deliverPay), 0, "Should be this deliverPay : " + 0);
+    assert.strictEqual(parseInt(dispute.sellerBalance), sellerBalance, "Should be this sellerBalance : " + sellerBalance);
+    assert.strictEqual(parseInt(dispute.deliverBalance), deliverBalance, "Should be this deliverBalance : " + deliverBalance);
     assert.strictEqual(dispute.buyerAcceptEscrow, buyerAcceptEscrow, "buyerAcceptEscrow should be : " + buyerAcceptEscrow);
     assert.strictEqual(dispute.sellerAcceptEscrow, sellerAcceptEscrow, "sellerAcceptEscrow should be : " + sellerAcceptEscrow);
     assert.strictEqual(dispute.deliverAcceptEscrow, deliverAcceptEscrow, "deliverAcceptEscrow should be : " + deliverAcceptEscrow);
@@ -410,5 +418,7 @@ Object.assign(exports, {
     updateInitializeOrder,
     createDispute,
     refundProposalDispute,
-    acceptDisputeProposal
+    acceptDisputeProposal,
+    createFullAcceptedRefundDispute,
+    costDisputeProposal
 });

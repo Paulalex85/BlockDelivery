@@ -57,6 +57,11 @@ contract EventDelivery {
         bool proposalAccepted
     );
 
+    event DisputeCostProposal(
+        uint256 indexed orderId,
+        int128 sellerBalance,
+        int128 deliverBalance
+    );
 }
 
 contract DeliveryContract is EventDelivery {
@@ -89,15 +94,15 @@ contract DeliveryContract is EventDelivery {
 
     struct EscrowOrder {
         uint64 delayEscrow;
-        uint128 escrowAmountBuyer;
-        uint128 escrowAmountSeller;
-        uint128 escrowAmountDeliver;
+        uint128 escrowBuyer;
+        uint128 escrowSeller;
+        uint128 escrowDeliver;
     }
 
     struct Dispute {
         uint128 buyerReceive;
-        uint128 sellerPay;
-        uint128 deliverPay;
+        int128 sellerBalance;
+        int128 deliverBalance;
         bool buyerAcceptEscrow;
         bool sellerAcceptEscrow;
         bool deliverAcceptEscrow;
@@ -140,9 +145,9 @@ contract DeliveryContract is EventDelivery {
 
         EscrowOrder memory escrow = EscrowOrder({
             delayEscrow : _delayEscrow,
-            escrowAmountBuyer : _escrowUsers[0],
-            escrowAmountSeller : _escrowUsers[1],
-            escrowAmountDeliver : _escrowUsers[2]
+            escrowBuyer : _escrowUsers[0],
+            escrowSeller : _escrowUsers[1],
+            escrowDeliver : _escrowUsers[2]
             });
         escrows[orderId] = escrow;
         return orderId;
@@ -162,24 +167,24 @@ contract DeliveryContract is EventDelivery {
 
         if (order.buyerValidation) {
             order.buyerValidation = false;
-            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice + escrow.escrowAmountBuyer;
+            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice + escrow.escrowBuyer;
         }
 
         if (order.sellerValidation) {
             order.sellerValidation = false;
-            withdraws[order.seller] += escrow.escrowAmountSeller;
+            withdraws[order.seller] += escrow.escrowSeller;
         }
 
         if (order.deliverValidation) {
             order.deliverValidation = false;
-            withdraws[order.deliver] += escrow.escrowAmountDeliver;
+            withdraws[order.deliver] += escrow.escrowDeliver;
         }
 
         order.sellerPrice = _sellerPrice;
         order.deliverPrice = _deliverPrice;
-        escrow.escrowAmountBuyer = _escrowBuyer;
-        escrow.escrowAmountSeller = _escrowSeller;
-        escrow.escrowAmountDeliver = _escrowDeliver;
+        escrow.escrowBuyer = _escrowBuyer;
+        escrow.escrowSeller = _escrowSeller;
+        escrow.escrowDeliver = _escrowDeliver;
 
         emit OrderUpdated(orderId);
     }
@@ -194,7 +199,7 @@ contract DeliveryContract is EventDelivery {
 
         require(msg.sender == order.buyer, "Sender is not the buyer");
         require(order.buyerValidation == false, "Buyer already validate");
-        require(order.deliverPrice + order.sellerPrice + escrow.escrowAmountBuyer <= msg.value, "The value send isn't enough");
+        require(order.deliverPrice + order.sellerPrice + escrow.escrowBuyer <= msg.value, "The value send isn't enough");
 
         order.buyerValidation = true;
         order.buyerHash = hash;
@@ -216,7 +221,7 @@ contract DeliveryContract is EventDelivery {
 
         require(msg.sender == order.seller, "Sender is not the seller");
         require(order.sellerValidation == false, "Seller already validate");
-        require(escrow.escrowAmountSeller <= msg.value, "The value send isn't enough");
+        require(escrow.escrowSeller <= msg.value, "The value send isn't enough");
 
         order.sellerValidation = true;
         order.sellerHash = hash;
@@ -238,7 +243,7 @@ contract DeliveryContract is EventDelivery {
 
         require(msg.sender == order.deliver, "Sender is not the deliver");
         require(order.deliverValidation == false, "Deliver already validate");
-        require(escrow.escrowAmountDeliver <= msg.value, "The value send isn't enough");
+        require(escrow.escrowDeliver <= msg.value, "The value send isn't enough");
 
         order.deliverValidation = true;
 
@@ -274,9 +279,9 @@ contract DeliveryContract is EventDelivery {
 
         order.orderStage = OrderStage.Delivered;
 
-        withdraws[order.seller] += order.sellerPrice + escrow.escrowAmountSeller;
-        withdraws[order.deliver] += order.deliverPrice + escrow.escrowAmountDeliver;
-        withdraws[order.buyer] += escrow.escrowAmountBuyer;
+        withdraws[order.seller] += order.sellerPrice + escrow.escrowSeller;
+        withdraws[order.deliver] += order.deliverPrice + escrow.escrowDeliver;
+        withdraws[order.buyer] += escrow.escrowBuyer;
         emit OrderDelivered(orderId);
     }
 
@@ -292,13 +297,13 @@ contract DeliveryContract is EventDelivery {
         order.orderStage = OrderStage.Cancel_Order;
 
         if (order.buyerValidation) {
-            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice + escrow.escrowAmountBuyer;
+            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice + escrow.escrowBuyer;
         }
         if (order.sellerValidation) {
-            withdraws[order.seller] += escrow.escrowAmountSeller;
+            withdraws[order.seller] += escrow.escrowSeller;
         }
         if (order.deliverValidation) {
-            withdraws[order.deliver] += escrow.escrowAmountDeliver;
+            withdraws[order.deliver] += escrow.escrowDeliver;
         }
         emit CancelOrder(orderId, false);
     }
@@ -321,8 +326,8 @@ contract DeliveryContract is EventDelivery {
 
         Dispute memory dispute = Dispute({
             buyerReceive : buyerReceive,
-            sellerPay : 0,
-            deliverPay : 0,
+            sellerBalance : 0,
+            deliverBalance : 0,
             buyerAcceptEscrow : false,
             sellerAcceptEscrow : false,
             deliverAcceptEscrow : false
@@ -396,12 +401,47 @@ contract DeliveryContract is EventDelivery {
             order.orderStage = OrderStage.Dispute_Cost_Repartition;
             dispute.deliverAcceptEscrow = false;
             dispute.sellerAcceptEscrow = false;
-            withdraws[order.buyer] += escrow.escrowAmountBuyer + dispute.buyerReceive;
+            withdraws[order.buyer] += escrow.escrowBuyer + dispute.buyerReceive;
 
             emit AcceptProposal(orderId, msg.sender, true);
         } else {
             emit AcceptProposal(orderId, msg.sender, false);
         }
+    }
+
+    function costDisputeProposal(uint orderId, int128 sellerBalance, int128 deliverBalance)
+    payable
+    public
+    {
+        Order storage order = orders[orderId];
+        Dispute storage dispute = disputes[orderId];
+        EscrowOrder storage escrow = escrows[orderId];
+        require(msg.sender == order.seller || msg.sender == order.deliver, "Should be the seller or the deliver of the order");
+        require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
+        require(sellerBalance + deliverBalance + int128(dispute.buyerReceive) == 0, "Cost repartition should be equal to 0");
+
+        dispute.deliverBalance = deliverBalance;
+        dispute.sellerBalance = sellerBalance;
+
+        if (msg.sender == order.seller) {
+            int128 currentBalance = int128(order.sellerPrice) + int128(escrow.escrowSeller) + sellerBalance;
+            if (currentBalance < 0) {
+                require(msg.value >= uint(- currentBalance), "Seller need to send additional cost");
+                escrow.escrowSeller += uint128(msg.value);
+            }
+            dispute.sellerAcceptEscrow = true;
+            dispute.deliverAcceptEscrow = false;
+        } else if (msg.sender == order.deliver) {
+            int128 currentBalance = int128(order.deliverPrice) + int128(escrow.escrowDeliver) + deliverBalance;
+            if (currentBalance < 0) {
+                require(msg.value >= uint128(- currentBalance), "Deliver need to send additional cost");
+                escrow.escrowDeliver += uint128(msg.value);
+            }
+            dispute.deliverAcceptEscrow = true;
+            dispute.sellerAcceptEscrow = false;
+        }
+
+        emit DisputeCostProposal(orderId, sellerBalance, deliverBalance);
     }
 
     function getOrder(uint orderId)
@@ -449,9 +489,9 @@ contract DeliveryContract is EventDelivery {
         EscrowOrder storage escrow = escrows[orderId];
 
         delayEscrow = escrow.delayEscrow;
-        escrowBuyer = escrow.escrowAmountBuyer;
-        escrowSeller = escrow.escrowAmountSeller;
-        escrowDeliver = escrow.escrowAmountDeliver;
+        escrowBuyer = escrow.escrowBuyer;
+        escrowSeller = escrow.escrowSeller;
+        escrowDeliver = escrow.escrowDeliver;
     }
 
     function getDispute(uint orderId)
@@ -459,8 +499,8 @@ contract DeliveryContract is EventDelivery {
     view
     returns (
         uint128 buyerReceive,
-        uint128 sellerPay,
-        uint128 deliverPay,
+        int128 sellerBalance,
+        int128 deliverBalance,
         bool buyerAcceptEscrow,
         bool sellerAcceptEscrow,
         bool deliverAcceptEscrow
@@ -468,8 +508,8 @@ contract DeliveryContract is EventDelivery {
         Dispute storage dispute = disputes[orderId];
 
         buyerReceive = dispute.buyerReceive;
-        sellerPay = dispute.sellerPay;
-        deliverPay = dispute.deliverPay;
+        sellerBalance = dispute.sellerBalance;
+        deliverBalance = dispute.deliverBalance;
         buyerAcceptEscrow = dispute.buyerAcceptEscrow;
         sellerAcceptEscrow = dispute.sellerAcceptEscrow;
         deliverAcceptEscrow = dispute.deliverAcceptEscrow;
