@@ -441,6 +441,39 @@ contract DeliveryContract is EventDelivery {
         emit DisputeCostProposal(orderId, sellerBalance, deliverBalance);
     }
 
+    function acceptCostProposal(uint orderId)
+    payable
+    public
+    {
+        Order storage order = orders[orderId];
+        Dispute storage dispute = disputes[orderId];
+        EscrowOrder storage escrow = escrows[orderId];
+        require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
+
+        if (msg.sender == order.seller) {
+            require(dispute.deliverAcceptEscrow && !dispute.sellerAcceptEscrow, "Cost Repartition is not defined");
+            dispute.sellerAcceptEscrow = true;
+            if (checkBalanceEscrow(int128(order.sellerPrice), int128(escrow.escrowSeller), dispute.sellerBalance)) {
+                escrow.escrowSeller += uint128(msg.value);
+            }
+        } else if (msg.sender == order.deliver) {
+            require(dispute.sellerAcceptEscrow && !dispute.deliverAcceptEscrow, "Cost Repartition is not defined");
+            dispute.deliverAcceptEscrow = true;
+            if (checkBalanceEscrow(int128(order.deliverPrice), int128(escrow.escrowDeliver), dispute.deliverBalance)) {
+                escrow.escrowDeliver += uint128(msg.value);
+            }
+        } else {
+            revert("Should be the seller or the deliver of the order");
+        }
+
+        order.orderStage = OrderStage.Cancel_Order;
+
+        withdraws[order.deliver] += uint128(int128(order.deliverPrice) + int128(escrow.escrowDeliver) + dispute.deliverBalance);
+        withdraws[order.seller] += uint128(int128(order.sellerPrice) + int128(escrow.escrowSeller) + dispute.sellerBalance);
+
+        emit CancelOrder(orderId, true);
+    }
+
     function getOrder(uint orderId)
     external
     view

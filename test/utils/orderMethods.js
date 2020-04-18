@@ -323,6 +323,8 @@ async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalan
     } else if (sender === order.seller) {
         await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, false, sellerBalance, deliverBalance);
         await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller) + shouldAddEscrow, parseInt(escrow.escrowDeliver));
+    } else {
+        assert.ok(false, "Wrong sender")
     }
 
     truffleAssert.eventEmitted(tx, 'DisputeCostProposal', (ev) => {
@@ -330,6 +332,40 @@ async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalan
             parseInt(ev.sellerBalance) === sellerBalance &&
             parseInt(ev.deliverBalance) === deliverBalance;
     }, 'DisputeCostProposal should be emitted with correct parameters');
+}
+
+async function acceptCostDisputeProposal(deliveryInstance, sender, addWithdrawSeller, addWithdrawDeliver, orderId = 0, shouldAddEscrow = 0, msgValue = 0) {
+    let dispute = await deliveryInstance.getDispute.call(orderId);
+    let order = await deliveryInstance.getOrder.call(orderId);
+    let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let withdrawBefore = await getWithdraw(deliveryInstance, order.buyer, order.seller, order.deliver);
+    let tx = await deliveryInstance.acceptCostProposal(
+        orderId,
+        {from: sender, value: msgValue}
+    );
+
+    let withdrawAfter = await getWithdraw(deliveryInstance, order.buyer, order.seller, order.deliver);
+    assert.strictEqual(withdrawAfter.deliver, withdrawBefore.deliver + addWithdrawDeliver, "Wrong deliver withdraw balance");
+    assert.strictEqual(withdrawAfter.seller, withdrawBefore.seller + addWithdrawSeller, "Wrong seller withdraw balance");
+    assert.strictEqual(withdrawAfter.buyer, withdrawBefore.buyer, "Wrong buyer withdraw balance");
+
+    if (sender === order.deliver) {
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, true, parseInt(dispute.sellerBalance), parseInt(dispute.deliverBalance));
+        await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller), parseInt(escrow.escrowDeliver) + shouldAddEscrow);
+    } else if (sender === order.seller) {
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, true, parseInt(dispute.sellerBalance), parseInt(dispute.deliverBalance));
+        await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller) + shouldAddEscrow, parseInt(escrow.escrowDeliver));
+    } else {
+        assert.ok(false, "Wrong sender")
+    }
+
+    order = await deliveryInstance.getOrder.call(orderId);
+    assert.strictEqual(parseInt(order.orderStage), 5, "Should be stage to cancel order");
+
+    truffleAssert.eventEmitted(tx, 'CancelOrder', (ev) => {
+        return ev.orderId.toNumber() === orderId &&
+            ev.startedOrder === true;
+    }, 'CancelOrder should be emitted with correct parameters');
 }
 
 async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash) {
@@ -420,5 +456,6 @@ Object.assign(exports, {
     refundProposalDispute,
     acceptDisputeProposal,
     createFullAcceptedRefundDispute,
-    costDisputeProposal
+    costDisputeProposal,
+    acceptCostDisputeProposal
 });

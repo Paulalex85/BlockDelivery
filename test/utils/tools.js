@@ -33,8 +33,8 @@ async function logContract(deliveryInstance, orderId) {
     console.log("Escrow Deliver : " + escrow.escrowDeliver);
     console.log("--------------");
     console.log("Dispute buyerReceive : " + dispute.buyerReceive);
-    console.log("Dispute sellerPay : " + dispute.sellerPay);
-    console.log("Dispute deliverPay : " + dispute.deliverPay);
+    console.log("Dispute sellerBalance : " + dispute.sellerBalance);
+    console.log("Dispute deliverBalance : " + dispute.deliverBalance);
     console.log("Dispute buyerAcceptEscrow : " + dispute.buyerAcceptEscrow);
     console.log("Dispute sellerAcceptEscrow : " + dispute.sellerAcceptEscrow);
     console.log("Dispute deliverAcceptEscrow : " + dispute.deliverAcceptEscrow);
