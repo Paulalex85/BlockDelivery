@@ -62,6 +62,11 @@ contract EventDelivery {
         int128 sellerBalance,
         int128 deliverBalance
     );
+
+    event RevertDispute(
+        uint256 indexed orderId,
+        address user
+    );
 }
 
 contract DeliveryContract is EventDelivery {
@@ -106,6 +111,7 @@ contract DeliveryContract is EventDelivery {
         bool buyerAcceptEscrow;
         bool sellerAcceptEscrow;
         bool deliverAcceptEscrow;
+        OrderStage previousStage;
     }
 
     Order[] orders;
@@ -330,7 +336,8 @@ contract DeliveryContract is EventDelivery {
             deliverBalance : 0,
             buyerAcceptEscrow : false,
             sellerAcceptEscrow : false,
-            deliverAcceptEscrow : false
+            deliverAcceptEscrow : false,
+            previousStage : order.orderStage
             });
 
         if (msg.sender == order.seller) {
@@ -474,6 +481,19 @@ contract DeliveryContract is EventDelivery {
         emit CancelOrder(orderId, true);
     }
 
+    function revertDispute(uint orderId)
+    public
+    {
+        Order storage order = orders[orderId];
+        Dispute storage dispute = disputes[orderId];
+        isActor(msg.sender, order.buyer, order.seller, order.deliver);
+        require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
+
+        order.orderStage = dispute.previousStage;
+
+        emit RevertDispute(orderId, msg.sender);
+    }
+
     function getOrder(uint orderId)
     external
     view
@@ -533,7 +553,8 @@ contract DeliveryContract is EventDelivery {
         int128 deliverBalance,
         bool buyerAcceptEscrow,
         bool sellerAcceptEscrow,
-        bool deliverAcceptEscrow
+        bool deliverAcceptEscrow,
+        OrderStage previousStage
     ) {
         Dispute storage dispute = disputes[orderId];
 
@@ -543,6 +564,7 @@ contract DeliveryContract is EventDelivery {
         buyerAcceptEscrow = dispute.buyerAcceptEscrow;
         sellerAcceptEscrow = dispute.sellerAcceptEscrow;
         deliverAcceptEscrow = dispute.deliverAcceptEscrow;
+        previousStage = dispute.previousStage;
     }
 
     function isActor(address sender, address buyer, address seller, address deliver)
