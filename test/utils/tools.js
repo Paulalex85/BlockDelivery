@@ -26,6 +26,7 @@ async function logContract(deliveryInstance, orderId) {
     console.log("Deliver validation : " + order.deliverValidation);
     console.log("Seller hash : " + order.sellerHash);
     console.log("Buyer hash : " + order.buyerHash);
+    console.log("Start date : " + order.startDate);
     console.log("--------------");
     console.log("Escrow Delay : " + escrow.delayEscrow);
     console.log("Escrow Buyer : " + escrow.escrowBuyer);

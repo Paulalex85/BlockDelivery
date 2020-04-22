@@ -89,7 +89,7 @@ contract DeliveryContract is EventDelivery {
         uint128 deliverPrice;
         uint128 sellerPrice;
         OrderStage orderStage;
-        uint64 dateCreation;
+        uint64 startDate;
         bool buyerValidation;
         bool sellerValidation;
         bool deliverValidation;
@@ -138,7 +138,7 @@ contract DeliveryContract is EventDelivery {
             deliverPrice : _deliverPrice,
             sellerPrice : _sellerPrice,
             orderStage : OrderStage.Initialization,
-            dateCreation : uint64(now),
+            startDate : 0,
             buyerValidation : false,
             sellerValidation : false,
             deliverValidation : false,
@@ -212,6 +212,7 @@ contract DeliveryContract is EventDelivery {
 
         if (order.sellerValidation && order.deliverValidation) {
             order.orderStage = OrderStage.Started;
+            order.startDate = uint64(now);
         }
 
         emit BuyerValidate(orderId, order.orderStage == OrderStage.Started);
@@ -234,6 +235,7 @@ contract DeliveryContract is EventDelivery {
 
         if (order.buyerValidation && order.deliverValidation) {
             order.orderStage = OrderStage.Started;
+            order.startDate = uint64(now);
         }
 
         emit SellerValidate(orderId, order.orderStage == OrderStage.Started);
@@ -255,6 +257,7 @@ contract DeliveryContract is EventDelivery {
 
         if (order.buyerValidation && order.sellerValidation) {
             order.orderStage = OrderStage.Started;
+            order.startDate = uint64(now);
         }
 
         emit DeliverValidate(orderId, order.orderStage == OrderStage.Started);
@@ -265,9 +268,10 @@ contract DeliveryContract is EventDelivery {
     atStage(orderId, OrderStage.Started)
     {
         Order storage order = orders[orderId];
-
+        EscrowOrder storage escrow = escrows[orderId];
         require(msg.sender == order.deliver, "Sender is not the deliver");
         require(keccak256(sellerKey) == order.sellerHash, "The key doesn't match with the stored hash");
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         order.orderStage = OrderStage.Taken;
         emit OrderTaken(orderId);
@@ -279,9 +283,9 @@ contract DeliveryContract is EventDelivery {
     {
         Order storage order = orders[orderId];
         EscrowOrder storage escrow = escrows[orderId];
-
         require(msg.sender == order.deliver, "Sender is not the deliver");
         require(keccak256(buyerKey) == order.buyerHash, "The key doesn't match with the stored hash");
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         order.orderStage = OrderStage.Delivered;
 
@@ -326,9 +330,11 @@ contract DeliveryContract is EventDelivery {
     public
     {
         Order storage order = orders[orderId];
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
+        EscrowOrder storage escrow = escrows[orderId];
         require(order.orderStage == OrderStage.Started || order.orderStage == OrderStage.Taken, "Order should be Started or Taken");
+        isActor(msg.sender, order.buyer, order.seller, order.deliver);
         checkAmountBuyerReceiveDispute(buyerReceive, order.deliverPrice + order.sellerPrice);
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         Dispute memory dispute = Dispute({
             buyerReceive : buyerReceive,
@@ -359,9 +365,11 @@ contract DeliveryContract is EventDelivery {
     public
     {
         Order storage order = orders[orderId];
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
+        EscrowOrder storage escrow = escrows[orderId];
         require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
+        isActor(msg.sender, order.buyer, order.seller, order.deliver);
         checkAmountBuyerReceiveDispute(buyerReceive, order.deliverPrice + order.sellerPrice);
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         Dispute storage dispute = disputes[orderId];
 
@@ -387,11 +395,11 @@ contract DeliveryContract is EventDelivery {
     public
     {
         Order storage order = orders[orderId];
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
-        require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
-
         Dispute storage dispute = disputes[orderId];
         EscrowOrder storage escrow = escrows[orderId];
+        require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
+        isActor(msg.sender, order.buyer, order.seller, order.deliver);
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         if (msg.sender == order.seller) {
             require(dispute.sellerAcceptEscrow == false, "Seller already accept dispute");
@@ -425,6 +433,7 @@ contract DeliveryContract is EventDelivery {
         EscrowOrder storage escrow = escrows[orderId];
         require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
         require(sellerBalance + deliverBalance + int128(dispute.buyerReceive) == 0, "Cost repartition should be equal to 0");
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         dispute.deliverBalance = deliverBalance;
         dispute.sellerBalance = sellerBalance;
@@ -456,6 +465,7 @@ contract DeliveryContract is EventDelivery {
         Dispute storage dispute = disputes[orderId];
         EscrowOrder storage escrow = escrows[orderId];
         require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         if (msg.sender == order.seller) {
             require(dispute.deliverAcceptEscrow && !dispute.sellerAcceptEscrow, "Cost Repartition is not defined");
@@ -486,8 +496,10 @@ contract DeliveryContract is EventDelivery {
     {
         Order storage order = orders[orderId];
         Dispute storage dispute = disputes[orderId];
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
+        EscrowOrder storage escrow = escrows[orderId];
         require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
+        isActor(msg.sender, order.buyer, order.seller, order.deliver);
+        checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         order.orderStage = dispute.previousStage;
 
@@ -504,7 +516,7 @@ contract DeliveryContract is EventDelivery {
         uint128 deliverPrice,
         uint128 sellerPrice,
         OrderStage orderStage,
-        uint64 dateCreation,
+        uint64 startDate,
         bool buyerValidation,
         bool sellerValidation,
         bool deliverValidation,
@@ -519,7 +531,7 @@ contract DeliveryContract is EventDelivery {
         deliverPrice = order.deliverPrice;
         sellerPrice = order.sellerPrice;
         orderStage = order.orderStage;
-        dateCreation = order.dateCreation;
+        startDate = order.startDate;
         buyerValidation = order.buyerValidation;
         sellerValidation = order.sellerValidation;
         deliverValidation = order.deliverValidation;
@@ -572,6 +584,13 @@ contract DeliveryContract is EventDelivery {
     internal
     {
         require(sender == buyer || sender == seller || sender == deliver, "Should be an actor of the order");
+    }
+
+    function checkDelayExpire(uint64 startDate, uint64 delay)
+    view
+    internal
+    {
+        require(uint64(now) < startDate + delay, "Delay of the order is passed");
     }
 
     function checkAmountBuyerReceiveDispute(uint128 buyerReceive, uint128 orderAmount)

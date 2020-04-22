@@ -94,6 +94,7 @@ async function validateOrder(deliveryInstance, typeValidation, sender, amountEth
 
     if (shouldBeStarted) {
         assert.strictEqual(order.orderStage.toNumber(), 1, "Should be stage started");
+        assert.ok(parseInt(order.startDate) > 0, "Start date should be initialized");
     } else {
         assert.strictEqual(order.orderStage.toNumber(), 0, "Should be stage initialization");
     }
@@ -396,6 +397,7 @@ async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, 
     assert.strictEqual(parseInt(order.sellerPrice), sellerPrice, "Should be this sellerPrice : " + sellerPrice);
     assert.strictEqual(parseInt(order.deliverPrice), deliverPrice, "Should be this deliverPrice : " + deliverPrice);
     assert.strictEqual(parseInt(order.orderStage), 0, "Should be stage to initialization");
+    assert.strictEqual(parseInt(order.startDate), 0, "Should be start date init to 0");
     assert.strictEqual(order.buyerValidation, false, "Should be false");
     assert.strictEqual(order.sellerValidation, false, "Should be false");
     assert.strictEqual(order.deliverValidation, false, "Should be false");
@@ -411,7 +413,6 @@ async function checkEscrowCreationData(deliveryInstance, orderId, delay, escrowB
     assert.strictEqual(parseInt(escrow.escrowSeller), escrowSeller, "Wrong escrow seller : " + escrowSeller);
     assert.strictEqual(parseInt(escrow.escrowDeliver), escrowDeliver, "Wrong escrow deliver : " + escrowDeliver);
 }
-
 
 async function checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, buyerAcceptEscrow, sellerAcceptEscrow, deliverAcceptEscrow, previousStage, sellerBalance = 0, deliverBalance = 0) {
     let dispute = await deliveryInstance.getDispute.call(orderId);
