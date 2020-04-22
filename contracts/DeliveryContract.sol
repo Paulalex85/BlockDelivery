@@ -502,7 +502,7 @@ contract DeliveryContract is EventDelivery {
         checkDelayExpire(order.startDate, escrow.delayEscrow);
 
         order.orderStage = dispute.previousStage;
-
+        delete disputes[orderId];
         emit RevertDispute(orderId, msg.sender);
     }
 
