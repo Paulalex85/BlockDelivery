@@ -2,6 +2,7 @@ const truffleAssert = require('truffle-assertions');
 const {createOrder, validateOrder, updateInitializeOrder, completeValidationOrder, takeOrder, initCancelOrder, deliverOrder} = require("../utils/orderMethods");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, actors} = require('../utils/constants');
+const {logContract} = require('../utils/tools');
 
 contract("update order method of DeliveryContract", accounts => {
 
@@ -257,5 +258,94 @@ contract("update order method of DeliveryContract", accounts => {
             updateInitializeOrder(deliveryInstance, buyer, seller, deliver, NEW_SELLER_PRICE, NEW_DELIVER_PRICE, 59 * 60 * 24, buyer),
             "Delay should be at least one day"
         );
+    });
+
+    it("Can update an order where the seller pay half the delivery price", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await updateInitializeOrder(deliveryInstance,
+            buyer,
+            seller,
+            deliver,
+            NEW_SELLER_PRICE,
+            NEW_DELIVER_PRICE,
+            DELAY_ORDER * 2,
+            deliver,
+            undefined,
+            NEW_ESCROW,
+            NEW_ESCROW * 2,
+            NEW_ESCROW * 3,
+            NEW_DELIVER_PRICE / 2);
+    });
+
+    it("Can update an order where the seller pay all the delivery price", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await updateInitializeOrder(deliveryInstance,
+            buyer,
+            seller,
+            deliver,
+            NEW_SELLER_PRICE,
+            NEW_DELIVER_PRICE,
+            DELAY_ORDER * 2,
+            deliver,
+            undefined,
+            NEW_ESCROW,
+            NEW_ESCROW * 2,
+            NEW_ESCROW * 3,
+            NEW_DELIVER_PRICE);
+    });
+
+    it("Can't update an order where the seller pay more than the delivery price", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await truffleAssert.reverts(
+            updateInitializeOrder(deliveryInstance,
+                buyer,
+                seller,
+                deliver,
+                NEW_SELLER_PRICE,
+                NEW_DELIVER_PRICE,
+                DELAY_ORDER * 2,
+                deliver,
+                undefined,
+                NEW_ESCROW,
+                NEW_ESCROW * 2,
+                NEW_ESCROW * 3,
+                NEW_DELIVER_PRICE + 100),
+            "Seller can't pay more than the delivery price"
+        );
+    });
+
+    it("Withdraw is correct when seller pay all the delivery", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        await validateOrder(deliveryInstance,
+            actors.BUYER,
+            buyer,
+            (SELLER_PRICE + DELIVER_PRICE) * 2 - DELIVER_PRICE,
+            0,
+            false,
+            true,
+            false,
+            false);
+        await validateOrder(deliveryInstance,
+            actors.SELLER,
+            seller,
+            (SELLER_PRICE + DELIVER_PRICE) * 2 + DELIVER_PRICE,
+            0,
+            false,
+            true,
+            true,
+            false);
+        await updateInitializeOrder(deliveryInstance,
+            buyer,
+            seller,
+            deliver,
+            NEW_SELLER_PRICE,
+            NEW_DELIVER_PRICE,
+            DELAY_ORDER * 2,
+            deliver,
+            undefined,
+            NEW_ESCROW,
+            NEW_ESCROW * 2,
+            NEW_ESCROW * 3,
+            NEW_DELIVER_PRICE);
     });
 });

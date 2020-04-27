@@ -82,25 +82,25 @@ contract("refundProposalDispute method of DeliveryContract", accounts => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         await truffleAssert.reverts(
             refundProposalDispute(deliveryInstance, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
 
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await truffleAssert.reverts(
             refundProposalDispute(deliveryInstance, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
 
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
             refundProposalDispute(deliveryInstance, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
 
         await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             refundProposalDispute(deliveryInstance, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
     });
 

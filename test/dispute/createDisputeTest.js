@@ -110,4 +110,16 @@ contract("createDispute method of DeliveryContract", accounts => {
             "Buyer can't receive more than he has paid"
         );
     });
+
+    it("BuyerReceive should handle sellerDeliveryPay ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+        await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await truffleAssert.reverts(
+            createDispute(deliveryInstance, buyer, SELLER_PRICE + DELIVER_PRICE),
+            "Buyer can't receive more than he has paid"
+        );
+
+        await createDispute(deliveryInstance, seller, SELLER_PRICE);
+    });
 });

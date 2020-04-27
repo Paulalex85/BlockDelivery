@@ -4,11 +4,12 @@ const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, DEFAULT_HASH, actors} = require
 const {generateKeyHash, logContract} = require('./tools');
 const DEFAULT_ESCROW_VALUE = SELLER_PRICE + DELIVER_PRICE;
 
-async function createOrder(deliveryInstance, buyer, seller, deliver, sender, orderId = 0, sellerPrice = SELLER_PRICE, deliverPrice = DELIVER_PRICE, delayEscrow = DELAY_ORDER, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3) {
+async function createOrder(deliveryInstance, buyer, seller, deliver, sender, orderId = 0, sellerPrice = SELLER_PRICE, deliverPrice = DELIVER_PRICE, delayEscrow = DELAY_ORDER, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3, sellerDeliveryPay = 0) {
     let tx = await deliveryInstance.createOrder(
         [buyer, seller, deliver],
         sellerPrice,
         deliverPrice,
+        sellerDeliveryPay,
         delayEscrow,
         [escrowBuyer, escrowSeller, escrowDeliver],
         {from: sender}
@@ -20,12 +21,12 @@ async function createOrder(deliveryInstance, buyer, seller, deliver, sender, ord
             && ev.deliver === deliver
             && ev.orderId.toNumber() === orderId;
     }, 'NewOrder should be emitted with correct parameters');
-    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, DEFAULT_HASH, DEFAULT_HASH);
+    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, DEFAULT_HASH, DEFAULT_HASH, sellerDeliveryPay);
     await checkEscrowCreationData(deliveryInstance, orderId, delayEscrow, escrowBuyer, escrowSeller, escrowDeliver);
 }
 
 
-async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, sellerPrice, deliverPrice, delayEscrow = DELAY_ORDER, sender, orderId = 0, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3) {
+async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, sellerPrice, deliverPrice, delayEscrow = DELAY_ORDER, sender, orderId = 0, escrowBuyer = DEFAULT_ESCROW_VALUE, escrowSeller = DEFAULT_ESCROW_VALUE * 2, escrowDeliver = DEFAULT_ESCROW_VALUE * 3, sellerDeliveryPay = 0) {
     let order = await deliveryInstance.getOrder.call(orderId);
     let escrow = await deliveryInstance.getEscrow.call(orderId);
     let withdrawBefore = await getWithdraw(deliveryInstance, buyer, seller, deliver);
@@ -33,10 +34,9 @@ async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, s
         orderId,
         sellerPrice,
         deliverPrice,
+        sellerDeliveryPay,
         delayEscrow,
-        escrowBuyer,
-        escrowSeller,
-        escrowDeliver,
+        [escrowBuyer, escrowSeller, escrowDeliver],
         {from: sender}
     );
 
@@ -45,7 +45,7 @@ async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, s
     }, 'OrderUpdated should be emitted with correct parameters');
 
     await checkWithdrawUpdate(deliveryInstance, buyer, seller, deliver, order, withdrawBefore, escrow);
-    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, order.sellerHash, order.buyerHash);
+    await checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, order.sellerHash, order.buyerHash, sellerDeliveryPay);
     await checkEscrowCreationData(deliveryInstance, orderId, delayEscrow, escrowBuyer, escrowSeller, escrowDeliver);
 }
 
@@ -53,33 +53,25 @@ async function validateOrder(deliveryInstance, typeValidation, sender, amountEth
     let keyHash = generateKeyHash();
 
     let tx = "";
-    let eventType = "";
-    if (typeValidation === actors.SELLER) {
-        tx = await deliveryInstance.validateSeller(
+    if (typeValidation === actors.SELLER || typeValidation === actors.BUYER) {
+        tx = await deliveryInstance.validateOrder(
             orderId,
             keyHash.hash,
             {from: sender, value: amountEth}
         );
-        eventType = "SellerValidate";
-    } else if (typeValidation === actors.BUYER) {
-        tx = await deliveryInstance.validateBuyer(
-            orderId,
-            keyHash.hash,
-            {from: sender, value: amountEth}
-        );
-        eventType = "BuyerValidate";
     } else if (typeValidation === actors.DELIVER) {
-        tx = await deliveryInstance.validateDeliver(
+        tx = await deliveryInstance.validateOrder(
             orderId,
+            "0x0",
             {from: sender, value: amountEth}
         );
-        eventType = "DeliverValidate";
     }
 
-    truffleAssert.eventEmitted(tx, eventType, (ev) => {
+    truffleAssert.eventEmitted(tx, 'OrderValidate', (ev) => {
         return ev.orderId.toNumber() === orderId
+            && ev.user === sender
             && ev.isOrderStarted === shouldBeStarted;
-    }, eventType + ' should be emitted with correct parameters');
+    }, 'OrderValidate should be emitted with correct parameters');
 
     let order = await deliveryInstance.getOrder.call(orderId);
     assert.strictEqual(order.buyerValidation, buyerValidation, "Buyer validation problem");
@@ -117,11 +109,11 @@ async function takeOrder(deliveryInstance, orderId, key, sender) {
     assert.strictEqual(order.orderStage.toNumber(), 2, "Should be stage Taken");
 }
 
-async function completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId) {
+async function completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, sellerDeliveryPay = 0) {
     let keyHashSeller = await validateOrder(deliveryInstance,
         actors.SELLER,
         seller,
-        DEFAULT_ESCROW_VALUE * 2,
+        DEFAULT_ESCROW_VALUE * 2 + sellerDeliveryPay,
         orderId,
         false,
         false,
@@ -139,7 +131,7 @@ async function completeValidationOrder(deliveryInstance, buyer, seller, deliver,
     let keyHashBuyer = await validateOrder(deliveryInstance,
         actors.BUYER,
         buyer,
-        DELIVER_PRICE + SELLER_PRICE + DEFAULT_ESCROW_VALUE,
+        DELIVER_PRICE + SELLER_PRICE + DEFAULT_ESCROW_VALUE - sellerDeliveryPay,
         orderId,
         true,
         true,
@@ -304,8 +296,8 @@ async function acceptDisputeProposal(deliveryInstance, shouldBeCostRepartition, 
     }, 'AcceptProposal should be emitted with correct parameters');
 }
 
-async function createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId = 0) {
-    await createDispute(deliveryInstance, seller, undefined, orderId);
+async function createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId = 0, buyerReceive = undefined) {
+    await createDispute(deliveryInstance, seller, buyerReceive, orderId);
     await acceptDisputeProposal(deliveryInstance, false, deliver, orderId);
     await acceptDisputeProposal(deliveryInstance, true, buyer, orderId);
 }
@@ -388,7 +380,7 @@ async function revertDispute(deliveryInstance, sender, orderId = 0) {
     }, 'RevertDispute should be emitted with correct parameters');
 }
 
-async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash) {
+async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, deliver, sellerPrice, deliverPrice, sellerHash, buyerHash, sellerDeliveryPay) {
     let order = await deliveryInstance.getOrder.call(orderId);
 
     assert.strictEqual(order.buyer, buyer, "Should be this buyer : " + buyer);
@@ -396,6 +388,7 @@ async function checkOrderCreationData(deliveryInstance, orderId, buyer, seller, 
     assert.strictEqual(order.deliver, deliver, "Should be this deliver : " + deliver);
     assert.strictEqual(parseInt(order.sellerPrice), sellerPrice, "Should be this sellerPrice : " + sellerPrice);
     assert.strictEqual(parseInt(order.deliverPrice), deliverPrice, "Should be this deliverPrice : " + deliverPrice);
+    assert.strictEqual(parseInt(order.sellerDeliveryPay), sellerDeliveryPay, "Should be this sellerDeliveryPay : " + sellerDeliveryPay);
     assert.strictEqual(parseInt(order.orderStage), 0, "Should be stage to initialization");
     assert.strictEqual(parseInt(order.startDate), 0, "Should be start date init to 0");
     assert.strictEqual(order.buyerValidation, false, "Should be false");
@@ -445,13 +438,13 @@ async function getWithdraw(deliveryInstance, buyer, seller, deliver) {
 async function checkWithdrawUpdate(deliveryInstance, buyer, seller, deliver, order, withdrawBefore, escrow) {
     let withdrawAfter = await getWithdraw(deliveryInstance, buyer, seller, deliver);
     if (order.buyerValidation) {
-        assert.strictEqual(parseInt(withdrawAfter.buyer), withdrawBefore.buyer + parseInt(order.sellerPrice) + parseInt(order.deliverPrice) + parseInt(escrow.escrowBuyer), "Withdraw balance should be filled");
+        assert.strictEqual(parseInt(withdrawAfter.buyer), withdrawBefore.buyer + parseInt(order.sellerPrice) + parseInt(order.deliverPrice) + parseInt(escrow.escrowBuyer) - parseInt(order.sellerDeliveryPay), "Withdraw balance should be filled");
     } else {
         assert.strictEqual(parseInt(withdrawAfter.buyer), withdrawBefore.buyer, "Buyer Withdraw balance should be 0");
     }
 
     if (order.sellerValidation) {
-        assert.strictEqual(parseInt(withdrawAfter.seller), withdrawBefore.seller + parseInt(escrow.escrowSeller), "Withdraw balance should be filled");
+        assert.strictEqual(parseInt(withdrawAfter.seller), withdrawBefore.seller + parseInt(escrow.escrowSeller) + parseInt(order.sellerDeliveryPay), "Withdraw balance should be filled");
     } else {
         assert.strictEqual(parseInt(withdrawAfter.seller), withdrawBefore.seller, "Seller Withdraw balance should be 0");
     }

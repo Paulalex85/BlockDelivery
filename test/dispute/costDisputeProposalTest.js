@@ -2,10 +2,12 @@ const truffleAssert = require('truffle-assertions');
 const {createOrder, completeValidationOrder, takeOrder, createFullAcceptedRefundDispute, createDispute, costDisputeProposal, deliverOrder} = require("../utils/orderMethods");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE} = require('../utils/constants');
+const {logContract} = require('../utils/tools');
 
 contract("costDisputeProposal method of DeliveryContract", accounts => {
 
     let deliveryInstance, buyer, seller, deliver;
+    let ESCROW = SELLER_PRICE + DELIVER_PRICE;
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
@@ -133,16 +135,15 @@ contract("costDisputeProposal method of DeliveryContract", accounts => {
         await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver);
 
         await truffleAssert.reverts(
-            costDisputeProposal(deliveryInstance, -(SELLER_PRICE + DELIVER_PRICE) * 3, (SELLER_PRICE + DELIVER_PRICE) * 2, seller, undefined, DELIVER_PRICE, undefined),
+            costDisputeProposal(deliveryInstance, -(ESCROW) * 3, (ESCROW) * 2, seller, undefined, DELIVER_PRICE, undefined),
             "User need to send additional cost"
         );
         await truffleAssert.reverts(
-            costDisputeProposal(deliveryInstance, -(SELLER_PRICE + DELIVER_PRICE) * 3, (SELLER_PRICE + DELIVER_PRICE) * 2, seller, undefined, DELIVER_PRICE - 100, undefined),
+            costDisputeProposal(deliveryInstance, -(ESCROW) * 3, (ESCROW) * 2, seller, undefined, DELIVER_PRICE - 100, DELIVER_PRICE - 100),
             "User need to send additional cost"
         );
-        await costDisputeProposal(deliveryInstance, -(SELLER_PRICE + DELIVER_PRICE) * 3, (SELLER_PRICE + DELIVER_PRICE) * 2, seller, undefined, DELIVER_PRICE, DELIVER_PRICE);
+        await costDisputeProposal(deliveryInstance, -(ESCROW) * 3, (ESCROW) * 2, seller, undefined, DELIVER_PRICE, DELIVER_PRICE);
     });
-
 
     it("Deliver should pay more than the escrow limit ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
@@ -153,13 +154,83 @@ contract("costDisputeProposal method of DeliveryContract", accounts => {
         await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver);
 
         await truffleAssert.reverts(
-            costDisputeProposal(deliveryInstance, (SELLER_PRICE + DELIVER_PRICE) * 3, -(SELLER_PRICE + DELIVER_PRICE) * 4, deliver, undefined, SELLER_PRICE, undefined),
+            costDisputeProposal(deliveryInstance, (ESCROW) * 3, -(ESCROW) * 4, deliver, undefined, SELLER_PRICE, undefined),
             "User need to send additional cost"
         );
         await truffleAssert.reverts(
-            costDisputeProposal(deliveryInstance, (SELLER_PRICE + DELIVER_PRICE) * 3, -(SELLER_PRICE + DELIVER_PRICE) * 4, deliver, undefined, SELLER_PRICE - 100, undefined),
+            costDisputeProposal(deliveryInstance, (ESCROW) * 3, -(ESCROW) * 4, deliver, undefined, SELLER_PRICE - 100, SELLER_PRICE - 100),
             "User need to send additional cost"
         );
-        await costDisputeProposal(deliveryInstance, (SELLER_PRICE + DELIVER_PRICE) * 3, -(SELLER_PRICE + DELIVER_PRICE) * 4, deliver, undefined, SELLER_PRICE, SELLER_PRICE);
+        await costDisputeProposal(deliveryInstance, (ESCROW) * 3, -(ESCROW) * 4, deliver, undefined, SELLER_PRICE, SELLER_PRICE);
+    });
+
+    it("Seller can pay more but under the escrow limit - with sellerDeliveryPay ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
+        await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId, SELLER_PRICE);
+        await costDisputeProposal(deliveryInstance, -SELLER_PRICE, 0, seller);
+    });
+
+    it("Deliver can pay more but under the escrow limit - with sellerDeliveryPay ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
+        await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId, SELLER_PRICE);
+        await costDisputeProposal(deliveryInstance, DELIVER_PRICE, -SELLER_PRICE - DELIVER_PRICE, seller);
+    });
+
+    it("Seller should pay more than the escrow limit - with sellerDeliveryPay", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
+        await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId, SELLER_PRICE);
+        await costDisputeProposal(deliveryInstance, -(ESCROW) * 3 + DELIVER_PRICE, (ESCROW) * 2, seller);
+
+        orderId = 1;
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, orderId, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let keyBis = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await takeOrder(deliveryInstance, orderId, keyBis.keyHashSeller.key, deliver);
+        await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId, SELLER_PRICE);
+
+        await truffleAssert.reverts(
+            costDisputeProposal(deliveryInstance, -(ESCROW) * 3, (ESCROW) * 2 + DELIVER_PRICE, seller, orderId, DELIVER_PRICE, undefined),
+            "User need to send additional cost"
+        );
+        await truffleAssert.reverts(
+            costDisputeProposal(deliveryInstance, -(ESCROW) * 3, (ESCROW) * 2 + DELIVER_PRICE, seller, orderId, DELIVER_PRICE - 100, DELIVER_PRICE - 100),
+            "User need to send additional cost"
+        );
+        await costDisputeProposal(deliveryInstance, -(ESCROW) * 3, (ESCROW) * 2 + DELIVER_PRICE, seller, orderId, DELIVER_PRICE, DELIVER_PRICE);
+    });
+
+    it("Deliver should pay more than the escrow limit - with sellerDeliveryPay", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
+        await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId, SELLER_PRICE);
+        await costDisputeProposal(deliveryInstance, (ESCROW) * 2 + DELIVER_PRICE * 2, -(ESCROW) * 3 - DELIVER_PRICE, deliver);
+
+        orderId = 1;
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, orderId, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+
+        let keyBis = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await takeOrder(deliveryInstance, orderId, keyBis.keyHashSeller.key, deliver);
+        await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver, orderId, SELLER_PRICE);
+
+        await truffleAssert.reverts(
+            costDisputeProposal(deliveryInstance, (ESCROW) * 2 + DELIVER_PRICE * 3, -(ESCROW) * 3 - DELIVER_PRICE * 2, deliver, orderId, DELIVER_PRICE, undefined),
+            "User need to send additional cost"
+        );
+        await truffleAssert.reverts(
+            costDisputeProposal(deliveryInstance, (ESCROW) * 2 + DELIVER_PRICE * 3, -(ESCROW) * 3 - DELIVER_PRICE * 2, deliver, orderId, DELIVER_PRICE - 100, DELIVER_PRICE - 100),
+            "User need to send additional cost"
+        );
+        await costDisputeProposal(deliveryInstance, (ESCROW) * 2 + DELIVER_PRICE * 3, -(ESCROW) * 3 - DELIVER_PRICE * 2, deliver, orderId, DELIVER_PRICE, DELIVER_PRICE);
     });
 });

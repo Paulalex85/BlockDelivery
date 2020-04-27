@@ -114,4 +114,14 @@ contract("cancel order method of DeliveryContract", accounts => {
             "The order isn't at the required stage"
         );
     });
+
+    it("Can cancel an order where the seller pay half the delivery price", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE / 2);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver);
+    });
+
+    it("Can cancel an order where the seller pay all the delivery price", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        await initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver);
+    });
 });

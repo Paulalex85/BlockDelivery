@@ -1,6 +1,7 @@
 const truffleAssert = require('truffle-assertions');
 const {createOrder, completeValidationOrder, takeOrder, createDispute, acceptDisputeProposal, deliverOrder} = require("../utils/orderMethods");
 const DeliveryContract = artifacts.require("DeliveryContract");
+const {SELLER_PRICE, DELIVER_PRICE} = require('../utils/constants');
 
 contract("acceptDisputeProposal method of DeliveryContract", accounts => {
 
@@ -134,26 +135,40 @@ contract("acceptDisputeProposal method of DeliveryContract", accounts => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         await truffleAssert.reverts(
             acceptDisputeProposal(deliveryInstance, false, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
 
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await truffleAssert.reverts(
             acceptDisputeProposal(deliveryInstance, false, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
 
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
             acceptDisputeProposal(deliveryInstance, false, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
 
         await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             acceptDisputeProposal(deliveryInstance, false, buyer),
-            "Order should be Refund Determination stage"
+            "The order isn't at the required stage"
         );
+    });
+
+    it("AcceptDispute should handle sellerDeliveryPay ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+        await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
+        await truffleAssert.reverts(
+            createDispute(deliveryInstance, buyer, SELLER_PRICE + DELIVER_PRICE),
+            "Buyer can't receive more than he has paid"
+        );
+
+        await createDispute(deliveryInstance, buyer, SELLER_PRICE);
+        await acceptDisputeProposal(deliveryInstance, false, seller);
+        await acceptDisputeProposal(deliveryInstance, true, deliver);
     });
 
 });

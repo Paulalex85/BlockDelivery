@@ -30,36 +30,6 @@ contract("validate methods of DeliveryContract", accounts => {
             false);
     });
 
-    it("Seller and Deliver can't validateBuyer the order", async () => {
-        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-
-        await truffleAssert.reverts(
-            validateOrder(deliveryInstance,
-                actors.BUYER,
-                seller,
-                SELLER_PRICE + DELIVER_PRICE + ESCROW_VALUE,
-                0,
-                false,
-                true,
-                false,
-                false),
-            "Sender is not the buyer"
-        );
-
-        await truffleAssert.reverts(
-            validateOrder(deliveryInstance,
-                actors.BUYER,
-                deliver,
-                SELLER_PRICE + DELIVER_PRICE + ESCROW_VALUE,
-                0,
-                false,
-                true,
-                false,
-                false),
-            "Sender is not the buyer"
-        );
-    });
-
     it("Buyer can't validate twice the order", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         await validateOrder(deliveryInstance,
@@ -117,6 +87,32 @@ contract("validate methods of DeliveryContract", accounts => {
             false);
     });
 
+    it("Buyer can validate with half the delivery cost", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE / 2);
+        await validateOrder(deliveryInstance,
+            actors.BUYER,
+            buyer,
+            SELLER_PRICE + DELIVER_PRICE / 2 + ESCROW_VALUE,
+            0,
+            false,
+            true,
+            false,
+            false);
+    });
+
+    it("Buyer can validate without pay the delivery cost", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        await validateOrder(deliveryInstance,
+            actors.BUYER,
+            buyer,
+            SELLER_PRICE + ESCROW_VALUE,
+            0,
+            false,
+            true,
+            false,
+            false);
+    });
+
     //Seller validate
 
     it("Seller should validate the order", async () => {
@@ -130,36 +126,6 @@ contract("validate methods of DeliveryContract", accounts => {
             false,
             true,
             false);
-    });
-
-    it("Buyer and Deliver can't validateSeller the order", async () => {
-        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-
-        await truffleAssert.reverts(
-            validateOrder(deliveryInstance,
-                actors.SELLER,
-                buyer,
-                ESCROW_VALUE * 2,
-                0,
-                false,
-                false,
-                true,
-                false),
-            "Sender is not the seller"
-        );
-
-        await truffleAssert.reverts(
-            validateOrder(deliveryInstance,
-                actors.SELLER,
-                deliver,
-                ESCROW_VALUE * 2,
-                0,
-                false,
-                false,
-                true,
-                false),
-            "Sender is not the seller"
-        );
     });
 
     it("Seller can't validate twice the order", async () => {
@@ -188,6 +154,58 @@ contract("validate methods of DeliveryContract", accounts => {
         );
     });
 
+    it("Seller can validate with half the delivery cost", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE / 2);
+        await truffleAssert.reverts(
+            validateOrder(deliveryInstance,
+                actors.SELLER,
+                seller,
+                ESCROW_VALUE * 2,
+                0,
+                false,
+                false,
+                true,
+                false),
+            "The value send isn't enough"
+        );
+
+        await validateOrder(deliveryInstance,
+            actors.SELLER,
+            seller,
+            ESCROW_VALUE * 2 + DELIVER_PRICE / 2,
+            0,
+            false,
+            false,
+            true,
+            false);
+    });
+
+    it("Seller can validate and pay all delivery cost", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        await truffleAssert.reverts(
+            validateOrder(deliveryInstance,
+                actors.SELLER,
+                seller,
+                ESCROW_VALUE * 2,
+                0,
+                false,
+                false,
+                true,
+                false),
+            "The value send isn't enough"
+        );
+
+        await validateOrder(deliveryInstance,
+            actors.SELLER,
+            seller,
+            ESCROW_VALUE * 2 + DELIVER_PRICE,
+            0,
+            false,
+            false,
+            true,
+            false);
+    });
+
     //Deliver validate
 
     it("Deliver should validate the order", async () => {
@@ -201,36 +219,6 @@ contract("validate methods of DeliveryContract", accounts => {
             false,
             false,
             true);
-    });
-
-    it("Buyer and Seller can't validateDeliver the order", async () => {
-        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
-
-        await truffleAssert.reverts(
-            validateOrder(deliveryInstance,
-                actors.DELIVER,
-                buyer,
-                ESCROW_VALUE * 3,
-                0,
-                false,
-                false,
-                false,
-                true),
-            "Sender is not the deliver"
-        );
-
-        await truffleAssert.reverts(
-            validateOrder(deliveryInstance,
-                actors.DELIVER,
-                seller,
-                ESCROW_VALUE * 3,
-                0,
-                false,
-                false,
-                false,
-                true),
-            "Sender is not the deliver"
-        );
     });
 
     it("Deliver can't validate twice the order", async () => {
@@ -331,6 +319,12 @@ contract("validate methods of DeliveryContract", accounts => {
             true,
             true,
             true);
+    });
+
+    it("Order to Started stage when seller pay all the delivery cost ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, deliver, undefined, undefined, undefined, undefined, undefined, undefined, undefined, DELIVER_PRICE);
+        let orderId = 0;
+        await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId, DELIVER_PRICE);
     });
 
     // test order validate when not stage init

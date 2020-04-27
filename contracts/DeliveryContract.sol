@@ -1,143 +1,44 @@
 pragma solidity >=0.4.21 <0.7.0;
 
-contract EventDelivery {
-
-    event NewOrder(
-        address indexed buyer,
-        address indexed seller,
-        address indexed deliver,
-        uint256 orderId
-    );
-
-    event OrderUpdated(
-        uint256 indexed orderId
-    );
-
-    event BuyerValidate(
-        uint256 indexed orderId,
-        bool isOrderStarted
-    );
-
-    event SellerValidate(
-        uint256 indexed orderId,
-        bool isOrderStarted
-    );
-
-    event DeliverValidate(
-        uint256 indexed orderId,
-        bool isOrderStarted
-    );
-
-    event OrderTaken(
-        uint256 indexed orderId
-    );
-
-    event OrderDelivered(
-        uint256 indexed orderId
-    );
-
-    event CancelOrder(
-        uint256 indexed orderId,
-        bool startedOrder
-    );
-
-    event DisputeStarted(
-        uint256 indexed orderId,
-        uint128 buyerProposal
-    );
-
-    event DisputeRefundProposal(
-        uint256 indexed orderId,
-        uint128 buyerProposal
-    );
-
-    event AcceptProposal(
-        uint256 indexed orderId,
-        address user,
-        bool proposalAccepted
-    );
-
-    event DisputeCostProposal(
-        uint256 indexed orderId,
-        int128 sellerBalance,
-        int128 deliverBalance
-    );
-
-    event RevertDispute(
-        uint256 indexed orderId,
-        address user
-    );
-}
+import "./EventDelivery.sol";
+import "./Library/OrderLib.sol";
+import "./Library/OrderStageLib.sol";
+import "./Library/EscrowLib.sol";
+import "./Library/DisputeLib.sol";
 
 contract DeliveryContract is EventDelivery {
 
-    enum OrderStage {
-        Initialization, //0
-        Started, //1
-        Taken, //2
-        Delivered, //3
-        Validated, //4
-        Cancel_Order, //5
-        Dispute_Refund_Determination, //6
-        Dispute_Cost_Repartition //7
+    struct Delivery {
+        OrderLib.Order order;
+        EscrowLib.Escrow escrow;
     }
 
-    struct Order {
-        address buyer;
-        address seller;
-        address deliver;
-        uint128 deliverPrice;
-        uint128 sellerPrice;
-        OrderStage orderStage;
-        uint64 startDate;
-        bool buyerValidation;
-        bool sellerValidation;
-        bool deliverValidation;
-        bytes32 sellerHash;
-        bytes32 buyerHash;
-    }
-
-    struct EscrowOrder {
-        uint64 delayEscrow;
-        uint128 escrowBuyer;
-        uint128 escrowSeller;
-        uint128 escrowDeliver;
-    }
-
-    struct Dispute {
-        uint128 buyerReceive;
-        int128 sellerBalance;
-        int128 deliverBalance;
-        bool buyerAcceptEscrow;
-        bool sellerAcceptEscrow;
-        bool deliverAcceptEscrow;
-        OrderStage previousStage;
-    }
-
-    Order[] orders;
-    mapping(uint => EscrowOrder) public escrows;
-    mapping(uint => Dispute) public disputes;
+    Delivery[] deliveries;
+    mapping(uint => DisputeLib.Dispute) public disputes;
     mapping(address => uint) public withdraws;
 
     function createOrder(
         address[3] memory _users,
         uint128 _sellerPrice,
         uint128 _deliverPrice,
+        uint128 _sellerDeliveryPay,
         uint64 _delayEscrow,
         uint128[3] memory _escrowUsers
     )
     public
     checkDelayMinimum(_delayEscrow)
+    checkSellerPayDelivery(_sellerDeliveryPay, _deliverPrice)
     returns (uint)
     {
         isActor(msg.sender, _users[0], _users[1], _users[2]);
-        Order memory _order = Order({
+        OrderLib.Order memory _order = OrderLib.Order({
             buyer : _users[0],
             seller : _users[1],
             deliver : _users[2],
             deliverPrice : _deliverPrice,
             sellerPrice : _sellerPrice,
-            orderStage : OrderStage.Initialization,
+            sellerDeliveryPay : _sellerDeliveryPay,
+            orderStage : OrderStageLib.OrderStage.Initialization,
             startDate : 0,
             buyerValidation : false,
             sellerValidation : false,
@@ -145,308 +46,260 @@ contract DeliveryContract is EventDelivery {
             buyerHash : 0,
             sellerHash : 0
             });
-        orders.push(_order);
-        uint256 orderId = orders.length - 1;
-        emit NewOrder(_users[0], _users[1], _users[2], orderId);
 
-        EscrowOrder memory escrow = EscrowOrder({
+        EscrowLib.Escrow memory _escrow = EscrowLib.Escrow({
             delayEscrow : _delayEscrow,
             escrowBuyer : _escrowUsers[0],
             escrowSeller : _escrowUsers[1],
             escrowDeliver : _escrowUsers[2]
             });
-        escrows[orderId] = escrow;
-        return orderId;
+
+        Delivery memory _delivery = Delivery({
+            order : _order,
+            escrow : _escrow
+            });
+
+        deliveries.push(_delivery);
+        uint256 deliveryId = deliveries.length - 1;
+        emit NewOrder(_users[0], _users[1], _users[2], deliveryId);
+        return deliveryId;
     }
 
-    function updateInitializeOrder(uint orderId, uint128 _sellerPrice, uint128 _deliverPrice, uint64 _delayEscrow, uint128 _escrowBuyer, uint128 _escrowSeller, uint128 _escrowDeliver)
+    function updateInitializeOrder(
+        uint deliveryId,
+        uint128 _sellerPrice,
+        uint128 _deliverPrice,
+        uint128 _sellerDeliveryPay,
+        uint64 _delayEscrow,
+        uint128[3] memory _escrowUsers)
     public
-    atStage(orderId, OrderStage.Initialization)
     checkDelayMinimum(_delayEscrow)
+    checkSellerPayDelivery(_sellerDeliveryPay, _deliverPrice)
     {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
+        Delivery storage delivery = deliveries[deliveryId];
 
-        require(msg.sender == order.buyer || msg.sender == order.seller || msg.sender == order.deliver, "Should be an actor of the order");
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
+        isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
 
-        escrow.delayEscrow = _delayEscrow;
-
-        if (order.buyerValidation) {
-            order.buyerValidation = false;
-            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice + escrow.escrowBuyer;
+        if (delivery.order.buyerValidation) {
+            delivery.order.buyerValidation = false;
+            withdraws[delivery.order.buyer] += buyerPay(delivery);
         }
 
-        if (order.sellerValidation) {
-            order.sellerValidation = false;
-            withdraws[order.seller] += escrow.escrowSeller;
+        if (delivery.order.sellerValidation) {
+            delivery.order.sellerValidation = false;
+            withdraws[delivery.order.seller] += sellerPay(delivery);
         }
 
-        if (order.deliverValidation) {
-            order.deliverValidation = false;
-            withdraws[order.deliver] += escrow.escrowDeliver;
+        if (delivery.order.deliverValidation) {
+            delivery.order.deliverValidation = false;
+            withdraws[delivery.order.deliver] += delivery.escrow.escrowDeliver;
         }
 
-        order.sellerPrice = _sellerPrice;
-        order.deliverPrice = _deliverPrice;
-        escrow.escrowBuyer = _escrowBuyer;
-        escrow.escrowSeller = _escrowSeller;
-        escrow.escrowDeliver = _escrowDeliver;
+        delivery.order.sellerPrice = _sellerPrice;
+        delivery.order.deliverPrice = _deliverPrice;
+        delivery.order.sellerDeliveryPay = _sellerDeliveryPay;
+        delivery.escrow.delayEscrow = _delayEscrow;
+        delivery.escrow.escrowBuyer = _escrowUsers[0];
+        delivery.escrow.escrowSeller = _escrowUsers[1];
+        delivery.escrow.escrowDeliver = _escrowUsers[2];
 
-        emit OrderUpdated(orderId);
+        emit OrderUpdated(deliveryId);
     }
 
-    function validateBuyer(uint orderId, bytes32 hash)
+    function validateOrder(uint deliveryId, bytes32 hash)
     payable
     public
-    atStage(orderId, OrderStage.Initialization)
     {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
+        Delivery storage delivery = deliveries[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
 
-        require(msg.sender == order.buyer, "Sender is not the buyer");
-        require(order.buyerValidation == false, "Buyer already validate");
-        require(order.deliverPrice + order.sellerPrice + escrow.escrowBuyer <= msg.value, "The value send isn't enough");
-
-        order.buyerValidation = true;
-        order.buyerHash = hash;
-
-        if (order.sellerValidation && order.deliverValidation) {
-            order.orderStage = OrderStage.Started;
-            order.startDate = uint64(now);
+        if (msg.sender == delivery.order.buyer) {
+            require(delivery.order.buyerValidation == false, "Buyer already validate");
+            require(buyerPay(delivery) <= msg.value, "The value send isn't enough");
+            delivery.order.buyerValidation = true;
+            delivery.order.buyerHash = hash;
+        } else if (msg.sender == delivery.order.seller) {
+            require(delivery.order.sellerValidation == false, "Seller already validate");
+            require(sellerPay(delivery) <= msg.value, "The value send isn't enough");
+            delivery.order.sellerValidation = true;
+            delivery.order.sellerHash = hash;
+        } else if (msg.sender == delivery.order.deliver) {
+            require(delivery.order.deliverValidation == false, "Deliver already validate");
+            require(delivery.escrow.escrowDeliver <= msg.value, "The value send isn't enough");
+            delivery.order.deliverValidation = true;
+        } else {
+            revert("Should be an actor of the order");
         }
 
-        emit BuyerValidate(orderId, order.orderStage == OrderStage.Started);
-    }
-
-    function validateSeller(uint orderId, bytes32 hash)
-    public
-    payable
-    atStage(orderId, OrderStage.Initialization)
-    {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-
-        require(msg.sender == order.seller, "Sender is not the seller");
-        require(order.sellerValidation == false, "Seller already validate");
-        require(escrow.escrowSeller <= msg.value, "The value send isn't enough");
-
-        order.sellerValidation = true;
-        order.sellerHash = hash;
-
-        if (order.buyerValidation && order.deliverValidation) {
-            order.orderStage = OrderStage.Started;
-            order.startDate = uint64(now);
+        if (delivery.order.sellerValidation && delivery.order.deliverValidation && delivery.order.buyerValidation) {
+            delivery.order.orderStage = OrderStageLib.OrderStage.Started;
+            delivery.order.startDate = uint64(now);
         }
-
-        emit SellerValidate(orderId, order.orderStage == OrderStage.Started);
+        emit OrderValidate(deliveryId, msg.sender, delivery.order.orderStage == OrderStageLib.OrderStage.Started);
     }
 
-    function validateDeliver(uint orderId)
+    function initializationCancel(uint deliveryId)
     public
-    payable
-    atStage(orderId, OrderStage.Initialization)
     {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
+        Delivery storage delivery = deliveries[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
+        isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
 
-        require(msg.sender == order.deliver, "Sender is not the deliver");
-        require(order.deliverValidation == false, "Deliver already validate");
-        require(escrow.escrowDeliver <= msg.value, "The value send isn't enough");
+        delivery.order.orderStage = OrderStageLib.OrderStage.Cancel_Order;
 
-        order.deliverValidation = true;
-
-        if (order.buyerValidation && order.sellerValidation) {
-            order.orderStage = OrderStage.Started;
-            order.startDate = uint64(now);
+        if (delivery.order.buyerValidation) {
+            withdraws[delivery.order.buyer] += buyerPay(delivery);
         }
-
-        emit DeliverValidate(orderId, order.orderStage == OrderStage.Started);
-    }
-
-    function orderTaken(uint orderId, bytes memory sellerKey)
-    public
-    atStage(orderId, OrderStage.Started)
-    {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(msg.sender == order.deliver, "Sender is not the deliver");
-        require(keccak256(sellerKey) == order.sellerHash, "The key doesn't match with the stored hash");
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
-
-        order.orderStage = OrderStage.Taken;
-        emit OrderTaken(orderId);
-    }
-
-    function orderDelivered(uint orderId, bytes memory buyerKey)
-    public
-    atStage(orderId, OrderStage.Taken)
-    {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(msg.sender == order.deliver, "Sender is not the deliver");
-        require(keccak256(buyerKey) == order.buyerHash, "The key doesn't match with the stored hash");
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
-
-        order.orderStage = OrderStage.Delivered;
-
-        withdraws[order.seller] += order.sellerPrice + escrow.escrowSeller;
-        withdraws[order.deliver] += order.deliverPrice + escrow.escrowDeliver;
-        withdraws[order.buyer] += escrow.escrowBuyer;
-        emit OrderDelivered(orderId);
-    }
-
-    function initializationCancel(uint orderId)
-    public
-    atStage(orderId, OrderStage.Initialization)
-    {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-
-        require(msg.sender == order.buyer || msg.sender == order.seller || msg.sender == order.deliver, "Should be an actor of the order");
-
-        order.orderStage = OrderStage.Cancel_Order;
-
-        if (order.buyerValidation) {
-            withdraws[order.buyer] += order.sellerPrice + order.deliverPrice + escrow.escrowBuyer;
+        if (delivery.order.sellerValidation) {
+            withdraws[delivery.order.seller] += sellerPay(delivery);
         }
-        if (order.sellerValidation) {
-            withdraws[order.seller] += escrow.escrowSeller;
+        if (delivery.order.deliverValidation) {
+            withdraws[delivery.order.deliver] += delivery.escrow.escrowDeliver;
         }
-        if (order.deliverValidation) {
-            withdraws[order.deliver] += escrow.escrowDeliver;
-        }
-        emit CancelOrder(orderId, false);
+        emit CancelOrder(deliveryId, false);
     }
 
-    function withdrawBalance()
+    function orderTaken(uint deliveryId, bytes memory sellerKey)
     public
     {
-        uint balance = withdraws[msg.sender];
-        withdraws[msg.sender] = 0;
-        msg.sender.transfer(balance);
+        Delivery storage delivery = deliveries[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Started);
+        require(msg.sender == delivery.order.deliver, "Sender is not the deliver");
+        require(keccak256(sellerKey) == delivery.order.sellerHash, "The key doesn't match with the stored hash");
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
+
+        delivery.order.orderStage = OrderStageLib.OrderStage.Taken;
+        emit OrderTaken(deliveryId);
     }
 
-    function createDispute(uint orderId, uint128 buyerReceive)
+    function orderDelivered(uint deliveryId, bytes memory buyerKey)
     public
     {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(order.orderStage == OrderStage.Started || order.orderStage == OrderStage.Taken, "Order should be Started or Taken");
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
-        checkAmountBuyerReceiveDispute(buyerReceive, order.deliverPrice + order.sellerPrice);
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
+        Delivery storage delivery = deliveries[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Taken);
+        require(msg.sender == delivery.order.deliver, "Sender is not the deliver");
+        require(keccak256(buyerKey) == delivery.order.buyerHash, "The key doesn't match with the stored hash");
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        Dispute memory dispute = Dispute({
+        delivery.order.orderStage = OrderStageLib.OrderStage.Delivered;
+
+        withdraws[delivery.order.seller] += delivery.order.sellerPrice + delivery.escrow.escrowSeller;
+        withdraws[delivery.order.deliver] += delivery.order.deliverPrice + delivery.escrow.escrowDeliver;
+        withdraws[delivery.order.buyer] += delivery.escrow.escrowBuyer;
+        emit OrderDelivered(deliveryId);
+    }
+
+    function createDispute(uint deliveryId, uint128 buyerReceive)
+    public
+    {
+        Delivery storage delivery = deliveries[deliveryId];
+        require(delivery.order.orderStage == OrderStageLib.OrderStage.Started || delivery.order.orderStage == OrderStageLib.OrderStage.Taken, "Order should be Started or Taken");
+        isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
+        checkAmountBuyerReceiveDispute(buyerReceive, delivery.order);
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
+
+        DisputeLib.Dispute memory dispute = DisputeLib.Dispute({
             buyerReceive : buyerReceive,
             sellerBalance : 0,
             deliverBalance : 0,
-            buyerAcceptEscrow : false,
-            sellerAcceptEscrow : false,
-            deliverAcceptEscrow : false,
-            previousStage : order.orderStage
+            buyerAcceptEscrow : msg.sender == delivery.order.buyer,
+            sellerAcceptEscrow : msg.sender == delivery.order.seller,
+            deliverAcceptEscrow : msg.sender == delivery.order.deliver,
+            previousStage : delivery.order.orderStage
             });
 
-        if (msg.sender == order.seller) {
-            dispute.sellerAcceptEscrow = true;
-        } else if (msg.sender == order.deliver) {
-            dispute.deliverAcceptEscrow = true;
-        } else {
-            dispute.buyerAcceptEscrow = true;
-        }
+        disputes[deliveryId] = dispute;
+        delivery.order.orderStage = OrderStageLib.OrderStage.Dispute_Refund_Determination;
 
-        disputes[orderId] = dispute;
-
-        order.orderStage = OrderStage.Dispute_Refund_Determination;
-
-        emit DisputeStarted(orderId, buyerReceive);
+        emit DisputeStarted(deliveryId, buyerReceive);
     }
 
-    function refundProposalDispute(uint orderId, uint128 buyerReceive)
+    function refundProposalDispute(uint deliveryId, uint128 buyerReceive)
     public
     {
-        Order storage order = orders[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
-        checkAmountBuyerReceiveDispute(buyerReceive, order.deliverPrice + order.sellerPrice);
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
+        Delivery storage delivery = deliveries[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Dispute_Refund_Determination);
+        checkAmountBuyerReceiveDispute(buyerReceive, delivery.order);
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        Dispute storage dispute = disputes[orderId];
+        DisputeLib.Dispute storage dispute = disputes[deliveryId];
 
-        if (msg.sender == order.seller) {
+        if (msg.sender == delivery.order.seller) {
             dispute.sellerAcceptEscrow = true;
             dispute.deliverAcceptEscrow = false;
             dispute.buyerAcceptEscrow = false;
-        } else if (msg.sender == order.deliver) {
+        } else if (msg.sender == delivery.order.deliver) {
             dispute.sellerAcceptEscrow = false;
             dispute.deliverAcceptEscrow = true;
             dispute.buyerAcceptEscrow = false;
-        } else {
+        } else if (msg.sender == delivery.order.buyer) {
             dispute.sellerAcceptEscrow = false;
             dispute.deliverAcceptEscrow = false;
             dispute.buyerAcceptEscrow = true;
+        } else {
+            revert("Should be an actor of the order");
         }
 
         dispute.buyerReceive = buyerReceive;
-        emit DisputeRefundProposal(orderId, buyerReceive);
+        emit DisputeRefundProposal(deliveryId, buyerReceive);
     }
 
-    function acceptDisputeProposal(uint orderId)
+    function acceptDisputeProposal(uint deliveryId)
     public
     {
-        Order storage order = orders[orderId];
-        Dispute storage dispute = disputes[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
+        Delivery storage delivery = deliveries[deliveryId];
+        DisputeLib.Dispute storage dispute = disputes[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Dispute_Refund_Determination);
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        if (msg.sender == order.seller) {
+        if (msg.sender == delivery.order.seller) {
             require(dispute.sellerAcceptEscrow == false, "Seller already accept dispute");
             dispute.sellerAcceptEscrow = true;
-        } else if (msg.sender == order.deliver) {
+        } else if (msg.sender == delivery.order.deliver) {
             require(dispute.deliverAcceptEscrow == false, "Deliver already accept dispute");
             dispute.deliverAcceptEscrow = true;
-        } else {
+        } else if (msg.sender == delivery.order.buyer) {
             require(dispute.buyerAcceptEscrow == false, "Buyer already accept dispute");
             dispute.buyerAcceptEscrow = true;
+        } else {
+            revert("Should be an actor of the order");
         }
 
         if (dispute.sellerAcceptEscrow && dispute.deliverAcceptEscrow && dispute.buyerAcceptEscrow) {
-            order.orderStage = OrderStage.Dispute_Cost_Repartition;
+            delivery.order.orderStage = OrderStageLib.OrderStage.Dispute_Cost_Repartition;
             dispute.deliverAcceptEscrow = false;
             dispute.sellerAcceptEscrow = false;
-            withdraws[order.buyer] += escrow.escrowBuyer + dispute.buyerReceive;
+            withdraws[delivery.order.buyer] += delivery.escrow.escrowBuyer + dispute.buyerReceive;
 
-            emit AcceptProposal(orderId, msg.sender, true);
+            emit AcceptProposal(deliveryId, msg.sender, true);
         } else {
-            emit AcceptProposal(orderId, msg.sender, false);
+            emit AcceptProposal(deliveryId, msg.sender, false);
         }
     }
 
-    function costDisputeProposal(uint orderId, int128 sellerBalance, int128 deliverBalance)
+    function costDisputeProposal(uint deliveryId, int128 sellerBalance, int128 deliverBalance)
     payable
     public
     {
-        Order storage order = orders[orderId];
-        Dispute storage dispute = disputes[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
+        Delivery storage delivery = deliveries[deliveryId];
+        DisputeLib.Dispute storage dispute = disputes[deliveryId];
+        require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
         require(sellerBalance + deliverBalance + int128(dispute.buyerReceive) == 0, "Cost repartition should be equal to 0");
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
         dispute.deliverBalance = deliverBalance;
         dispute.sellerBalance = sellerBalance;
 
-        if (msg.sender == order.seller) {
-            if (checkBalanceEscrow(int128(order.sellerPrice), int128(escrow.escrowSeller), sellerBalance)) {
-                escrow.escrowSeller += uint128(msg.value);
+        if (msg.sender == delivery.order.seller) {
+            if (checkBalanceEscrow(int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), sellerBalance)) {
+                delivery.escrow.escrowSeller += uint128(msg.value);
             }
             dispute.sellerAcceptEscrow = true;
             dispute.deliverAcceptEscrow = false;
-        } else if (msg.sender == order.deliver) {
-            if (checkBalanceEscrow(int128(order.deliverPrice), int128(escrow.escrowDeliver), deliverBalance)) {
-                escrow.escrowDeliver += uint128(msg.value);
+        } else if (msg.sender == delivery.order.deliver) {
+            if (checkBalanceEscrow(int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), deliverBalance)) {
+                delivery.escrow.escrowDeliver += uint128(msg.value);
             }
             dispute.deliverAcceptEscrow = true;
             dispute.sellerAcceptEscrow = false;
@@ -454,59 +307,57 @@ contract DeliveryContract is EventDelivery {
             revert("Should be the seller or the deliver of the order");
         }
 
-        emit DisputeCostProposal(orderId, sellerBalance, deliverBalance);
+        emit DisputeCostProposal(deliveryId, sellerBalance, deliverBalance);
     }
 
-    function acceptCostProposal(uint orderId)
+    function acceptCostProposal(uint deliveryId)
     payable
     public
     {
-        Order storage order = orders[orderId];
-        Dispute storage dispute = disputes[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(order.orderStage == OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
+        Delivery storage delivery = deliveries[deliveryId];
+        DisputeLib.Dispute storage dispute = disputes[deliveryId];
+        require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        if (msg.sender == order.seller) {
+        if (msg.sender == delivery.order.seller) {
             require(dispute.deliverAcceptEscrow && !dispute.sellerAcceptEscrow, "Cost Repartition is not defined");
             dispute.sellerAcceptEscrow = true;
-            if (checkBalanceEscrow(int128(order.sellerPrice), int128(escrow.escrowSeller), dispute.sellerBalance)) {
-                escrow.escrowSeller += uint128(msg.value);
+            if (checkBalanceEscrow(int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), dispute.sellerBalance)) {
+                delivery.escrow.escrowSeller += uint128(msg.value);
             }
-        } else if (msg.sender == order.deliver) {
+        } else if (msg.sender == delivery.order.deliver) {
             require(dispute.sellerAcceptEscrow && !dispute.deliverAcceptEscrow, "Cost Repartition is not defined");
             dispute.deliverAcceptEscrow = true;
-            if (checkBalanceEscrow(int128(order.deliverPrice), int128(escrow.escrowDeliver), dispute.deliverBalance)) {
-                escrow.escrowDeliver += uint128(msg.value);
+            if (checkBalanceEscrow(int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), dispute.deliverBalance)) {
+                delivery.escrow.escrowDeliver += uint128(msg.value);
             }
         } else {
             revert("Should be the seller or the deliver of the order");
         }
 
-        order.orderStage = OrderStage.Cancel_Order;
+        delivery.order.orderStage = OrderStageLib.OrderStage.Cancel_Order;
 
-        withdraws[order.deliver] += uint128(int128(order.deliverPrice) + int128(escrow.escrowDeliver) + dispute.deliverBalance);
-        withdraws[order.seller] += uint128(int128(order.sellerPrice) + int128(escrow.escrowSeller) + dispute.sellerBalance);
+        withdraws[delivery.order.deliver] += uint128(int128(delivery.order.deliverPrice) + int128(delivery.escrow.escrowDeliver) + dispute.deliverBalance);
+        withdraws[delivery.order.seller] += uint128(int128(delivery.order.sellerPrice) + int128(delivery.escrow.escrowSeller) + dispute.sellerBalance);
 
-        emit CancelOrder(orderId, true);
+        emit CancelOrder(deliveryId, true);
     }
 
-    function revertDispute(uint orderId)
+    function revertDispute(uint deliveryId)
     public
     {
-        Order storage order = orders[orderId];
-        Dispute storage dispute = disputes[orderId];
-        EscrowOrder storage escrow = escrows[orderId];
-        require(order.orderStage == OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
-        isActor(msg.sender, order.buyer, order.seller, order.deliver);
-        checkDelayExpire(order.startDate, escrow.delayEscrow);
+        Delivery storage delivery = deliveries[deliveryId];
+        DisputeLib.Dispute storage dispute = disputes[deliveryId];
+        require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
+        isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        order.orderStage = dispute.previousStage;
-        delete disputes[orderId];
-        emit RevertDispute(orderId, msg.sender);
+        delivery.order.orderStage = dispute.previousStage;
+        delete disputes[deliveryId];
+        emit RevertDispute(deliveryId, msg.sender);
     }
 
-    function getOrder(uint orderId)
+    function getOrder(uint deliveryId)
     external
     view
     returns (
@@ -515,7 +366,8 @@ contract DeliveryContract is EventDelivery {
         address deliver,
         uint128 deliverPrice,
         uint128 sellerPrice,
-        OrderStage orderStage,
+        uint128 sellerDeliveryPay,
+        OrderStageLib.OrderStage orderStage,
         uint64 startDate,
         bool buyerValidation,
         bool sellerValidation,
@@ -523,23 +375,24 @@ contract DeliveryContract is EventDelivery {
         bytes32 sellerHash,
         bytes32 buyerHash
     ) {
-        Order storage order = orders[orderId];
+        Delivery storage delivery = deliveries[deliveryId];
 
-        buyer = order.buyer;
-        seller = order.seller;
-        deliver = order.deliver;
-        deliverPrice = order.deliverPrice;
-        sellerPrice = order.sellerPrice;
-        orderStage = order.orderStage;
-        startDate = order.startDate;
-        buyerValidation = order.buyerValidation;
-        sellerValidation = order.sellerValidation;
-        deliverValidation = order.deliverValidation;
-        sellerHash = order.sellerHash;
-        buyerHash = order.buyerHash;
+        buyer = delivery.order.buyer;
+        seller = delivery.order.seller;
+        deliver = delivery.order.deliver;
+        deliverPrice = delivery.order.deliverPrice;
+        sellerPrice = delivery.order.sellerPrice;
+        sellerDeliveryPay = delivery.order.sellerDeliveryPay;
+        orderStage = delivery.order.orderStage;
+        startDate = delivery.order.startDate;
+        buyerValidation = delivery.order.buyerValidation;
+        sellerValidation = delivery.order.sellerValidation;
+        deliverValidation = delivery.order.deliverValidation;
+        sellerHash = delivery.order.sellerHash;
+        buyerHash = delivery.order.buyerHash;
     }
 
-    function getEscrow(uint orderId)
+    function getEscrow(uint deliveryId)
     external
     view
     returns (
@@ -548,15 +401,15 @@ contract DeliveryContract is EventDelivery {
         uint128 escrowSeller,
         uint128 escrowDeliver
     ) {
-        EscrowOrder storage escrow = escrows[orderId];
+        Delivery storage delivery = deliveries[deliveryId];
 
-        delayEscrow = escrow.delayEscrow;
-        escrowBuyer = escrow.escrowBuyer;
-        escrowSeller = escrow.escrowSeller;
-        escrowDeliver = escrow.escrowDeliver;
+        delayEscrow = delivery.escrow.delayEscrow;
+        escrowBuyer = delivery.escrow.escrowBuyer;
+        escrowSeller = delivery.escrow.escrowSeller;
+        escrowDeliver = delivery.escrow.escrowDeliver;
     }
 
-    function getDispute(uint orderId)
+    function getDispute(uint deliveryId)
     external
     view
     returns (
@@ -566,9 +419,9 @@ contract DeliveryContract is EventDelivery {
         bool buyerAcceptEscrow,
         bool sellerAcceptEscrow,
         bool deliverAcceptEscrow,
-        OrderStage previousStage
+        OrderStageLib.OrderStage previousStage
     ) {
-        Dispute storage dispute = disputes[orderId];
+        DisputeLib.Dispute storage dispute = disputes[deliveryId];
 
         buyerReceive = dispute.buyerReceive;
         sellerBalance = dispute.sellerBalance;
@@ -579,11 +432,12 @@ contract DeliveryContract is EventDelivery {
         previousStage = dispute.previousStage;
     }
 
-    function isActor(address sender, address buyer, address seller, address deliver)
-    pure
-    internal
+    function withdrawBalance()
+    public
     {
-        require(sender == buyer || sender == seller || sender == deliver, "Should be an actor of the order");
+        uint balance = withdraws[msg.sender];
+        withdraws[msg.sender] = 0;
+        msg.sender.transfer(balance);
     }
 
     function checkDelayExpire(uint64 startDate, uint64 delay)
@@ -593,11 +447,27 @@ contract DeliveryContract is EventDelivery {
         require(uint64(now) < startDate + delay, "Delay of the order is passed");
     }
 
-    function checkAmountBuyerReceiveDispute(uint128 buyerReceive, uint128 orderAmount)
-    pure
+    function buyerPay(Delivery storage delivery)
+    internal
+    view
+    returns (uint128)
+    {
+        return delivery.order.deliverPrice + delivery.order.sellerPrice + delivery.escrow.escrowBuyer - delivery.order.sellerDeliveryPay;
+    }
+
+    function sellerPay(Delivery storage delivery)
+    internal
+    view
+    returns (uint128)
+    {
+        return delivery.escrow.escrowSeller + delivery.order.sellerDeliveryPay;
+    }
+
+    function checkAmountBuyerReceiveDispute(uint128 buyerReceive, OrderLib.Order storage order)
+    view
     internal
     {
-        require(buyerReceive <= orderAmount, "Buyer can't receive more than he has paid");
+        require(buyerReceive <= order.deliverPrice + order.sellerPrice - order.sellerDeliveryPay, "Buyer can't receive more than he has paid");
     }
 
     function checkBalanceEscrow(int128 price, int128 escrow, int128 balance)
@@ -617,8 +487,23 @@ contract DeliveryContract is EventDelivery {
         _;
     }
 
-    modifier atStage(uint256 orderId, OrderStage expected) {
-        require(orders[orderId].orderStage == expected, "The order isn't at the required stage");
+    modifier checkSellerPayDelivery(uint128 sellerDeliveryPay, uint128 deliverPrice){
+        require(sellerDeliveryPay <= deliverPrice, "Seller can't pay more than the delivery price");
         _;
     }
+
+    function isActor(address sender, address buyer, address seller, address deliver)
+    pure
+    internal
+    {
+        require(sender == buyer || sender == seller || sender == deliver, "Should be an actor of the order");
+    }
+
+    function atStage(OrderStageLib.OrderStage current, OrderStageLib.OrderStage expected)
+    internal
+    pure
+    {
+        require(current == expected, "The order isn't at the required stage");
+    }
+
 }
