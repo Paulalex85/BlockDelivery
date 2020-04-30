@@ -1,5 +1,6 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, completeValidationOrder, takeOrder} = require("../utils/orderMethods");
+const {createOrder, takeOrder} = require("../utils/orderMethods");
+const {completeValidationOrder} = require("../utils/orderHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {generateKeyHash} = require('../utils/tools');
 
@@ -22,7 +23,7 @@ contract("takeOrder method of DeliveryContract", accounts => {
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
     });
 
-    it("TakeOrder fail with wrong key ", async () => {
+    it("takeOrder fail with wrong key ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         let orderId = 0;
 
@@ -33,7 +34,7 @@ contract("takeOrder method of DeliveryContract", accounts => {
         );
     });
 
-    it("TakeOrder can't be call by seller or buyer ", async () => {
+    it("takeOrder can't be call by seller or buyer ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         let orderId = 0;
 
@@ -49,7 +50,7 @@ contract("takeOrder method of DeliveryContract", accounts => {
         );
     });
 
-    it("TakeOrder need started stage ", async () => {
+    it("takeOrder need started stage ", async () => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         let orderId = 0;
 

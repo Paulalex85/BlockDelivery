@@ -1,5 +1,8 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, completeValidationOrder, updateInitializeOrder, validateOrder, takeOrder, initCancelOrder, deliverOrder, revertDispute, createDispute, refundProposalDispute, acceptDisputeProposal, acceptCostDisputeProposal, createFullAcceptedRefundDispute, costDisputeProposal} = require("./utils/orderMethods");
+const {createOrder, updateInitializeOrder, validateOrder, takeOrder, initCancelOrder, deliverOrder, endOrder} = require("./utils/orderMethods");
+const {revertDispute, createDispute, refundProposalDispute, acceptDisputeProposal, acceptCostDisputeProposal, costDisputeProposal} = require("./utils/disputeMethods");
+const {completeValidationOrder, createToDeliver} = require("./utils/orderHelper");
+const {createFullAcceptedRefundDispute} = require("./utils/disputeHelper");
 const {advanceTimeAndBlock} = require("./utils/timeHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, actors} = require('./utils/constants');
@@ -38,7 +41,18 @@ contract("check delay method of DeliveryContract", accounts => {
 
         await advanceTimeAndBlock(dayAndSecond);
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver),
+            deliverOrder(deliveryInstance, 0, keyHashBuyer.key, deliver),
+            "Delay of the order is passed"
+        );
+    });
+
+    it("Delay can expire in end order method ", async () => {
+        let orderId = 0;
+        await createToDeliver(deliveryInstance, buyer, seller, deliver, orderId);
+
+        await advanceTimeAndBlock(dayAndSecond);
+        await truffleAssert.reverts(
+            endOrder(deliveryInstance, buyer, seller, deliver, orderId, buyer),
             "Delay of the order is passed"
         );
     });

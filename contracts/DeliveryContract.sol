@@ -160,7 +160,7 @@ contract DeliveryContract is EventDelivery {
         emit CancelOrder(deliveryId, false);
     }
 
-    function orderTaken(uint deliveryId, bytes memory sellerKey)
+    function takeOrder(uint deliveryId, bytes memory sellerKey)
     public
     {
         Delivery storage delivery = deliveries[deliveryId];
@@ -173,7 +173,7 @@ contract DeliveryContract is EventDelivery {
         emit OrderTaken(deliveryId);
     }
 
-    function orderDelivered(uint deliveryId, bytes memory buyerKey)
+    function deliverOrder(uint deliveryId, bytes memory buyerKey)
     public
     {
         Delivery storage delivery = deliveries[deliveryId];
@@ -183,11 +183,23 @@ contract DeliveryContract is EventDelivery {
         checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
         delivery.order.orderStage = OrderStageLib.OrderStage.Delivered;
+        emit OrderDelivered(deliveryId);
+    }
+
+    function endOrder(uint deliveryId)
+    public
+    {
+        Delivery storage delivery = deliveries[deliveryId];
+        atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Delivered);
+        require(msg.sender == delivery.order.buyer, "Sender is not the buyer");
+        checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
+
+        delivery.order.orderStage = OrderStageLib.OrderStage.Ended;
 
         withdraws[delivery.order.seller] += delivery.order.sellerPrice + delivery.escrow.escrowSeller;
         withdraws[delivery.order.deliver] += delivery.order.deliverPrice + delivery.escrow.escrowDeliver;
         withdraws[delivery.order.buyer] += delivery.escrow.escrowBuyer;
-        emit OrderDelivered(deliveryId);
+        emit OrderEnded(deliveryId);
     }
 
     function createDispute(uint deliveryId, uint128 buyerReceive)

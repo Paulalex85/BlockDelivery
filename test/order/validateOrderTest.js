@@ -1,5 +1,6 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, validateOrder, completeValidationOrder} = require("../utils/orderMethods");
+const {createOrder, validateOrder} = require("../utils/orderMethods");
+const {completeValidationOrder} = require("../utils/orderHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE, actors} = require('../utils/constants');
 const ESCROW_VALUE = SELLER_PRICE + DELIVER_PRICE;

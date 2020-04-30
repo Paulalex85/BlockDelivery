@@ -1,11 +1,12 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, validateOrder, initCancelOrder, completeValidationOrder, takeOrder, deliverOrder} = require("../utils/orderMethods");
+const {createOrder, validateOrder, initCancelOrder, takeOrder, deliverOrder, endOrder} = require("../utils/orderMethods");
+const {completeValidationOrder} = require("../utils/orderHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {generateKeyHash} = require('../utils/tools');
 const {SELLER_PRICE, DELIVER_PRICE, actors} = require('../utils/constants');
 const ESCROW = SELLER_PRICE + DELIVER_PRICE;
 
-contract("cancel order method of DeliveryContract", accounts => {
+contract("init cancel order method of DeliveryContract", accounts => {
 
     let deliveryInstance, buyer, seller, deliver;
 
@@ -77,18 +78,24 @@ contract("cancel order method of DeliveryContract", accounts => {
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         await initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver);
 
+        let orderId = 0;
         await truffleAssert.reverts(
-            completeValidationOrder(deliveryInstance, buyer, seller, deliver, 0),
+            completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId),
             "The order isn't at the required stage"
         );
 
         await truffleAssert.reverts(
-            takeOrder(deliveryInstance, 0, generateKeyHash().key, deliver),
+            takeOrder(deliveryInstance, orderId, generateKeyHash().key, deliver),
             "The order isn't at the required stage"
         );
 
         await truffleAssert.reverts(
-            deliverOrder(deliveryInstance, buyer, seller, deliver, 0, generateKeyHash().key, deliver),
+            deliverOrder(deliveryInstance, orderId, generateKeyHash().key, deliver),
+            "The order isn't at the required stage"
+        );
+
+        await truffleAssert.reverts(
+            endOrder(deliveryInstance, buyer, seller, deliver, orderId, buyer),
             "The order isn't at the required stage"
         );
     });
@@ -108,7 +115,7 @@ contract("cancel order method of DeliveryContract", accounts => {
             "The order isn't at the required stage"
         );
 
-        await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
+        await deliverOrder(deliveryInstance, 0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             initCancelOrder(deliveryInstance, buyer, seller, deliver, deliver),
             "The order isn't at the required stage"

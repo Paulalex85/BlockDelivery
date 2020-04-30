@@ -1,5 +1,8 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, completeValidationOrder, takeOrder, createFullAcceptedRefundDispute, createDispute, costDisputeProposal, deliverOrder} = require("../utils/orderMethods");
+const {createOrder, takeOrder, deliverOrder} = require("../utils/orderMethods");
+const {createDispute, costDisputeProposal} = require("../utils/disputeMethods");
+const {completeValidationOrder} = require("../utils/orderHelper");
+const {createFullAcceptedRefundDispute} = require("../utils/disputeHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE} = require('../utils/constants');
 const {logContract} = require('../utils/tools');
@@ -70,7 +73,7 @@ contract("costDisputeProposal method of DeliveryContract", accounts => {
             "Order should be Cost Repartition stage"
         );
 
-        await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
+        await deliverOrder(deliveryInstance,  0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             costDisputeProposal(deliveryInstance, -SELLER_PRICE, -DELIVER_PRICE, seller),
             "Order should be Cost Repartition stage"

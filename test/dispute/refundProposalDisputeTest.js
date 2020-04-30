@@ -1,5 +1,7 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, completeValidationOrder, takeOrder, createDispute, deliverOrder, refundProposalDispute} = require("../utils/orderMethods");
+const {createOrder, takeOrder, deliverOrder} = require("../utils/orderMethods");
+const {createDispute, refundProposalDispute} = require("../utils/disputeMethods");
+const {completeValidationOrder} = require("../utils/orderHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE} = require('../utils/constants');
 
@@ -97,7 +99,7 @@ contract("refundProposalDispute method of DeliveryContract", accounts => {
             "The order isn't at the required stage"
         );
 
-        await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
+        await deliverOrder(deliveryInstance,  0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             refundProposalDispute(deliveryInstance, buyer),
             "The order isn't at the required stage"

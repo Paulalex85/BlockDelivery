@@ -27,6 +27,10 @@ contract EventDelivery {
         uint256 indexed orderId
     );
 
+    event OrderEnded(
+        uint256 indexed orderId
+    );
+
     event CancelOrder(
         uint256 indexed orderId,
         bool startedOrder

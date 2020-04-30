@@ -1,5 +1,6 @@
 const assert = require('assert');
-const {fullDeliveredOrder, withdrawBalance} = require("./utils/orderMethods");
+const {withdrawBalance} = require("./utils/withdrawMethods");
+const {fullDeliveredOrder} = require("./utils/orderHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE} = require('./utils/constants');
 const ESCROW = SELLER_PRICE + DELIVER_PRICE;

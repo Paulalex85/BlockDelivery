@@ -1,7 +1,9 @@
 const truffleAssert = require('truffle-assertions');
-const {createOrder, completeValidationOrder, takeOrder, createDispute, deliverOrder, revertDispute, createFullAcceptedRefundDispute} = require("../utils/orderMethods");
+const {createOrder, takeOrder, deliverOrder} = require("../utils/orderMethods");
+const {createDispute, revertDispute} = require("../utils/disputeMethods");
+const {completeValidationOrder} = require("../utils/orderHelper");
+const {createFullAcceptedRefundDispute} = require("../utils/disputeHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
-const {SELLER_PRICE, DELIVER_PRICE} = require('../utils/constants');
 
 contract("revertDispute method of DeliveryContract", accounts => {
 
@@ -12,6 +14,17 @@ contract("revertDispute method of DeliveryContract", accounts => {
         buyer = accounts[0];
         seller = accounts[1];
         deliver = accounts[2];
+    });
+
+    it("Can revert a dispute and re create one ", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        let orderId = 0;
+
+        let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
+        await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
+        await createDispute(deliveryInstance, buyer);
+        await revertDispute(deliveryInstance, buyer);
+        await createDispute(deliveryInstance, buyer);
     });
 
     it("Buyer can revert a dispute ", async () => {
@@ -77,7 +90,7 @@ contract("revertDispute method of DeliveryContract", accounts => {
             "Order should be Refund Determination stage"
         );
 
-        await deliverOrder(deliveryInstance, buyer, seller, deliver, 0, keyHashBuyer.key, deliver);
+        await deliverOrder(deliveryInstance,  0, keyHashBuyer.key, deliver);
         await truffleAssert.reverts(
             revertDispute(deliveryInstance, buyer),
             "Order should be Refund Determination stage"
