@@ -93,7 +93,7 @@ async function acceptDisputeProposal(deliveryInstance, shouldBeCostRepartition, 
     }, 'AcceptProposal should be emitted with correct parameters');
 }
 
-async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalance, sender, orderId = 0, shouldAddEscrow = 0, msgValue = 0) {
+async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalance, sender, orderId = 0, shouldAddEscrow = 0, msgValue = 0, withdrawShouldBe = 0) {
     let dispute = await deliveryInstance.getDispute.call(orderId);
     let order = await deliveryInstance.getOrder.call(orderId);
     let escrow = await deliveryInstance.getEscrow.call(orderId);
@@ -103,6 +103,9 @@ async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalan
         deliverBalance,
         {from: sender, value: msgValue}
     );
+
+    let withdrawBalance = await deliveryInstance.withdraws.call(sender);
+    assert.strictEqual(parseInt(withdrawBalance), withdrawShouldBe, "Wrong withdraw balance");
 
     if (sender === order.deliver) {
         await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, true, dispute.previousStage, sellerBalance, deliverBalance);

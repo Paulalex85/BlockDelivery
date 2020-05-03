@@ -50,9 +50,8 @@ async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, s
     await checkEscrowCreationData(deliveryInstance, orderId, delayEscrow, escrowBuyer, escrowSeller, escrowDeliver);
 }
 
-async function validateOrder(deliveryInstance, typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation) {
+async function validateOrder(deliveryInstance, typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation, withdrawShouldBe = 0) {
     let keyHash = generateKeyHash();
-
     let tx = "";
     if (typeValidation === actors.SELLER || typeValidation === actors.BUYER) {
         tx = await deliveryInstance.validateOrder(
@@ -67,6 +66,8 @@ async function validateOrder(deliveryInstance, typeValidation, sender, amountEth
             {from: sender, value: amountEth}
         );
     }
+    let withdrawBalance = await deliveryInstance.withdraws.call(sender);
+    assert.strictEqual(parseInt(withdrawBalance), withdrawShouldBe, "Wrong withdraw balance");
 
     truffleAssert.eventEmitted(tx, 'OrderValidate', (ev) => {
         return ev.orderId.toNumber() === orderId

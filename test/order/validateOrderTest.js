@@ -1,6 +1,6 @@
 const truffleAssert = require('truffle-assertions');
 const {createOrder, validateOrder} = require("../utils/orderMethods");
-const {completeValidationOrder} = require("../utils/orderHelper");
+const {completeValidationOrder, validationWithdrawTest, increaseWithdraw} = require("../utils/orderHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
 const {SELLER_PRICE, DELIVER_PRICE, actors} = require('../utils/constants');
 const ESCROW_VALUE = SELLER_PRICE + DELIVER_PRICE;
@@ -76,16 +76,18 @@ contract("validate methods of DeliveryContract", accounts => {
     });
 
     it("Buyer can validate the order with too much eth", async () => {
+        let moreEth = 1000000;
         await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
         await validateOrder(deliveryInstance,
             actors.BUYER,
             buyer,
-            SELLER_PRICE + DELIVER_PRICE + ESCROW_VALUE + 1000000,
+            SELLER_PRICE + DELIVER_PRICE + ESCROW_VALUE + moreEth,
             0,
             false,
             true,
             false,
-            false);
+            false,
+            moreEth);
     });
 
     it("Buyer can validate with half the delivery cost", async () => {
@@ -374,4 +376,31 @@ contract("validate methods of DeliveryContract", accounts => {
             "The order isn't at the required stage"
         );
     });
+
+    it("Buyer can use the withdraw to pay", async () => {
+        await validationWithdrawTest(deliveryInstance, buyer, seller, deliver, ESCROW_VALUE, 0, 0);
+    });
+
+    it("Buyer can use the withdraw to pay but need to add the half", async () => {
+        await validationWithdrawTest(deliveryInstance, buyer, seller, deliver, ESCROW_VALUE, ESCROW_VALUE, 0, ESCROW_VALUE);
+    });
+
+    it("Buyer can use the withdraw to pay and there will be withdraw left", async () => {
+        await validationWithdrawTest(deliveryInstance, buyer, seller, deliver, ESCROW_VALUE * 2, 0, ESCROW_VALUE);
+    });
+
+    it("Buyer can use the withdraw to pay but need to send the rest", async () => {
+        await truffleAssert.reverts(
+            validationWithdrawTest(deliveryInstance, buyer, seller, deliver, ESCROW_VALUE, 0, 0, ESCROW_VALUE),
+            "The value send isn't enough"
+        );
+    });
+
+    it("Buyer can use the withdraw to pay but need to send the rest - 2", async () => {
+        await truffleAssert.reverts(
+            validationWithdrawTest(deliveryInstance, buyer, seller, deliver, ESCROW_VALUE, ESCROW_VALUE - 100, 0, ESCROW_VALUE),
+            "The value send isn't enough"
+        );
+    });
+
 });
