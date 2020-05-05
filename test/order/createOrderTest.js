@@ -9,7 +9,7 @@ contract("createOrder method of DeliveryContract", accounts => {
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
-        buyer = accounts[0];
+        buyer = accounts[3];
         seller = accounts[1];
         deliver = accounts[2];
     });
@@ -33,7 +33,7 @@ contract("createOrder method of DeliveryContract", accounts => {
 
     it("Other account can't create account if the're not actor", async () => {
         await truffleAssert.reverts(
-            createOrder(deliveryInstance, buyer, seller, deliver, accounts[3])
+            createOrder(deliveryInstance, buyer, seller, deliver, accounts[9])
         );
     });
 

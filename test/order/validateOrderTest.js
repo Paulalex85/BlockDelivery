@@ -11,7 +11,7 @@ contract("validate methods of DeliveryContract", accounts => {
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
-        buyer = accounts[0];
+        buyer = accounts[3];
         seller = accounts[1];
         deliver = accounts[2];
     });

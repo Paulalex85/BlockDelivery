@@ -3,7 +3,7 @@ const {withdrawBalance} = require("./utils/withdrawMethods");
 const {fullDeliveredOrder} = require("./utils/orderHelper");
 const {createOrder, validateOrder, endOrder, deliverOrder, takeOrder} = require("./utils/orderMethods");
 const DeliveryContract = artifacts.require("DeliveryContract");
-const {SELLER_PRICE, DELIVER_PRICE, DEFAULT_ESCROW_VALUE,actors} = require('./utils/constants');
+const {SELLER_PRICE, DELIVER_PRICE, DEFAULT_ESCROW_VALUE, actors} = require('./utils/constants');
 
 contract("withdraw balance method of DeliveryContract", accounts => {
 
@@ -11,7 +11,7 @@ contract("withdraw balance method of DeliveryContract", accounts => {
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
-        buyer = accounts[0];
+        buyer = accounts[3];
         seller = accounts[1];
         deliver = accounts[2];
     });
@@ -47,7 +47,7 @@ contract("withdraw balance method of DeliveryContract", accounts => {
             true,
             true,
             false,
-            SELLER_PRICE);
+            SELLER_PRICE * 0.99);
         await validateOrder(deliveryInstance,
             actors.DELIVER,
             deliver,
@@ -57,7 +57,7 @@ contract("withdraw balance method of DeliveryContract", accounts => {
             true,
             true,
             true,
-            DELIVER_PRICE);
+            DELIVER_PRICE * 0.99);
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await deliverOrder(deliveryInstance, orderId, keyHashBuyer.key, deliver);
         await endOrder(deliveryInstance, buyer, seller, deliver, orderId, buyer);
@@ -66,8 +66,8 @@ contract("withdraw balance method of DeliveryContract", accounts => {
         let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
         let withdrawBalanceBuyer = await deliveryInstance.withdraws.call(buyer);
 
-        assert.strictEqual(parseInt(withdrawBalanceSeller), SELLER_PRICE * 2 + DEFAULT_ESCROW_VALUE * 2, "Seller withdraw balance should increase");
-        assert.strictEqual(parseInt(withdrawBalanceDeliver), DELIVER_PRICE * 2 + DEFAULT_ESCROW_VALUE * 3, "Deliver withdraw balance should increase");
+        assert.strictEqual(parseInt(withdrawBalanceSeller), (SELLER_PRICE * 2 * 0.99) + DEFAULT_ESCROW_VALUE * 2, "Seller withdraw balance should increase");
+        assert.strictEqual(parseInt(withdrawBalanceDeliver), (DELIVER_PRICE * 2 * 0.99) + DEFAULT_ESCROW_VALUE * 3, "Deliver withdraw balance should increase");
         assert.strictEqual(parseInt(withdrawBalanceBuyer), DEFAULT_ESCROW_VALUE, "Buyer withdraw balance should increase");
 
         await withdrawBalance(deliveryInstance, buyer);

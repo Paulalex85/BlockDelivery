@@ -11,7 +11,7 @@ contract("revertDispute method of DeliveryContract", accounts => {
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
-        buyer = accounts[0];
+        buyer = accounts[3];
         seller = accounts[1];
         deliver = accounts[2];
     });
@@ -55,7 +55,7 @@ contract("revertDispute method of DeliveryContract", accounts => {
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await createDispute(deliveryInstance, deliver);
         await truffleAssert.reverts(
-            revertDispute(deliveryInstance, accounts[3]),
+            revertDispute(deliveryInstance, accounts[9]),
             "Should be an actor of the order"
         );
     });

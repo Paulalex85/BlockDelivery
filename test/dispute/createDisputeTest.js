@@ -11,7 +11,7 @@ contract("createDispute method of DeliveryContract", accounts => {
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
-        buyer = accounts[0];
+        buyer = accounts[3];
         seller = accounts[1];
         deliver = accounts[2];
     });
@@ -76,7 +76,7 @@ contract("createDispute method of DeliveryContract", accounts => {
         let {keyHashSeller, keyHashBuyer} = await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await takeOrder(deliveryInstance, orderId, keyHashSeller.key, deliver);
         await truffleAssert.reverts(
-            createDispute(deliveryInstance, accounts[3]),
+            createDispute(deliveryInstance, accounts[9]),
             "Should be an actor of the order"
         );
     });

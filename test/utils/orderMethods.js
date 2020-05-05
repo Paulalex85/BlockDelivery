@@ -128,9 +128,11 @@ async function deliverOrder(deliveryInstance, orderId, key, sender) {
 
 async function endOrder(deliveryInstance, buyer, seller, deliver, orderId, sender) {
     let escrow = await deliveryInstance.getEscrow.call(orderId);
+    let owner = await deliveryInstance.owner.call();
     let withdrawBalanceSellerBefore = await deliveryInstance.withdraws.call(seller);
     let withdrawBalanceDeliverBefore = await deliveryInstance.withdraws.call(deliver);
     let withdrawBalanceBuyerBefore = await deliveryInstance.withdraws.call(buyer);
+    let withdrawBalanceOwnerBefore = await deliveryInstance.withdraws.call(owner);
 
     let tx = await deliveryInstance.endOrder(
         orderId,
@@ -147,10 +149,12 @@ async function endOrder(deliveryInstance, buyer, seller, deliver, orderId, sende
     let withdrawBalanceSeller = await deliveryInstance.withdraws.call(seller);
     let withdrawBalanceDeliver = await deliveryInstance.withdraws.call(deliver);
     let withdrawBalanceBuyer = await deliveryInstance.withdraws.call(buyer);
+    let withdrawBalanceOwner = await deliveryInstance.withdraws.call(owner);
 
-    assert.strictEqual(parseInt(order.sellerPrice) + parseInt(escrow.escrowSeller) + parseInt(withdrawBalanceSellerBefore), parseInt(withdrawBalanceSeller), "Withdraw balance for the seller is wrong");
-    assert.strictEqual(parseInt(order.deliverPrice) + parseInt(escrow.escrowDeliver) + parseInt(withdrawBalanceDeliverBefore), parseInt(withdrawBalanceDeliver), "Withdraw balance for the deliver is wrong");
+    assert.strictEqual(parseInt(order.sellerPrice) * 0.99 + parseInt(escrow.escrowSeller) + parseInt(withdrawBalanceSellerBefore), parseInt(withdrawBalanceSeller), "Withdraw balance for the seller is wrong");
+    assert.strictEqual(parseInt(order.deliverPrice) * 0.99 + parseInt(escrow.escrowDeliver) + parseInt(withdrawBalanceDeliverBefore), parseInt(withdrawBalanceDeliver), "Withdraw balance for the deliver is wrong");
     assert.strictEqual(parseInt(escrow.escrowBuyer) + parseInt(withdrawBalanceBuyerBefore), parseInt(withdrawBalanceBuyer), "Withdraw balance for the buyer is wrong");
+    assert.strictEqual(parseInt(order.sellerPrice) * 0.01 + parseInt(order.deliverPrice) * 0.01 + parseInt(withdrawBalanceOwnerBefore), parseInt(withdrawBalanceOwner), "Withdraw balance for the owner is wrong");
 }
 
 

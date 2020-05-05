@@ -11,6 +11,7 @@ contract DeliveryContract is EventDelivery {
     DeliveryLib.Delivery[] deliveries;
     mapping(uint => DisputeLib.Dispute) public disputes;
     mapping(address => uint128) public withdraws;
+    address public owner = msg.sender;
 
     function createOrder(
         address[3] memory _users,
@@ -191,9 +192,13 @@ contract DeliveryContract is EventDelivery {
 
         delivery.order.orderStage = OrderStageLib.OrderStage.Ended;
 
-        withdraws[delivery.order.seller] += delivery.order.sellerPrice + delivery.escrow.escrowSeller;
-        withdraws[delivery.order.deliver] += delivery.order.deliverPrice + delivery.escrow.escrowDeliver;
+        uint128 sellerFee = delivery.order.sellerPrice / 100;
+        uint128 delivererFee = delivery.order.deliverPrice / 100;
+
+        withdraws[delivery.order.seller] += delivery.order.sellerPrice + delivery.escrow.escrowSeller - sellerFee;
+        withdraws[delivery.order.deliver] += delivery.order.deliverPrice + delivery.escrow.escrowDeliver - delivererFee;
         withdraws[delivery.order.buyer] += delivery.escrow.escrowBuyer;
+        withdraws[owner] += sellerFee + delivererFee;
         emit OrderEnded(deliveryId);
     }
 
@@ -316,6 +321,13 @@ contract DeliveryContract is EventDelivery {
         uint balance = withdraws[msg.sender];
         withdraws[msg.sender] = 0;
         msg.sender.transfer(balance);
+    }
+
+    function updateOwner(address newOwner)
+    external
+    {
+        require(msg.sender == owner, "Not the owner");
+        owner = newOwner;
     }
 
     function userValueWithdraw(address user, uint128 cost)
