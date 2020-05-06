@@ -111,11 +111,13 @@ contract DeliveryContract is EventDelivery {
         atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
 
         if (msg.sender == delivery.order.buyer) {
+            require(hash > 0, "Should set hash");
             require(delivery.order.buyerValidation == false, "Buyer already validate");
             require(userValueWithdraw(delivery.order.buyer, buyerPay(delivery)), "The value send isn't enough");
             delivery.order.buyerValidation = true;
             delivery.order.buyerHash = hash;
         } else if (msg.sender == delivery.order.seller) {
+            require(hash > 0, "Should set hash");
             require(delivery.order.sellerValidation == false, "Seller already validate");
             require(userValueWithdraw(delivery.order.seller, sellerPay(delivery)), "The value send isn't enough");
             delivery.order.sellerValidation = true;

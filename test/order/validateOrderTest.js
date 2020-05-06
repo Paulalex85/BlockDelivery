@@ -403,4 +403,54 @@ contract("validate methods of DeliveryContract", accounts => {
         );
     });
 
+    it("Buyer can't send an empty hash", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await truffleAssert.reverts(
+            validateOrder(deliveryInstance,
+                actors.BUYER,
+                buyer,
+                SELLER_PRICE + DELIVER_PRICE + ESCROW_VALUE,
+                0,
+                false,
+                true,
+                false,
+                false,
+                undefined,
+                '0x0'),
+            "Should set hash"
+        );
+    });
+
+    it("Seller can't send an empty hash", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await truffleAssert.reverts(
+            validateOrder(deliveryInstance,
+                actors.SELLER,
+                seller,
+                ESCROW_VALUE * 2,
+                0,
+                false,
+                false,
+                true,
+                false,
+                undefined,
+                '0x0'),
+            "Should set hash"
+        );
+    });
+
+    it("Deliver can send an empty hash", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await validateOrder(deliveryInstance,
+            actors.DELIVER,
+            deliver,
+            ESCROW_VALUE * 3,
+            0,
+            false,
+            false,
+            false,
+            true,
+            undefined,
+            '0x0');
+    });
 });

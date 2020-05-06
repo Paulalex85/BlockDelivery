@@ -50,13 +50,17 @@ async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, s
     await checkEscrowCreationData(deliveryInstance, orderId, delayEscrow, escrowBuyer, escrowSeller, escrowDeliver);
 }
 
-async function validateOrder(deliveryInstance, typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation, withdrawShouldBe = 0) {
+async function validateOrder(deliveryInstance, typeValidation, sender, amountEth, orderId, shouldBeStarted, buyerValidation, sellerValidation, deliverValidation, withdrawShouldBe = 0, hash = undefined) {
     let keyHash = generateKeyHash();
+    let hashGenerated = keyHash.hash;
+    if (hash !== undefined) {
+        hashGenerated = hash;
+    }
     let tx = "";
     if (typeValidation === actors.SELLER || typeValidation === actors.BUYER) {
         tx = await deliveryInstance.validateOrder(
             orderId,
-            keyHash.hash,
+            hashGenerated,
             {from: sender, value: amountEth}
         );
     } else if (typeValidation === actors.DELIVER) {
