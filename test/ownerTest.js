@@ -44,4 +44,12 @@ contract("Owner test method of DeliveryContract", accounts => {
             "Not the owner"
         );
     });
+
+    it("Can't change the owner if from another address ", async () => {
+        let newOwner = '0x0000000000000000000000000000000000000000';
+        await truffleAssert.reverts(
+            updateOwner(deliveryInstance, newOwner,  accounts[0]),
+            "New address need to be defined"
+        );
+    });
 });

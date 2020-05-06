@@ -327,6 +327,7 @@ contract DeliveryContract is EventDelivery {
     external
     {
         require(msg.sender == owner, "Not the owner");
+        require(newOwner != address(0), "New address need to be defined");
         owner = newOwner;
     }
 
