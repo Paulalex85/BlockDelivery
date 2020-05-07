@@ -93,14 +93,13 @@ async function acceptDisputeProposal(deliveryInstance, shouldBeCostRepartition, 
     }, 'AcceptProposal should be emitted with correct parameters');
 }
 
-async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalance, sender, orderId = 0, shouldAddEscrow = 0, msgValue = 0, withdrawShouldBe = 0) {
+async function costDisputeProposal(deliveryInstance, sellerBalance, sender, orderId = 0, shouldAddEscrow = 0, msgValue = 0, withdrawShouldBe = 0) {
     let dispute = await deliveryInstance.getDispute.call(orderId);
     let order = await deliveryInstance.getOrder.call(orderId);
     let escrow = await deliveryInstance.getEscrow.call(orderId);
     let tx = await deliveryInstance.costDisputeProposal(
         orderId,
         sellerBalance,
-        deliverBalance,
         {from: sender, value: msgValue}
     );
 
@@ -108,10 +107,10 @@ async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalan
     assert.strictEqual(parseInt(withdrawBalance), withdrawShouldBe, "Wrong withdraw balance");
 
     if (sender === order.deliver) {
-        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, true, dispute.previousStage, sellerBalance, deliverBalance);
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, false, true, dispute.previousStage, sellerBalance);
         await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller), parseInt(escrow.escrowDeliver) + shouldAddEscrow);
     } else if (sender === order.seller) {
-        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, false, dispute.previousStage, sellerBalance, deliverBalance);
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, false, dispute.previousStage, sellerBalance);
         await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller) + shouldAddEscrow, parseInt(escrow.escrowDeliver));
     } else {
         assert.ok(false, "Wrong sender")
@@ -119,8 +118,7 @@ async function costDisputeProposal(deliveryInstance, sellerBalance, deliverBalan
 
     truffleAssert.eventEmitted(tx, 'DisputeCostProposal', (ev) => {
         return ev.orderId.toNumber() === orderId &&
-            parseInt(ev.sellerBalance) === sellerBalance &&
-            parseInt(ev.deliverBalance) === deliverBalance;
+            parseInt(ev.sellerBalance) === sellerBalance;
     }, 'DisputeCostProposal should be emitted with correct parameters');
 }
 
@@ -140,10 +138,10 @@ async function acceptCostDisputeProposal(deliveryInstance, sender, addWithdrawSe
     assert.strictEqual(withdrawAfter.buyer, withdrawBefore.buyer, "Wrong buyer withdraw balance");
 
     if (sender === order.deliver) {
-        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, true, dispute.previousStage, parseInt(dispute.sellerBalance), parseInt(dispute.deliverBalance));
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, true, dispute.previousStage, parseInt(dispute.sellerBalance));
         await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller), parseInt(escrow.escrowDeliver) + shouldAddEscrow);
     } else if (sender === order.seller) {
-        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, true, dispute.previousStage, parseInt(dispute.sellerBalance), parseInt(dispute.deliverBalance));
+        await checkDisputeCreationData(deliveryInstance, orderId, parseInt(dispute.buyerReceive), true, true, true, dispute.previousStage, parseInt(dispute.sellerBalance));
         await checkEscrowCreationData(deliveryInstance, orderId, parseInt(escrow.delayEscrow), parseInt(escrow.escrowBuyer), parseInt(escrow.escrowSeller) + shouldAddEscrow, parseInt(escrow.escrowDeliver));
     } else {
         assert.ok(false, "Wrong sender")
@@ -174,12 +172,11 @@ async function revertDispute(deliveryInstance, sender, orderId = 0) {
     }, 'RevertDispute should be emitted with correct parameters');
 }
 
-async function checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, buyerAcceptEscrow, sellerAcceptEscrow, deliverAcceptEscrow, previousStage, sellerBalance = 0, deliverBalance = 0) {
+async function checkDisputeCreationData(deliveryInstance, orderId, buyerReceive, buyerAcceptEscrow, sellerAcceptEscrow, deliverAcceptEscrow, previousStage, sellerBalance = 0) {
     let dispute = await deliveryInstance.getDispute.call(orderId);
 
     assert.strictEqual(parseInt(dispute.buyerReceive), buyerReceive, "Should be this buyerReceive : " + buyerReceive);
     assert.strictEqual(parseInt(dispute.sellerBalance), sellerBalance, "Should be this sellerBalance : " + sellerBalance);
-    assert.strictEqual(parseInt(dispute.deliverBalance), deliverBalance, "Should be this deliverBalance : " + deliverBalance);
     assert.strictEqual(parseInt(dispute.previousStage), parseInt(previousStage), "Should be previous stage : " + previousStage);
     assert.strictEqual(dispute.buyerAcceptEscrow, buyerAcceptEscrow, "buyerAcceptEscrow should be : " + buyerAcceptEscrow);
     assert.strictEqual(dispute.sellerAcceptEscrow, sellerAcceptEscrow, "sellerAcceptEscrow should be : " + sellerAcceptEscrow);

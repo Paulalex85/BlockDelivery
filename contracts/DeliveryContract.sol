@@ -222,11 +222,11 @@ contract DeliveryContract is EventDelivery {
         DisputeLib.acceptDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId);
     }
 
-    function costDisputeProposal(uint deliveryId, int128 sellerBalance, int128 deliverBalance)
+    function costDisputeProposal(uint deliveryId, int128 sellerBalance)
     payable
     public
     {
-        DisputeLib.costDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId, sellerBalance, deliverBalance);
+        DisputeLib.costDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId, sellerBalance);
     }
 
     function acceptCostProposal(uint deliveryId)
@@ -300,7 +300,6 @@ contract DeliveryContract is EventDelivery {
     returns (
         uint128 buyerReceive,
         int128 sellerBalance,
-        int128 deliverBalance,
         bool buyerAcceptEscrow,
         bool sellerAcceptEscrow,
         bool deliverAcceptEscrow,
@@ -310,7 +309,6 @@ contract DeliveryContract is EventDelivery {
 
         buyerReceive = dispute.buyerReceive;
         sellerBalance = dispute.sellerBalance;
-        deliverBalance = dispute.deliverBalance;
         buyerAcceptEscrow = dispute.buyerAcceptEscrow;
         sellerAcceptEscrow = dispute.sellerAcceptEscrow;
         deliverAcceptEscrow = dispute.deliverAcceptEscrow;

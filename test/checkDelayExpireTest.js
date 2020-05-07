@@ -5,13 +5,12 @@ const {completeValidationOrder, createToDeliver} = require("./utils/orderHelper"
 const {createFullAcceptedRefundDispute} = require("./utils/disputeHelper");
 const {advanceTimeAndBlock} = require("./utils/timeHelper");
 const DeliveryContract = artifacts.require("DeliveryContract");
-const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, actors} = require('./utils/constants');
+const {SELLER_PRICE, DELIVER_PRICE, DELAY_ORDER, actors, DEFAULT_ESCROW_VALUE} = require('./utils/constants');
 
 contract("check delay method of DeliveryContract", accounts => {
 
     let deliveryInstance, buyer, seller, deliver;
     let dayAndSecond = 60 * 60 * 24 + 1;
-    let defaultEscrow = DELIVER_PRICE + SELLER_PRICE;
 
     beforeEach(async function () {
         deliveryInstance = await DeliveryContract.new();
@@ -104,7 +103,7 @@ contract("check delay method of DeliveryContract", accounts => {
         await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver);
         await advanceTimeAndBlock(dayAndSecond);
         await truffleAssert.reverts(
-            costDisputeProposal(deliveryInstance, -SELLER_PRICE, -DELIVER_PRICE, seller),
+            costDisputeProposal(deliveryInstance, -SELLER_PRICE + (DEFAULT_ESCROW_VALUE / 2), seller),
             "Delay of the order is passed"
         );
     });
@@ -115,10 +114,10 @@ contract("check delay method of DeliveryContract", accounts => {
 
         await completeValidationOrder(deliveryInstance, buyer, seller, deliver, orderId);
         await createFullAcceptedRefundDispute(deliveryInstance, buyer, seller, deliver);
-        await costDisputeProposal(deliveryInstance, -SELLER_PRICE, -DELIVER_PRICE, seller);
+        await costDisputeProposal(deliveryInstance, -SELLER_PRICE + (DEFAULT_ESCROW_VALUE / 2), seller);
         await advanceTimeAndBlock(dayAndSecond);
         await truffleAssert.reverts(
-            acceptCostDisputeProposal(deliveryInstance, seller, defaultEscrow * 2, defaultEscrow * 3),
+            acceptCostDisputeProposal(deliveryInstance, seller, DEFAULT_ESCROW_VALUE * 2.5),
             "Delay of the order is passed"
         );
     });
@@ -144,7 +143,7 @@ contract("check delay method of DeliveryContract", accounts => {
         await validateOrder(deliveryInstance,
             actors.BUYER,
             buyer,
-            SELLER_PRICE + DELIVER_PRICE + defaultEscrow,
+            SELLER_PRICE + DELIVER_PRICE + DEFAULT_ESCROW_VALUE,
             0,
             false,
             true,
@@ -154,7 +153,7 @@ contract("check delay method of DeliveryContract", accounts => {
         await validateOrder(deliveryInstance,
             actors.SELLER,
             seller,
-            defaultEscrow * 2,
+            DEFAULT_ESCROW_VALUE * 2,
             0,
             false,
             true,
@@ -169,7 +168,7 @@ contract("check delay method of DeliveryContract", accounts => {
         await validateOrder(deliveryInstance,
             actors.DELIVER,
             deliver,
-            defaultEscrow * 3,
+            DEFAULT_ESCROW_VALUE * 3,
             orderId,
             false,
             false,

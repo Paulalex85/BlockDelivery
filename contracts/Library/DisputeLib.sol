@@ -8,7 +8,6 @@ library DisputeLib {
     struct Dispute {
         uint128 buyerReceive;
         int128 sellerBalance;
-        int128 deliverBalance;
         bool buyerAcceptEscrow;
         bool sellerAcceptEscrow;
         bool deliverAcceptEscrow;
@@ -18,7 +17,7 @@ library DisputeLib {
     event DisputeStarted(uint256 indexed orderId, uint128 buyerProposal);
     event DisputeRefundProposal(uint256 indexed orderId, uint128 buyerProposal);
     event AcceptProposal(uint256 indexed orderId, address user, bool proposalAccepted);
-    event DisputeCostProposal(uint256 indexed orderId, int128 sellerBalance, int128 deliverBalance);
+    event DisputeCostProposal(uint256 indexed orderId, int128 sellerBalance);
     event CancelOrder(uint256 indexed orderId, bool startedOrder);
     event RevertDispute(uint256 indexed orderId, address user);
 
@@ -33,7 +32,6 @@ library DisputeLib {
         Dispute memory dispute = Dispute({
             buyerReceive : buyerReceive,
             sellerBalance : 0,
-            deliverBalance : 0,
             buyerAcceptEscrow : msg.sender == delivery.order.buyer,
             sellerAcceptEscrow : msg.sender == delivery.order.seller,
             deliverAcceptEscrow : msg.sender == delivery.order.deliver,
@@ -107,30 +105,30 @@ library DisputeLib {
         }
     }
 
-    function costDisputeProposal(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, mapping(address => uint128) storage withdraws, uint deliveryId, int128 sellerBalance, int128 deliverBalance)
+    function costDisputeProposal(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, mapping(address => uint128) storage withdraws, uint deliveryId, int128 sellerBalance)
     public
     {
         Dispute storage dispute = disputes[deliveryId];
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
-        require(sellerBalance + deliverBalance + int128(dispute.buyerReceive) == 0, "Cost repartition should be equal to 0");
         checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        dispute.deliverBalance = deliverBalance;
         dispute.sellerBalance = sellerBalance;
 
         if (msg.sender == delivery.order.seller) {
-            delivery.escrow.escrowSeller += checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), sellerBalance);
+            int128 current = sellerBalance - int128(dispute.buyerReceive) / 2;
+            delivery.escrow.escrowSeller += checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), current);
             dispute.sellerAcceptEscrow = true;
             dispute.deliverAcceptEscrow = false;
         } else if (msg.sender == delivery.order.deliver) {
-            delivery.escrow.escrowDeliver += checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), deliverBalance);
+            int128 current = (- sellerBalance) - int128(dispute.buyerReceive) / 2;
+            delivery.escrow.escrowDeliver += checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), current);
             dispute.deliverAcceptEscrow = true;
             dispute.sellerAcceptEscrow = false;
         } else {
             revert("Should be the seller or the deliver of the order");
         }
 
-        emit DisputeCostProposal(deliveryId, sellerBalance, deliverBalance);
+        emit DisputeCostProposal(deliveryId, sellerBalance);
     }
 
     function acceptCostProposal(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, mapping(address => uint128) storage withdraws, uint deliveryId)
@@ -140,13 +138,15 @@ library DisputeLib {
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
         checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
+        int128 currentSeller = dispute.sellerBalance - int128(dispute.buyerReceive) / 2;
+        int128 currentDeliver = (- dispute.sellerBalance) - int128(dispute.buyerReceive) / 2;
         if (msg.sender == delivery.order.seller) {
             require(dispute.deliverAcceptEscrow && !dispute.sellerAcceptEscrow, "Cost Repartition is not defined");
-            delivery.escrow.escrowSeller += checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), dispute.sellerBalance);
+            delivery.escrow.escrowSeller += checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), currentSeller);
             dispute.sellerAcceptEscrow = true;
         } else if (msg.sender == delivery.order.deliver) {
             require(dispute.sellerAcceptEscrow && !dispute.deliverAcceptEscrow, "Cost Repartition is not defined");
-            delivery.escrow.escrowDeliver += checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), dispute.deliverBalance);
+            delivery.escrow.escrowDeliver += checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), currentDeliver);
             dispute.deliverAcceptEscrow = true;
         } else {
             revert("Should be the seller or the deliver of the order");
@@ -154,8 +154,8 @@ library DisputeLib {
 
         delivery.order.orderStage = OrderStageLib.OrderStage.Cancel_Order;
 
-        withdraws[delivery.order.deliver] += uint128(int128(delivery.order.deliverPrice) + int128(delivery.escrow.escrowDeliver) + dispute.deliverBalance);
-        withdraws[delivery.order.seller] += uint128(int128(delivery.order.sellerPrice) + int128(delivery.escrow.escrowSeller) + dispute.sellerBalance);
+        withdraws[delivery.order.deliver] += uint128(int128(delivery.order.deliverPrice) + int128(delivery.escrow.escrowDeliver) + currentDeliver);
+        withdraws[delivery.order.seller] += uint128(int128(delivery.order.sellerPrice) + int128(delivery.escrow.escrowSeller) + currentSeller);
 
         emit CancelOrder(deliveryId, true);
     }
