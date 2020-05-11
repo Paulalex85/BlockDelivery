@@ -13,7 +13,14 @@ module.exports = {
     },
     compilers: {
         solc: {
-            version: "0.6.2"
+            version: "0.6.7"
         }
-    }
+    },
+    mocha: {
+        reporter: 'eth-gas-reporter',
+        reporterOptions: {
+            currency: 'USD'
+        }
+    },
+    plugins: ["solidity-coverage", "truffle-security"]
 };

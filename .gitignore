@@ -1,4 +1,6 @@
 node_modules
 build
+coverage.json
 app/src/contracts
 .DS_Store
+/coverage/

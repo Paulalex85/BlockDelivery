@@ -1,9 +1,13 @@
-pragma solidity >=0.4.21 <0.7.0;
+pragma solidity 0.6.7;
 
 import "./OrderStageLib.sol";
 import "./DeliveryLib.sol";
+import "./SafeMath.sol";
+import "./SignedSafeMath.sol";
 
 library DisputeLib {
+    using SafeMath for uint128;
+    using SignedSafeMath for int128;
 
     struct Dispute {
         uint128 buyerReceive;
@@ -81,13 +85,13 @@ library DisputeLib {
         checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
         if (msg.sender == delivery.order.seller) {
-            require(dispute.sellerAcceptEscrow == false, "Seller already accept dispute");
+            require(!dispute.sellerAcceptEscrow, "Seller already accept dispute");
             dispute.sellerAcceptEscrow = true;
         } else if (msg.sender == delivery.order.deliver) {
-            require(dispute.deliverAcceptEscrow == false, "Deliver already accept dispute");
+            require(!dispute.deliverAcceptEscrow, "Deliver already accept dispute");
             dispute.deliverAcceptEscrow = true;
         } else if (msg.sender == delivery.order.buyer) {
-            require(dispute.buyerAcceptEscrow == false, "Buyer already accept dispute");
+            require(!dispute.buyerAcceptEscrow, "Buyer already accept dispute");
             dispute.buyerAcceptEscrow = true;
         } else {
             revert("Should be an actor of the order");
@@ -97,7 +101,7 @@ library DisputeLib {
             delivery.order.orderStage = OrderStageLib.OrderStage.Dispute_Cost_Repartition;
             dispute.deliverAcceptEscrow = false;
             dispute.sellerAcceptEscrow = false;
-            withdraws[delivery.order.buyer] += delivery.escrow.escrowBuyer + dispute.buyerReceive;
+            withdraws[delivery.order.buyer] = withdraws[delivery.order.buyer].add(delivery.escrow.escrowBuyer).add(dispute.buyerReceive);
 
             emit AcceptProposal(deliveryId, msg.sender, true);
         } else {
@@ -115,13 +119,13 @@ library DisputeLib {
         dispute.sellerBalance = sellerBalance;
 
         if (msg.sender == delivery.order.seller) {
-            int128 current = sellerBalance - int128(dispute.buyerReceive) / 2;
-            delivery.escrow.escrowSeller += checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), current);
+            int128 current = sellerBalance.sub(int128(dispute.buyerReceive) / 2);
+            delivery.escrow.escrowSeller = delivery.escrow.escrowSeller.add(checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), current));
             dispute.sellerAcceptEscrow = true;
             dispute.deliverAcceptEscrow = false;
         } else if (msg.sender == delivery.order.deliver) {
-            int128 current = (- sellerBalance) - int128(dispute.buyerReceive) / 2;
-            delivery.escrow.escrowDeliver += checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), current);
+            int128 current = (- sellerBalance).sub(int128(dispute.buyerReceive) / 2);
+            delivery.escrow.escrowDeliver = delivery.escrow.escrowDeliver.add(checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), current));
             dispute.deliverAcceptEscrow = true;
             dispute.sellerAcceptEscrow = false;
         } else {
@@ -138,15 +142,15 @@ library DisputeLib {
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
         checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        int128 currentSeller = dispute.sellerBalance - int128(dispute.buyerReceive) / 2;
-        int128 currentDeliver = (- dispute.sellerBalance) - int128(dispute.buyerReceive) / 2;
+        int128 currentSeller = dispute.sellerBalance.sub(int128(dispute.buyerReceive) / 2);
+        int128 currentDeliver = (- dispute.sellerBalance).sub(int128(dispute.buyerReceive) / 2);
         if (msg.sender == delivery.order.seller) {
             require(dispute.deliverAcceptEscrow && !dispute.sellerAcceptEscrow, "Cost Repartition is not defined");
-            delivery.escrow.escrowSeller += checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), currentSeller);
+            delivery.escrow.escrowSeller = delivery.escrow.escrowSeller.add(checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), currentSeller));
             dispute.sellerAcceptEscrow = true;
         } else if (msg.sender == delivery.order.deliver) {
             require(dispute.sellerAcceptEscrow && !dispute.deliverAcceptEscrow, "Cost Repartition is not defined");
-            delivery.escrow.escrowDeliver += checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), currentDeliver);
+            delivery.escrow.escrowDeliver = delivery.escrow.escrowDeliver.add(checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), currentDeliver));
             dispute.deliverAcceptEscrow = true;
         } else {
             revert("Should be the seller or the deliver of the order");
@@ -154,8 +158,8 @@ library DisputeLib {
 
         delivery.order.orderStage = OrderStageLib.OrderStage.Cancel_Order;
 
-        withdraws[delivery.order.deliver] += uint128(int128(delivery.order.deliverPrice) + int128(delivery.escrow.escrowDeliver) + currentDeliver);
-        withdraws[delivery.order.seller] += uint128(int128(delivery.order.sellerPrice) + int128(delivery.escrow.escrowSeller) + currentSeller);
+        withdraws[delivery.order.deliver] = withdraws[delivery.order.deliver].add(uint128(int128(delivery.order.deliverPrice.add(delivery.escrow.escrowDeliver)).add(currentDeliver)));
+        withdraws[delivery.order.seller] = withdraws[delivery.order.seller].add(uint128(int128(delivery.order.sellerPrice.add(delivery.escrow.escrowSeller)).add(currentSeller)));
 
         emit CancelOrder(deliveryId, true);
     }
@@ -184,7 +188,7 @@ library DisputeLib {
     view
     internal
     {
-        require(buyerReceive <= order.deliverPrice + order.sellerPrice - order.sellerDeliveryPay, "Buyer can't receive more than he has paid");
+        require(buyerReceive <= order.deliverPrice.add(order.sellerPrice).sub(order.sellerDeliveryPay), "Buyer can't receive more than he has paid");
     }
 
     function checkDelayExpire(uint64 startDate, uint64 delay)
@@ -205,12 +209,12 @@ library DisputeLib {
     internal
     returns (uint128)
     {
-        int128 currentBalance = price + escrow + balance;
+        int128 currentBalance = price.add(escrow).add(balance);
         if (currentBalance < 0) {
             uint128 toAdd = uint128(- currentBalance);
-            require(withdraws[user] + msg.value >= toAdd, "User need to send additional cost");
-            withdraws[user] = withdraws[user] + uint128(msg.value) - toAdd;
-            require(withdraws[user] >= 0, "Withdraw can't be negative");
+            uint128 value = withdraws[user].add(uint128(msg.value));
+            require(value >= toAdd, "User need to send additional cost");
+            withdraws[user] = value.sub(toAdd);
             return toAdd;
         }
         return 0;
