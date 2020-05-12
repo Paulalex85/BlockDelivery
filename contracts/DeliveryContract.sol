@@ -7,8 +7,9 @@ import "./Library/OrderStageLib.sol";
 import "./Library/EscrowLib.sol";
 import "./Library/DeliveryLib.sol";
 import "./Library/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract DeliveryContract is EventDelivery {
+contract DeliveryContract is EventDelivery, Pausable {
     using SafeMath for uint128;
 
     DeliveryLib.Delivery[] deliveries;
@@ -25,6 +26,7 @@ contract DeliveryContract is EventDelivery {
         uint128[3] calldata escrowUsers
     )
     external
+    whenNotPaused
     checkDelayMinimum(delayEscrow)
     checkSellerPayDelivery(sellerDeliveryPay, deliverPrice)
     returns (uint)
@@ -72,6 +74,7 @@ contract DeliveryContract is EventDelivery {
         uint64 delayEscrow,
         uint128[3] calldata escrowUsers)
     external
+    whenNotPaused
     checkDelayMinimum(delayEscrow)
     checkSellerPayDelivery(sellerDeliveryPay, deliverPrice)
     {
@@ -109,6 +112,7 @@ contract DeliveryContract is EventDelivery {
     function validateOrder(uint deliveryId, bytes32 hash)
     payable
     external
+    whenNotPaused
     {
         DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
         DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
@@ -142,6 +146,7 @@ contract DeliveryContract is EventDelivery {
 
     function initializationCancel(uint deliveryId)
     external
+    whenNotPaused
     {
         DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
         DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
@@ -163,6 +168,7 @@ contract DeliveryContract is EventDelivery {
 
     function takeOrder(uint deliveryId, bytes calldata sellerKey)
     external
+    whenNotPaused
     {
         DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
         DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Started);
@@ -176,6 +182,7 @@ contract DeliveryContract is EventDelivery {
 
     function deliverOrder(uint deliveryId, bytes calldata buyerKey)
     external
+    whenNotPaused
     {
         DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
         DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Taken);
@@ -189,6 +196,7 @@ contract DeliveryContract is EventDelivery {
 
     function endOrder(uint deliveryId)
     external
+    whenNotPaused
     {
         DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
         DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Delivered);
@@ -208,19 +216,22 @@ contract DeliveryContract is EventDelivery {
     }
 
     function createDispute(uint deliveryId, uint128 buyerReceive)
-    public
+    external
+    whenNotPaused
     {
         DisputeLib.createDispute(deliveries[deliveryId], disputes, buyerReceive, deliveryId);
     }
 
     function refundProposalDispute(uint deliveryId, uint128 buyerReceive)
-    public
+    external
+    whenNotPaused
     {
         DisputeLib.refundProposalDispute(deliveries[deliveryId], disputes, deliveryId, buyerReceive);
     }
 
     function acceptDisputeProposal(uint deliveryId)
     external
+    whenNotPaused
     {
         DisputeLib.acceptDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId);
     }
@@ -228,6 +239,7 @@ contract DeliveryContract is EventDelivery {
     function costDisputeProposal(uint deliveryId, int128 sellerBalance)
     payable
     external
+    whenNotPaused
     {
         DisputeLib.costDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId, sellerBalance);
     }
@@ -235,12 +247,14 @@ contract DeliveryContract is EventDelivery {
     function acceptCostProposal(uint deliveryId)
     payable
     external
+    whenNotPaused
     {
         DisputeLib.acceptCostProposal(deliveries[deliveryId], disputes, withdraws, deliveryId);
     }
 
     function revertDispute(uint deliveryId)
     external
+    whenNotPaused
     {
         DisputeLib.revertDispute(deliveries[deliveryId], disputes, deliveryId);
     }
@@ -320,6 +334,7 @@ contract DeliveryContract is EventDelivery {
 
     function withdrawBalance()
     external
+    whenNotPaused
     {
         uint balance = withdraws[msg.sender];
         withdraws[msg.sender] = 0;
@@ -329,10 +344,25 @@ contract DeliveryContract is EventDelivery {
 
     function updateOwner(address newOwner)
     external
+    whenNotPaused
+    isOwner
     {
-        require(msg.sender == owner, "Not the owner");
         require(newOwner != address(0), "New address need to be defined");
         owner = newOwner;
+    }
+
+    function pause()
+    external
+    isOwner
+    {
+        _pause();
+    }
+
+    function unpause()
+    external
+    isOwner
+    {
+        _unpause();
     }
 
     function userValueWithdraw(address user, uint128 cost)
@@ -365,6 +395,11 @@ contract DeliveryContract is EventDelivery {
 
     modifier checkSellerPayDelivery(uint128 sellerDeliveryPay, uint128 deliverPrice){
         require(sellerDeliveryPay <= deliverPrice, "Seller can't pay more than the delivery price");
+        _;
+    }
+
+    modifier isOwner(){
+        require(msg.sender == owner, "Not the owner");
         _;
     }
 }

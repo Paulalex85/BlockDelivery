@@ -26,7 +26,7 @@ library DisputeLib {
     event RevertDispute(uint256 indexed orderId, address user);
 
     function createDispute(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, uint128 buyerReceive, uint deliveryId)
-    public
+    external
     {
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Started || delivery.order.orderStage == OrderStageLib.OrderStage.Taken, "Order should be Started or Taken");
         isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
@@ -49,7 +49,7 @@ library DisputeLib {
     }
 
     function refundProposalDispute(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, uint deliveryId, uint128 buyerReceive)
-    public
+    external
     {
         atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Dispute_Refund_Determination);
         checkAmountBuyerReceiveDispute(buyerReceive, delivery.order);
@@ -78,7 +78,7 @@ library DisputeLib {
     }
 
     function acceptDisputeProposal(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, mapping(address => uint128) storage withdraws, uint deliveryId)
-    public
+    external
     {
         Dispute storage dispute = disputes[deliveryId];
         atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Dispute_Refund_Determination);
@@ -110,7 +110,7 @@ library DisputeLib {
     }
 
     function costDisputeProposal(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, mapping(address => uint128) storage withdraws, uint deliveryId, int128 sellerBalance)
-    public
+    external
     {
         Dispute storage dispute = disputes[deliveryId];
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
@@ -136,7 +136,7 @@ library DisputeLib {
     }
 
     function acceptCostProposal(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, mapping(address => uint128) storage withdraws, uint deliveryId)
-    public
+    external
     {
         Dispute storage dispute = disputes[deliveryId];
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
@@ -165,7 +165,7 @@ library DisputeLib {
     }
 
     function revertDispute(DeliveryLib.Delivery storage delivery, mapping(uint => DisputeLib.Dispute) storage disputes, uint deliveryId)
-    public
+    external
     {
         Dispute storage dispute = disputes[deliveryId];
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Refund_Determination, "Order should be Refund Determination stage");
