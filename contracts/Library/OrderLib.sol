@@ -81,15 +81,13 @@ library OrderLib {
         return deliveryId;
     }
 
+
     function updateInitializeOrder(
         DeliveryLib.Delivery storage delivery,
         mapping(address => uint128) storage withdraws,
         uint deliveryId,
-        uint128 sellerPrice,
-        uint128 deliverPrice,
-        uint128 sellerDeliveryPay,
         uint64 delayEscrow,
-        uint128[3] calldata escrowUsers)
+        uint128[6] calldata userData)
     external
     {
         DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
@@ -110,13 +108,13 @@ library OrderLib {
             withdraws[delivery.order.deliver] = withdraws[delivery.order.deliver].add(delivery.escrow.escrowDeliver);
         }
 
-        delivery.order.sellerPrice = sellerPrice;
-        delivery.order.deliverPrice = deliverPrice;
-        delivery.order.sellerDeliveryPay = sellerDeliveryPay;
+        delivery.order.sellerPrice = userData[0];
+        delivery.order.deliverPrice = userData[1];
+        delivery.order.sellerDeliveryPay = userData[2];
         delivery.escrow.delayEscrow = delayEscrow;
-        delivery.escrow.escrowBuyer = escrowUsers[0];
-        delivery.escrow.escrowSeller = escrowUsers[1];
-        delivery.escrow.escrowDeliver = escrowUsers[2];
+        delivery.escrow.escrowBuyer = userData[3];
+        delivery.escrow.escrowSeller = userData[4];
+        delivery.escrow.escrowDeliver = userData[5];
 
         emit OrderUpdated(deliveryId);
     }

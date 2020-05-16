@@ -33,11 +33,8 @@ async function updateInitializeOrder(deliveryInstance, buyer, seller, deliver, s
     let withdrawBefore = await getWithdraw(deliveryInstance, buyer, seller, deliver);
     let tx = await deliveryInstance.updateInitializeOrder(
         orderId,
-        sellerPrice,
-        deliverPrice,
-        sellerDeliveryPay,
         delayEscrow,
-        [escrowBuyer, escrowSeller, escrowDeliver],
+        [sellerPrice, deliverPrice, sellerDeliveryPay, escrowBuyer, escrowSeller, escrowDeliver],
         {from: sender}
     );
 

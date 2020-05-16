@@ -37,20 +37,26 @@ contract DeliveryContract is Pausable, ReentrancyGuard {
         return OrderLib.createOrder(deliveries, users, sellerPrice, deliverPrice, sellerDeliveryPay, delayEscrow, escrowUsers);
     }
 
+    /**
+    * @param userData : 0 = sellerPrice,
+    *                   1 = deliverPrice,
+    *                   2 = sellerDeliveryPay,
+    *                   3 = escrowBuyer,
+    *                   4 = escrowSeller,
+    *                   5 = escrowDeliver,
+    *
+    */
     function updateInitializeOrder(
         uint deliveryId,
-        uint128 sellerPrice,
-        uint128 deliverPrice,
-        uint128 sellerDeliveryPay,
         uint64 delayEscrow,
-        uint128[3] calldata escrowUsers)
+        uint128[6] calldata userData)
     external
     whenNotPaused
     nonReentrant
     checkDelayMinimum(delayEscrow)
-    checkSellerPayDelivery(sellerDeliveryPay, deliverPrice)
+    checkSellerPayDelivery(userData[2], userData[1])
     {
-        return OrderLib.updateInitializeOrder(deliveries[deliveryId], withdraws, deliveryId, sellerPrice, deliverPrice, sellerDeliveryPay, delayEscrow, escrowUsers);
+        return OrderLib.updateInitializeOrder(deliveries[deliveryId], withdraws, deliveryId, delayEscrow, userData);
     }
 
     function validateOrder(uint deliveryId, bytes32 hash)

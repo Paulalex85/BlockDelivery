@@ -25,7 +25,8 @@ module.exports = {
     mocha: {
         reporter: 'eth-gas-reporter',
         reporterOptions: {
-            currency: 'USD'
+            currency: 'USD',
+            gasPrice: 20
         }
     },
     plugins: ["solidity-coverage", "truffle-security"]
