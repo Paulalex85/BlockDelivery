@@ -1,6 +1,5 @@
 pragma solidity 0.6.7;
 
-import "./EventDelivery.sol";
 import "./Library/DisputeLib.sol";
 import "./Library/OrderLib.sol";
 import "./Library/OrderStageLib.sol";
@@ -8,14 +7,17 @@ import "./Library/EscrowLib.sol";
 import "./Library/DeliveryLib.sol";
 import "./Library/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract DeliveryContract is EventDelivery, Pausable {
+contract DeliveryContract is Pausable, ReentrancyGuard {
     using SafeMath for uint128;
 
     DeliveryLib.Delivery[] deliveries;
     mapping(uint => DisputeLib.Dispute) public disputes;
     mapping(address => uint128) public withdraws;
     address public owner = msg.sender;
+
+    event NewOrder(address indexed buyer, address indexed seller, address indexed deliver, uint256 orderId);
 
     function createOrder(
         address[3] calldata users,
@@ -27,43 +29,12 @@ contract DeliveryContract is EventDelivery, Pausable {
     )
     external
     whenNotPaused
+    nonReentrant
     checkDelayMinimum(delayEscrow)
     checkSellerPayDelivery(sellerDeliveryPay, deliverPrice)
     returns (uint)
     {
-        DisputeLib.isActor(msg.sender, users[0], users[1], users[2]);
-        OrderLib.Order memory _order = OrderLib.Order({
-            buyer : users[0],
-            seller : users[1],
-            deliver : users[2],
-            deliverPrice : deliverPrice,
-            sellerPrice : sellerPrice,
-            sellerDeliveryPay : sellerDeliveryPay,
-            orderStage : OrderStageLib.OrderStage.Initialization,
-            startDate : 0,
-            buyerValidation : false,
-            sellerValidation : false,
-            deliverValidation : false,
-            buyerHash : 0,
-            sellerHash : 0
-            });
-
-        EscrowLib.Escrow memory _escrow = EscrowLib.Escrow({
-            delayEscrow : delayEscrow,
-            escrowBuyer : escrowUsers[0],
-            escrowSeller : escrowUsers[1],
-            escrowDeliver : escrowUsers[2]
-            });
-
-        DeliveryLib.Delivery memory _delivery = DeliveryLib.Delivery({
-            order : _order,
-            escrow : _escrow
-            });
-
-        deliveries.push(_delivery);
-        uint256 deliveryId = deliveries.length - 1;
-        emit NewOrder(users[0], users[1], users[2], deliveryId);
-        return deliveryId;
+        return OrderLib.createOrder(deliveries, users, sellerPrice, deliverPrice, sellerDeliveryPay, delayEscrow, escrowUsers);
     }
 
     function updateInitializeOrder(
@@ -75,149 +46,58 @@ contract DeliveryContract is EventDelivery, Pausable {
         uint128[3] calldata escrowUsers)
     external
     whenNotPaused
+    nonReentrant
     checkDelayMinimum(delayEscrow)
     checkSellerPayDelivery(sellerDeliveryPay, deliverPrice)
     {
-        DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
-
-        DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
-        DisputeLib.isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
-
-        if (delivery.order.buyerValidation) {
-            delivery.order.buyerValidation = false;
-            withdraws[delivery.order.buyer] = withdraws[delivery.order.buyer].add(buyerPay(delivery));
-        }
-
-        if (delivery.order.sellerValidation) {
-            delivery.order.sellerValidation = false;
-            withdraws[delivery.order.seller] = withdraws[delivery.order.seller].add(sellerPay(delivery));
-        }
-
-        if (delivery.order.deliverValidation) {
-            delivery.order.deliverValidation = false;
-            withdraws[delivery.order.deliver] = withdraws[delivery.order.deliver].add(delivery.escrow.escrowDeliver);
-        }
-
-        delivery.order.sellerPrice = sellerPrice;
-        delivery.order.deliverPrice = deliverPrice;
-        delivery.order.sellerDeliveryPay = sellerDeliveryPay;
-        delivery.escrow.delayEscrow = delayEscrow;
-        delivery.escrow.escrowBuyer = escrowUsers[0];
-        delivery.escrow.escrowSeller = escrowUsers[1];
-        delivery.escrow.escrowDeliver = escrowUsers[2];
-
-        emit OrderUpdated(deliveryId);
+        return OrderLib.updateInitializeOrder(deliveries[deliveryId], withdraws, deliveryId, sellerPrice, deliverPrice, sellerDeliveryPay, delayEscrow, escrowUsers);
     }
 
     function validateOrder(uint deliveryId, bytes32 hash)
     payable
     external
     whenNotPaused
+    nonReentrant
     {
-        DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
-        DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
-
-        if (msg.sender == delivery.order.buyer) {
-            require(hash > 0, "Should set hash");
-            require(!delivery.order.buyerValidation, "Buyer already validate");
-            userValueWithdraw(delivery.order.buyer, buyerPay(delivery));
-            delivery.order.buyerValidation = true;
-            delivery.order.buyerHash = hash;
-        } else if (msg.sender == delivery.order.seller) {
-            require(hash > 0, "Should set hash");
-            require(!delivery.order.sellerValidation, "Seller already validate");
-            userValueWithdraw(delivery.order.seller, sellerPay(delivery));
-            delivery.order.sellerValidation = true;
-            delivery.order.sellerHash = hash;
-        } else if (msg.sender == delivery.order.deliver) {
-            require(!delivery.order.deliverValidation, "Deliver already validate");
-            userValueWithdraw(delivery.order.deliver, delivery.escrow.escrowDeliver);
-            delivery.order.deliverValidation = true;
-        } else {
-            revert("Should be an actor of the order");
-        }
-
-        if (delivery.order.sellerValidation && delivery.order.deliverValidation && delivery.order.buyerValidation) {
-            delivery.order.orderStage = OrderStageLib.OrderStage.Started;
-            delivery.order.startDate = uint64(now);
-        }
-        emit OrderValidate(deliveryId, msg.sender, delivery.order.orderStage == OrderStageLib.OrderStage.Started);
+        return OrderLib.validateOrder(deliveries[deliveryId], withdraws, deliveryId, hash);
     }
 
     function initializationCancel(uint deliveryId)
     external
     whenNotPaused
+    nonReentrant
     {
-        DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
-        DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Initialization);
-        DisputeLib.isActor(msg.sender, delivery.order.buyer, delivery.order.seller, delivery.order.deliver);
-
-        delivery.order.orderStage = OrderStageLib.OrderStage.Cancel_Order;
-
-        if (delivery.order.buyerValidation) {
-            withdraws[delivery.order.buyer] = withdraws[delivery.order.buyer].add(buyerPay(delivery));
-        }
-        if (delivery.order.sellerValidation) {
-            withdraws[delivery.order.seller] = withdraws[delivery.order.seller].add(sellerPay(delivery));
-        }
-        if (delivery.order.deliverValidation) {
-            withdraws[delivery.order.deliver] = withdraws[delivery.order.deliver].add(delivery.escrow.escrowDeliver);
-        }
-        emit CancelOrder(deliveryId, false);
+        return OrderLib.initializationCancel(deliveries[deliveryId], withdraws, deliveryId);
     }
 
     function takeOrder(uint deliveryId, bytes calldata sellerKey)
     external
     whenNotPaused
+    nonReentrant
     {
-        DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
-        DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Started);
-        require(msg.sender == delivery.order.deliver, "Sender is not the deliver");
-        require(keccak256(sellerKey) == delivery.order.sellerHash, "The key doesn't match with the stored hash");
-        DisputeLib.checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
-
-        delivery.order.orderStage = OrderStageLib.OrderStage.Taken;
-        emit OrderTaken(deliveryId);
+        return OrderLib.takeOrder(deliveries[deliveryId], deliveryId, sellerKey);
     }
 
     function deliverOrder(uint deliveryId, bytes calldata buyerKey)
     external
     whenNotPaused
+    nonReentrant
     {
-        DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
-        DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Taken);
-        require(msg.sender == delivery.order.deliver, "Sender is not the deliver");
-        require(keccak256(buyerKey) == delivery.order.buyerHash, "The key doesn't match with the stored hash");
-        DisputeLib.checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
-
-        delivery.order.orderStage = OrderStageLib.OrderStage.Delivered;
-        emit OrderDelivered(deliveryId);
+        return OrderLib.deliverOrder(deliveries[deliveryId], deliveryId, buyerKey);
     }
 
     function endOrder(uint deliveryId)
     external
     whenNotPaused
+    nonReentrant
     {
-        DeliveryLib.Delivery storage delivery = deliveries[deliveryId];
-        DisputeLib.atStage(delivery.order.orderStage, OrderStageLib.OrderStage.Delivered);
-        require(msg.sender == delivery.order.buyer, "Sender is not the buyer");
-        DisputeLib.checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
-
-        delivery.order.orderStage = OrderStageLib.OrderStage.Ended;
-
-        uint128 sellerFee = delivery.order.sellerPrice / 100;
-        uint128 delivererFee = delivery.order.deliverPrice / 100;
-
-        withdraws[delivery.order.seller] = withdraws[delivery.order.seller].add(delivery.order.sellerPrice).add(delivery.escrow.escrowSeller).sub(sellerFee);
-        withdraws[delivery.order.deliver] = withdraws[delivery.order.deliver].add(delivery.order.deliverPrice).add(delivery.escrow.escrowDeliver).sub(delivererFee);
-        withdraws[delivery.order.buyer] = withdraws[delivery.order.buyer].add(delivery.escrow.escrowBuyer);
-        withdraws[owner] = withdraws[owner].add(sellerFee).add(delivererFee);
-        emit OrderEnded(deliveryId);
+        return OrderLib.endOrder(deliveries[deliveryId], withdraws, owner, deliveryId);
     }
 
     function createDispute(uint deliveryId, uint128 buyerReceive)
     external
     whenNotPaused
+    nonReentrant
     {
         DisputeLib.createDispute(deliveries[deliveryId], disputes, buyerReceive, deliveryId);
     }
@@ -225,6 +105,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     function refundProposalDispute(uint deliveryId, uint128 buyerReceive)
     external
     whenNotPaused
+    nonReentrant
     {
         DisputeLib.refundProposalDispute(deliveries[deliveryId], disputes, deliveryId, buyerReceive);
     }
@@ -232,6 +113,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     function acceptDisputeProposal(uint deliveryId)
     external
     whenNotPaused
+    nonReentrant
     {
         DisputeLib.acceptDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId);
     }
@@ -240,6 +122,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     payable
     external
     whenNotPaused
+    nonReentrant
     {
         DisputeLib.costDisputeProposal(deliveries[deliveryId], disputes, withdraws, deliveryId, sellerBalance);
     }
@@ -248,6 +131,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     payable
     external
     whenNotPaused
+    nonReentrant
     {
         DisputeLib.acceptCostProposal(deliveries[deliveryId], disputes, withdraws, deliveryId);
     }
@@ -255,6 +139,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     function revertDispute(uint deliveryId)
     external
     whenNotPaused
+    nonReentrant
     {
         DisputeLib.revertDispute(deliveries[deliveryId], disputes, deliveryId);
     }
@@ -335,6 +220,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     function withdrawBalance()
     external
     whenNotPaused
+    nonReentrant
     {
         uint balance = withdraws[msg.sender];
         withdraws[msg.sender] = 0;
@@ -346,6 +232,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     external
     whenNotPaused
     isOwner
+    nonReentrant
     {
         require(newOwner != address(0), "New address need to be defined");
         owner = newOwner;
@@ -354,6 +241,7 @@ contract DeliveryContract is EventDelivery, Pausable {
     function pause()
     external
     isOwner
+    nonReentrant
     {
         _pause();
     }
@@ -361,31 +249,9 @@ contract DeliveryContract is EventDelivery, Pausable {
     function unpause()
     external
     isOwner
+    nonReentrant
     {
         _unpause();
-    }
-
-    function userValueWithdraw(address user, uint128 cost)
-    internal
-    {
-        require(withdraws[user].add(uint128(msg.value)) >= cost, "The value send isn't enough");
-        withdraws[user] = withdraws[user].add(uint128(msg.value)).sub(cost);
-    }
-
-    function buyerPay(DeliveryLib.Delivery storage delivery)
-    internal
-    view
-    returns (uint128)
-    {
-        return delivery.order.deliverPrice.add(delivery.order.sellerPrice).add(delivery.escrow.escrowBuyer).sub(delivery.order.sellerDeliveryPay);
-    }
-
-    function sellerPay(DeliveryLib.Delivery storage delivery)
-    internal
-    view
-    returns (uint128)
-    {
-        return delivery.escrow.escrowSeller.add(delivery.order.sellerDeliveryPay);
     }
 
     modifier checkDelayMinimum(uint64 delay){

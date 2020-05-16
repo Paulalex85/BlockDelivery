@@ -13,7 +13,13 @@ module.exports = {
     },
     compilers: {
         solc: {
-            version: "0.6.7"
+            version: "0.6.7",
+            settings: {
+                optimizer: {
+                    enabled: true,
+                    runs: 400   // Optimize for how many times you intend to run the code
+                }
+            }
         }
     },
     mocha: {

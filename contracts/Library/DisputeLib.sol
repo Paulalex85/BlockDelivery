@@ -4,6 +4,7 @@ import "./OrderStageLib.sol";
 import "./DeliveryLib.sol";
 import "./SafeMath.sol";
 import "./SignedSafeMath.sol";
+import "./SafeCast.sol";
 
 library DisputeLib {
     using SafeMath for uint128;
@@ -119,13 +120,13 @@ library DisputeLib {
         dispute.sellerBalance = sellerBalance;
 
         if (msg.sender == delivery.order.seller) {
-            int128 current = sellerBalance.sub(int128(dispute.buyerReceive) / 2);
-            delivery.escrow.escrowSeller = delivery.escrow.escrowSeller.add(checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), current));
+            int128 current = sellerBalance.sub(SafeCast.toInt128(dispute.buyerReceive) / 2);
+            delivery.escrow.escrowSeller = delivery.escrow.escrowSeller.add(checkBalanceEscrow(withdraws, delivery.order.seller, SafeCast.toInt128(delivery.order.sellerPrice), SafeCast.toInt128(delivery.escrow.escrowSeller), current));
             dispute.sellerAcceptEscrow = true;
             dispute.deliverAcceptEscrow = false;
         } else if (msg.sender == delivery.order.deliver) {
-            int128 current = (- sellerBalance).sub(int128(dispute.buyerReceive) / 2);
-            delivery.escrow.escrowDeliver = delivery.escrow.escrowDeliver.add(checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), current));
+            int128 current = (- sellerBalance).sub(SafeCast.toInt128(dispute.buyerReceive) / 2);
+            delivery.escrow.escrowDeliver = delivery.escrow.escrowDeliver.add(checkBalanceEscrow(withdraws, delivery.order.deliver, SafeCast.toInt128(delivery.order.deliverPrice), SafeCast.toInt128(delivery.escrow.escrowDeliver), current));
             dispute.deliverAcceptEscrow = true;
             dispute.sellerAcceptEscrow = false;
         } else {
@@ -142,15 +143,15 @@ library DisputeLib {
         require(delivery.order.orderStage == OrderStageLib.OrderStage.Dispute_Cost_Repartition, "Order should be Cost Repartition stage");
         checkDelayExpire(delivery.order.startDate, delivery.escrow.delayEscrow);
 
-        int128 currentSeller = dispute.sellerBalance.sub(int128(dispute.buyerReceive) / 2);
-        int128 currentDeliver = (- dispute.sellerBalance).sub(int128(dispute.buyerReceive) / 2);
+        int128 currentSeller = dispute.sellerBalance.sub(SafeCast.toInt128(dispute.buyerReceive) / 2);
+        int128 currentDeliver = (- dispute.sellerBalance).sub(SafeCast.toInt128(dispute.buyerReceive) / 2);
         if (msg.sender == delivery.order.seller) {
             require(dispute.deliverAcceptEscrow && !dispute.sellerAcceptEscrow, "Cost Repartition is not defined");
-            delivery.escrow.escrowSeller = delivery.escrow.escrowSeller.add(checkBalanceEscrow(withdraws, delivery.order.seller, int128(delivery.order.sellerPrice), int128(delivery.escrow.escrowSeller), currentSeller));
+            delivery.escrow.escrowSeller = delivery.escrow.escrowSeller.add(checkBalanceEscrow(withdraws, delivery.order.seller, SafeCast.toInt128(delivery.order.sellerPrice), SafeCast.toInt128(delivery.escrow.escrowSeller), currentSeller));
             dispute.sellerAcceptEscrow = true;
         } else if (msg.sender == delivery.order.deliver) {
             require(dispute.sellerAcceptEscrow && !dispute.deliverAcceptEscrow, "Cost Repartition is not defined");
-            delivery.escrow.escrowDeliver = delivery.escrow.escrowDeliver.add(checkBalanceEscrow(withdraws, delivery.order.deliver, int128(delivery.order.deliverPrice), int128(delivery.escrow.escrowDeliver), currentDeliver));
+            delivery.escrow.escrowDeliver = delivery.escrow.escrowDeliver.add(checkBalanceEscrow(withdraws, delivery.order.deliver, SafeCast.toInt128(delivery.order.deliverPrice), SafeCast.toInt128(delivery.escrow.escrowDeliver), currentDeliver));
             dispute.deliverAcceptEscrow = true;
         } else {
             revert("Should be the seller or the deliver of the order");
@@ -158,8 +159,8 @@ library DisputeLib {
 
         delivery.order.orderStage = OrderStageLib.OrderStage.Cancel_Order;
 
-        withdraws[delivery.order.deliver] = withdraws[delivery.order.deliver].add(uint128(int128(delivery.order.deliverPrice.add(delivery.escrow.escrowDeliver)).add(currentDeliver)));
-        withdraws[delivery.order.seller] = withdraws[delivery.order.seller].add(uint128(int128(delivery.order.sellerPrice.add(delivery.escrow.escrowSeller)).add(currentSeller)));
+        withdraws[delivery.order.deliver] = SafeCast.intToUint128(SafeCast.toInt128(delivery.order.deliverPrice.add(delivery.escrow.escrowDeliver).add(withdraws[delivery.order.deliver])).add(currentDeliver));
+        withdraws[delivery.order.seller] = SafeCast.intToUint128(SafeCast.toInt128(delivery.order.sellerPrice.add(delivery.escrow.escrowSeller).add(withdraws[delivery.order.seller])).add(currentSeller));
 
         emit CancelOrder(deliveryId, true);
     }
@@ -211,8 +212,8 @@ library DisputeLib {
     {
         int128 currentBalance = price.add(escrow).add(balance);
         if (currentBalance < 0) {
-            uint128 toAdd = uint128(- currentBalance);
-            uint128 value = withdraws[user].add(uint128(msg.value));
+            uint128 toAdd = SafeCast.intToUint128(- currentBalance);
+            uint128 value = withdraws[user].add(SafeCast.toUint128(msg.value));
             require(value >= toAdd, "User need to send additional cost");
             withdraws[user] = value.sub(toAdd);
             return toAdd;
