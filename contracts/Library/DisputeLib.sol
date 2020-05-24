@@ -1,6 +1,7 @@
 pragma solidity 0.6.7;
 
 import "./OrderStageLib.sol";
+import "./OrderLib.sol";
 import "./DeliveryLib.sol";
 import "./SafeMath.sol";
 import "./SignedSafeMath.sol";

@@ -453,4 +453,20 @@ contract("validate methods of DeliveryContract", accounts => {
             undefined,
             '0x0');
     });
+
+    it("Need to be an actor to validate the order", async () => {
+        await createOrder(deliveryInstance, buyer, seller, deliver, buyer);
+        await truffleAssert.reverts(
+            validateOrder(deliveryInstance,
+                actors.BUYER,
+                accounts[0],
+                SELLER_PRICE + DELIVER_PRICE + ESCROW_VALUE,
+                0,
+                false,
+                true,
+                false,
+                false),
+            "Should be an actor of the order"
+        );
+    });
 });
