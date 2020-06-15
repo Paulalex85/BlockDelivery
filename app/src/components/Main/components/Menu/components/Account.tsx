@@ -82,7 +82,6 @@ const Account = ({address, setAddress, account, localProvider, mainnetProvider, 
 
     const logoutOfWeb3Modal = async () => {
         await web3Modal.clearCachedProvider();
-        //console.log("Cleared cache provider!?!",clear)
         setTimeout(() => {
             window.location.reload()
         }, 1)
@@ -113,7 +112,7 @@ const Account = ({address, setAddress, account, localProvider, mainnetProvider, 
         display = (
             <Navbar.Text>
                 {address ? (
-                    <Address value={address} ensProvider={mainnetProvider}/>
+                    <Address value={address} size="short" ensProvider={mainnetProvider}/>
                 ) : "Connecting..."}
                 <Balance address={address} provider={localProvider} dollarMultiplier={price}/>
             </Navbar.Text>
