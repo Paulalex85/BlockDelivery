@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import * as ethers from "ethers";
 import {usePoller} from "../../../../../hooks";
 import {Navbar} from 'react-bootstrap'
+import {FaEthereum} from "react-icons/fa";
 
 type BalanceProps = {
     address: string;
@@ -13,7 +14,7 @@ type BalanceProps = {
 
 const Balance = ({address, balanceProps, pollTime, dollarMultiplier, provider}: BalanceProps) => {
 
-    const [dollarMode, setDollarMode] = useState(true);
+    const [dollarMode, setDollarMode] = useState(false);
     const [balance, setBalance] = useState();
 
     usePoller(async () => {
@@ -51,6 +52,9 @@ const Balance = ({address, balanceProps, pollTime, dollarMultiplier, provider}: 
         <Navbar.Text style={{paddingRight: 5}} onClick={() => {
             setDollarMode(!dollarMode)
         }}>
+            {
+                dollarMode ? "" : <FaEthereum/>
+            }
             {displayBalance}
         </Navbar.Text>
     );
