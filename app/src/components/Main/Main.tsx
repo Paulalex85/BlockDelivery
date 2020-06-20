@@ -17,7 +17,6 @@ class Main extends Component {
                             <Route path="/create" component={CreateOrder}/>
                             {/*<Route path="/orders" component={OrderDashboard}/>*/}
                         </div>
-                        }
                     </div>
                 </div>
             </BrowserRouter>
