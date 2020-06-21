@@ -1,6 +1,8 @@
 import React, {useState} from 'react';
 import {Form, Col, Row} from 'react-bootstrap';
 import AddressInput from "./AddressInput";
+import {useSelector} from "react-redux";
+import {getUserAddress} from "../../../redux/selectors"
 
 type AccountInfoProps = {
     actor: string
@@ -11,13 +13,13 @@ type AccountInfoProps = {
 const AccountInfo = ({actor, account, onChange}: AccountInfoProps) => {
     const [disabled, setDisabled] = useState(false);
     const [accountState, setAccountState] = useState(account);
+    const userAddress = useSelector(getUserAddress);
 
     const handleCheckBox = async (event: any) => {
         if (event.target.checked === true) {
-            const name = "";//TODO set current ETH account
+            const name = userAddress;
             setDisabled(true);
-            setAccountState(name);
-            onChange(name, actor);
+            handleChange(name);
         } else {
             setDisabled(false);
         }

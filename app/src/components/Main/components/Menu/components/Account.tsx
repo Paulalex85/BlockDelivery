@@ -7,6 +7,8 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import {Button, Navbar} from 'react-bootstrap';
 import Balance from "./Balance";
 import Address from "./Address";
+import {useDispatch} from "react-redux";
+import {setUserAddress} from "../../../../../redux/actions"
 
 const INFURA_ID = "c668ee6214a74e1c89726b345a5aed66";
 
@@ -26,7 +28,6 @@ const web3Modal = new Web3Modal({
 type AccountProps = {
     address: string;
     setAddress: any;
-    account?: string;
     localProvider: any;
     mainnetProvider?: any;
     injectedProvider: any;
@@ -36,7 +37,8 @@ type AccountProps = {
     minimized?: boolean;
 }
 
-const Account = ({address, setAddress, account, localProvider, mainnetProvider, injectedProvider, setInjectedProvider, pollTime, price, minimized = false}: AccountProps) => {
+const Account = ({address, setAddress, localProvider, mainnetProvider, injectedProvider, setInjectedProvider, pollTime, price, minimized = false}: AccountProps) => {
+    const dispatch = useDispatch();
 
     const createBurnerIfNoAddress = () => {
         if (!injectedProvider && localProvider && typeof setInjectedProvider == "function") {
@@ -60,9 +62,10 @@ const Account = ({address, setAddress, account, localProvider, mainnetProvider, 
     const pollInjectedProvider = async () => {
         if (injectedProvider) {
             let accounts = await injectedProvider.listAccounts();
-            if (accounts && accounts[0] && accounts[0] !== account) {
+            if (accounts && accounts[0] && accounts[0] !== address) {
                 if (typeof setAddress === "function") {
-                    setAddress(accounts[0])
+                    setAddress(accounts[0]);
+                    dispatch(setUserAddress(accounts[0]));
                 }
             }
         }

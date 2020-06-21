@@ -15,15 +15,18 @@ type AddressInputProps = {
 const AddressInput = ({value, ensProvider, onChange, actor, disabled}: AddressInputProps) => {
 
     const [ens, setEns] = useState("");
-    const [valueState, setValueState] = useState(typeof value != "undefined" ? value : "");
+    const [valueState, setValueState] = useState("");
     const [scan, setScan] = useState(false);
 
     useEffect(() => {
         setEns("");
+        if (value !== undefined) {
+            setValueState(value)
+        }
         if (ensProvider) {
             getEns().then();
         }
-    }, [ensProvider]);
+    }, [ensProvider, value]);
 
     async function getEns() {
         let newEns;
