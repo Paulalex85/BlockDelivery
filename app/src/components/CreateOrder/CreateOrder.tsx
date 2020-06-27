@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Card, Col, Row} from 'react-bootstrap';
-import {AccountInfo} from "./components";
+import {AccountInfo, EtherInput} from "./components";
 
 type CreateOrderProps = {}
 
@@ -8,9 +8,11 @@ const CreateOrder = ({}: CreateOrderProps) => {
     const [buyer, setBuyer] = useState("");
     const [seller, setSeller] = useState("");
     const [deliver, setDeliver] = useState("");
+    const [sellerPrice, setSellerPrice] = useState(0);
+    const [deliverPrice, setDeliverPrice] = useState(0);
 
-    const onChange = (value: string, actor: string) => {
-        switch (actor) {
+    const onChange = (value: any, type: string) => {
+        switch (type) {
             case "buyer":
                 setBuyer(value);
                 break;
@@ -19,6 +21,12 @@ const CreateOrder = ({}: CreateOrderProps) => {
                 break;
             case "deliver":
                 setDeliver(value);
+                break;
+            case "sellerPrice":
+                setSellerPrice(value);
+                break;
+            case "deliverPrice":
+                setDeliverPrice(value);
                 break;
             default:
         }
@@ -46,6 +54,16 @@ const CreateOrder = ({}: CreateOrderProps) => {
                             account={deliver}
                             actor={"deliver"}
                             onChange={(value, actor) => onChange(value, actor)}
+                        />
+                        <EtherInput
+                            currencyPrice={0.5}
+                            label={"Seller price"}
+                            onChange={(value) => onChange(value, "sellerPrice")}
+                        />
+                        <EtherInput
+                            currencyPrice={0.5}
+                            label={"Deliver price"}
+                            onChange={(value) => onChange(value, "deliverPrice")}
                         />
                     </Card.Body>
                 </Card>
