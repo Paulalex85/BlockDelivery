@@ -29,5 +29,5 @@ module.exports = {
             gasPrice: 20
         }
     },
-    plugins: ["solidity-coverage", "truffle-security"]
+    plugins: ["solidity-coverage"]
 };
