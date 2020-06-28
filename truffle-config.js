@@ -26,7 +26,8 @@ module.exports = {
         reporter: 'eth-gas-reporter',
         reporterOptions: {
             currency: 'USD',
-            gasPrice: 20
+            gasPrice: 20,
+            excludeContracts: ['Migrations']
         }
     },
     plugins: ["solidity-coverage"]
