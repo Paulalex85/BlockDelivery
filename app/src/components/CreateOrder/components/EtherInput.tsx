@@ -17,6 +17,7 @@ const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
     const [mode, setMode] = useState(currencyPrice ? Mode.USD : Mode.ETH);
     const [ethValue, setEthValue] = useState(0);
     const [usdValue, setUsdValue] = useState(0);
+    const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
 
     const handleChange = (event: any) => {
         let newValue = (event.target.value);
@@ -52,7 +53,7 @@ const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
             <Col sm={4}>
                 <InputGroup>
                     <Form.Control
-                        pattern="^[0-9]*([,.][0-9]{0,4})?$"
+                        isInvalid={mode === Mode.USD ? !regex.test(usdValue.toString()) : !regex.test(ethValue.toString())}
                         type="text"
                         value={mode === Mode.USD ? usdValue : ethValue}
                         onChange={handleChange}
@@ -78,7 +79,6 @@ const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
             <Col sm={4}>
                 <InputGroup>
                     <Form.Control
-                        pattern="^[0-9]*([,.][0-9]{0,4})?$"
                         type="text"
                         value={mode === Mode.USD ? ethValue : usdValue}
                         onChange={handleChange}
