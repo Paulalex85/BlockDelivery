@@ -11,27 +11,6 @@ const CreateOrder = ({}: CreateOrderProps) => {
     const [sellerPrice, setSellerPrice] = useState(0);
     const [deliverPrice, setDeliverPrice] = useState(0);
 
-    const onChange = (value: any, type: string) => {
-        switch (type) {
-            case "buyer":
-                setBuyer(value);
-                break;
-            case "seller":
-                setSeller(value);
-                break;
-            case "deliver":
-                setDeliver(value);
-                break;
-            case "sellerPrice":
-                setSellerPrice(value);
-                break;
-            case "deliverPrice":
-                setDeliverPrice(value);
-                break;
-            default:
-        }
-    };
-
     return (
         <Row className="justify-content-md-center mt-5">
             <Col className="col-sm-5">
@@ -43,27 +22,27 @@ const CreateOrder = ({}: CreateOrderProps) => {
                         <AccountInfo
                             account={buyer}
                             actor={"buyer"}
-                            onChange={(value, actor) => onChange(value, actor)}
+                            onChange={(value) => setBuyer(value)}
                         />
                         <AccountInfo
                             account={seller}
                             actor={"seller"}
-                            onChange={(value, actor) => onChange(value, actor)}
+                            onChange={(value) => setSeller(value)}
                         />
                         <AccountInfo
                             account={deliver}
                             actor={"deliver"}
-                            onChange={(value, actor) => onChange(value, actor)}
+                            onChange={(value) => setDeliver(value)}
                         />
                         <EtherInput
                             currencyPrice={0.5}
                             label={"Seller price"}
-                            onChange={(value) => onChange(value, "sellerPrice")}
+                            onChange={(value) => setSellerPrice(value)}
                         />
                         <EtherInput
                             currencyPrice={0.5}
                             label={"Deliver price"}
-                            onChange={(value) => onChange(value, "deliverPrice")}
+                            onChange={(value) => setDeliverPrice(value)}
                         />
                     </Card.Body>
                 </Card>

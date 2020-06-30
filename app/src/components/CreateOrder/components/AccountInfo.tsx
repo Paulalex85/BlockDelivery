@@ -7,7 +7,7 @@ import {getUserAddress} from "../../../redux/selectors"
 type AccountInfoProps = {
     actor: string
     account: string
-    onChange: (account: string, actor: string) => void
+    onChange: (account: string) => void
 }
 
 const AccountInfo = ({actor, account, onChange}: AccountInfoProps) => {
@@ -27,7 +27,7 @@ const AccountInfo = ({actor, account, onChange}: AccountInfoProps) => {
 
     const handleChange = (value: string) => {
         setAccountState(value);
-        onChange(value, actor)
+        onChange(value)
     };
 
     let labelCheckBox = "I'm the " + actor;
