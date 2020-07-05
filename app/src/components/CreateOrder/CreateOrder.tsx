@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Card, Col, Row} from 'react-bootstrap';
-import {AccountInfo, EtherInput} from "./components";
+import {AccountInfo, EtherInput, SellerDeliveryPay} from "./components";
+import {Mode} from "./components/EtherInput";
 
 type CreateOrderProps = {}
 
@@ -10,6 +11,8 @@ const CreateOrder = ({}: CreateOrderProps) => {
     const [deliver, setDeliver] = useState("");
     const [sellerPrice, setSellerPrice] = useState(0);
     const [deliverPrice, setDeliverPrice] = useState(0);
+    const [sellerDeliveryPay, setSellerDeliveryPay] = useState(0);
+    const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
 
     return (
         <Row className="justify-content-md-center mt-5">
@@ -43,7 +46,16 @@ const CreateOrder = ({}: CreateOrderProps) => {
                             currencyPrice={0.5}
                             label={"Deliver price"}
                             onChange={(value) => setDeliverPrice(value)}
+                            onChangeMode={(mode) => setDeliverPriceMode(mode)}
                         />
+                        {deliverPrice > 0 ?
+                            <SellerDeliveryPay
+                                deliveryCost={deliverPrice}
+                                onChange={(value) => setSellerDeliveryPay(value)}
+                                currencyMode={deliverPriceMode}
+                                currencyPrice={0.5}
+                            />
+                            : ""}
                     </Card.Body>
                 </Card>
             </Col>

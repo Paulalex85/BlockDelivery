@@ -1,20 +1,21 @@
 import React, {useState} from 'react';
-import {Col, Form, Row, InputGroup} from 'react-bootstrap';
+import {Col, Form, InputGroup, Row} from 'react-bootstrap';
 import {IoIosSwap} from "react-icons/io";
 
 type EtherInputProps = {
     currencyPrice: number
     label: string
     onChange: (ethValue: number) => void
+    onChangeMode?: (mode: Mode) => void
 }
 
-enum Mode {
+export enum Mode {
     USD = "USD",
     ETH = "ETH"
 }
 
-const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
-    const [mode, setMode] = useState(currencyPrice ? Mode.USD : Mode.ETH);
+const EtherInput = ({currencyPrice, label, onChange, onChangeMode}: EtherInputProps) => {
+    const [mode, setMode] = useState(Mode.USD);
     const [ethValue, setEthValue] = useState(0);
     const [usdValue, setUsdValue] = useState(0);
     const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
@@ -24,7 +25,7 @@ const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
         if (newValue === undefined || newValue < 0) {
             newValue = 0;
         }
-        if (mode == Mode.USD) {
+        if (mode === Mode.USD) {
             let ethValue = 0;
             if (newValue > 0) {
                 ethValue = parseFloat(newValue) / currencyPrice;
@@ -66,10 +67,16 @@ const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
             <Col>
                 <Form.Text>
                     <div style={{cursor: "pointer"}} onClick={() => {
-                        if (mode == Mode.USD) {
+                        if (mode === Mode.USD) {
                             setMode(Mode.ETH);
+                            if (onChangeMode) {
+                                onChangeMode(Mode.ETH);
+                            }
                         } else {
                             setMode(Mode.USD);
+                            if (onChangeMode) {
+                                onChangeMode(Mode.USD);
+                            }
                         }
                     }}>
                         <IoIosSwap size={22}/>
@@ -81,7 +88,6 @@ const EtherInput = ({currencyPrice, label, onChange}: EtherInputProps) => {
                     <Form.Control
                         type="text"
                         value={mode === Mode.USD ? ethValue : usdValue}
-                        onChange={handleChange}
                         disabled={true}
                     />
                     <InputGroup.Append>
