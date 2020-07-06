@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Card, Col, Row} from 'react-bootstrap';
-import {AccountInfo, EtherInput, SellerDeliveryPay} from "./components";
+import {AccountInfo, DelayPicker, EtherInput, SellerDeliveryPay} from "./components";
 import {Mode} from "./components/EtherInput";
 
 type CreateOrderProps = {}
@@ -13,6 +13,7 @@ const CreateOrder = ({}: CreateOrderProps) => {
     const [deliverPrice, setDeliverPrice] = useState(0);
     const [sellerDeliveryPay, setSellerDeliveryPay] = useState(0);
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
+    const [dateDelay, setDateDelay] = useState(new Date());
 
     return (
         <Row className="justify-content-md-center mt-5">
@@ -56,6 +57,7 @@ const CreateOrder = ({}: CreateOrderProps) => {
                                 currencyPrice={0.5}
                             />
                             : ""}
+                        <DelayPicker onChange={(value) => setDateDelay(value)}/>
                     </Card.Body>
                 </Card>
             </Col>
