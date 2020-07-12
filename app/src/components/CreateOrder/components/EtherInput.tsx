@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Col, Form, InputGroup, Row} from 'react-bootstrap';
 import {IoIosSwap} from "react-icons/io";
 
@@ -7,6 +7,8 @@ type EtherInputProps = {
     label: string
     onChange: (ethValue: number) => void
     onChangeMode?: (mode: Mode) => void
+    fullDisabled?: boolean
+    ethBaseValue?: number
 }
 
 export enum Mode {
@@ -14,11 +16,18 @@ export enum Mode {
     ETH = "ETH"
 }
 
-const EtherInput = ({currencyPrice, label, onChange, onChangeMode}: EtherInputProps) => {
+const EtherInput = ({currencyPrice, label, onChange, onChangeMode, fullDisabled, ethBaseValue}: EtherInputProps) => {
     const [mode, setMode] = useState(Mode.USD);
     const [ethValue, setEthValue] = useState(0);
     const [usdValue, setUsdValue] = useState(0);
     const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
+
+    useEffect(() => {
+        if (ethBaseValue !== undefined) {
+            setEthValue(ethBaseValue);
+            setUsdValue(ethBaseValue * currencyPrice);
+        }
+    }, [ethBaseValue]);
 
     const handleChange = (event: any) => {
         let newValue = (event.target.value);
@@ -40,7 +49,7 @@ const EtherInput = ({currencyPrice, label, onChange, onChangeMode}: EtherInputPr
                 usd = parseFloat(newValue) * currencyPrice;
             }
             setUsdValue(usd);
-            onChange(newValue);
+            onChange(parseFloat(newValue));
         }
     };
 
@@ -58,6 +67,7 @@ const EtherInput = ({currencyPrice, label, onChange, onChangeMode}: EtherInputPr
                         type="text"
                         value={mode === Mode.USD ? usdValue : ethValue}
                         onChange={handleChange}
+                        disabled={fullDisabled}
                     />
                     <InputGroup.Append>
                         <InputGroup.Text id="symbol">{mode}</InputGroup.Text>

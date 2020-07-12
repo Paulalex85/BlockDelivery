@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Card, Col, Row} from 'react-bootstrap';
-import {AccountInfo, DelayPicker, EtherInput, SellerDeliveryPay} from "./components";
+import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} from "./components";
 import {Mode} from "./components/EtherInput";
 
 type CreateOrderProps = {}
@@ -13,6 +13,9 @@ const CreateOrder = ({}: CreateOrderProps) => {
     const [deliverPrice, setDeliverPrice] = useState(0);
     const [sellerDeliveryPay, setSellerDeliveryPay] = useState(0);
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
+    const [buyerEscrow, setBuyerEscrow] = useState(0);
+    const [sellerEscrow, setSellerEscrow] = useState(0);
+    const [deliverEscrow, setDeliverEscrow] = useState(0);
     const [dateDelay, setDateDelay] = useState(new Date());
 
     return (
@@ -58,6 +61,13 @@ const CreateOrder = ({}: CreateOrderProps) => {
                             />
                             : ""}
                         <DelayPicker onChange={(value) => setDateDelay(value)}/>
+                        <EscrowInput
+                            simpleEscrowValue={deliverPrice + sellerPrice}
+                            currencyPrice={0.5}
+                            onChangeBuyer={(value) => setBuyerEscrow(value)}
+                            onChangeSeller={(value) => setSellerEscrow(value)}
+                            onChangeDeliver={(value) => setDeliverEscrow(value)}
+                        />
                     </Card.Body>
                 </Card>
             </Col>
