@@ -83,24 +83,24 @@ const EscrowInput = ({simpleEscrowValue, currencyPrice}: EscrowInputProps) => {
                             </Form.Control>
                         </Form.Group>
                         <Form.Group>
-                            <EtherInput
-                                ethBaseValue={buyerEscrow}
-                                fullDisabled={inputDisabled}
-                                currencyPrice={currencyPrice}
-                                label={"Buyer"}
-                                onChange={(value) => setBuyerEscrow(value)}/>
-                            <EtherInput
-                                ethBaseValue={sellerEscrow}
-                                fullDisabled={inputDisabled}
-                                currencyPrice={currencyPrice}
-                                label={"Seller"}
-                                onChange={(value) => setSellerEscrow(value)}/>
-                            <EtherInput
-                                ethBaseValue={deliverEscrow}
-                                fullDisabled={inputDisabled}
-                                currencyPrice={currencyPrice}
-                                label={"Deliver"}
-                                onChange={(value) => setDeliverEscrow(value)}/>
+                            {/*<EtherInput*/}
+                            {/*    ethBaseValue={buyerEscrow}*/}
+                            {/*    fullDisabled={inputDisabled}*/}
+                            {/*    currencyPrice={currencyPrice}*/}
+                            {/*    label={"Buyer"}*/}
+                            {/*    onChange={(value) => setBuyerEscrow(value)}/>*/}
+                            {/*<EtherInput*/}
+                            {/*    ethBaseValue={sellerEscrow}*/}
+                            {/*    fullDisabled={inputDisabled}*/}
+                            {/*    currencyPrice={currencyPrice}*/}
+                            {/*    label={"Seller"}*/}
+                            {/*    onChange={(value) => setSellerEscrow(value)}/>*/}
+                            {/*<EtherInput*/}
+                            {/*    ethBaseValue={deliverEscrow}*/}
+                            {/*    fullDisabled={inputDisabled}*/}
+                            {/*    currencyPrice={currencyPrice}*/}
+                            {/*    label={"Deliver"}*/}
+                            {/*    onChange={(value) => setDeliverEscrow(value)}/>*/}
                         </Form.Group>
                     </div>
                 ) : (

@@ -5,10 +5,13 @@ import {IoIosSwap} from "react-icons/io";
 type EtherInputProps = {
     currencyPrice: number
     label: string
-    onChange: (ethValue: number) => void
     onChangeMode?: (mode: Mode) => void
     fullDisabled?: boolean
     ethBaseValue?: number
+    setFieldValue: any
+    name: string
+    touched: any
+    errors: any
 }
 
 export enum Mode {
@@ -16,18 +19,18 @@ export enum Mode {
     ETH = "ETH"
 }
 
-const EtherInput = ({currencyPrice, label, onChange, onChangeMode, fullDisabled, ethBaseValue}: EtherInputProps) => {
+const EtherInput = (props: EtherInputProps) => {
     const [mode, setMode] = useState(Mode.USD);
     const [ethValue, setEthValue] = useState(0);
     const [usdValue, setUsdValue] = useState(0);
     const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
 
     useEffect(() => {
-        if (ethBaseValue !== undefined) {
-            setEthValue(ethBaseValue);
-            setUsdValue(ethBaseValue * currencyPrice);
+        if (props.ethBaseValue !== undefined) {
+            setEthValue(props.ethBaseValue);
+            setUsdValue(props.ethBaseValue * props.currencyPrice);
         }
-    }, [ethBaseValue]);
+    }, [props.ethBaseValue]);
 
     const handleChange = (event: any) => {
         let newValue = (event.target.value);
@@ -37,19 +40,19 @@ const EtherInput = ({currencyPrice, label, onChange, onChangeMode, fullDisabled,
         if (mode === Mode.USD) {
             let ethValue = 0;
             if (newValue > 0) {
-                ethValue = parseFloat(newValue) / currencyPrice;
+                ethValue = parseFloat(newValue) / props.currencyPrice;
             }
             setEthValue(ethValue);
             setUsdValue(newValue);
-            onChange(ethValue);
+            props.setFieldValue(props.name, ethValue);
         } else {
             setEthValue(newValue);
             let usd = 0;
             if (newValue > 0) {
-                usd = parseFloat(newValue) * currencyPrice;
+                usd = parseFloat(newValue) * props.currencyPrice;
             }
             setUsdValue(usd);
-            onChange(parseFloat(newValue));
+            props.setFieldValue(props.name, parseFloat(newValue));
         }
     };
 
@@ -57,7 +60,7 @@ const EtherInput = ({currencyPrice, label, onChange, onChangeMode, fullDisabled,
         <Form.Group as={Row}>
             <Col sm={2}>
                 <Form.Label>
-                    {label}
+                    {props.label}
                 </Form.Label>
             </Col>
             <Col sm={4}>
@@ -67,7 +70,7 @@ const EtherInput = ({currencyPrice, label, onChange, onChangeMode, fullDisabled,
                         type="text"
                         value={mode === Mode.USD ? usdValue : ethValue}
                         onChange={handleChange}
-                        disabled={fullDisabled}
+                        disabled={props.fullDisabled}
                     />
                     <InputGroup.Append>
                         <InputGroup.Text id="symbol">{mode}</InputGroup.Text>
@@ -79,13 +82,13 @@ const EtherInput = ({currencyPrice, label, onChange, onChangeMode, fullDisabled,
                     <div style={{cursor: "pointer"}} onClick={() => {
                         if (mode === Mode.USD) {
                             setMode(Mode.ETH);
-                            if (onChangeMode) {
-                                onChangeMode(Mode.ETH);
+                            if (props.onChangeMode) {
+                                props.onChangeMode(Mode.ETH);
                             }
                         } else {
                             setMode(Mode.USD);
-                            if (onChangeMode) {
-                                onChangeMode(Mode.USD);
+                            if (props.onChangeMode) {
+                                props.onChangeMode(Mode.USD);
                             }
                         }
                     }}>
