@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Col, Form, InputGroup, Row} from 'react-bootstrap';
 import {IoIosSwap} from "react-icons/io";
+import {ErrorMessage} from "formik";
 
 type EtherInputProps = {
     currencyPrice: number
@@ -108,6 +109,7 @@ const EtherInput = (props: EtherInputProps) => {
                     </InputGroup.Append>
                 </InputGroup>
             </Col>
+            <ErrorMessage name={props.name} />
         </Form.Group>
     )
 };

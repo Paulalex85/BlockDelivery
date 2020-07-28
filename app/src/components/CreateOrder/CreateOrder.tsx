@@ -25,6 +25,7 @@ interface FormProps {
 
 interface FormErrors {
     sellerPrice: string;
+    deliverPrice: string;
 }
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
@@ -74,12 +75,15 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                 touched={touched}
                                 errors={errors}
                             />
-                            {/*<EtherInput*/}
-                            {/*    currencyPrice={0.5}*/}
-                            {/*    label={"Deliver price"}*/}
-                            {/*    setFieldValue={setFieldValue}*/}
-                            {/*    onChangeMode={(mode) => setDeliverPriceMode(mode)}*/}
-                            {/*/>*/}
+                            <EtherInput
+                                currencyPrice={0.5}
+                                label={"Deliver price"}
+                                setFieldValue={setFieldValue}
+                                name={"deliverPrice"}
+                                touched={touched}
+                                errors={errors}
+                                onChangeMode={(mode) => setDeliverPriceMode(mode)}
+                            />
                             {/*{deliverPrice > 0 ?*/}
                             {/*    <SellerDeliveryPay*/}
                             {/*        deliveryCost={deliverPrice}*/}
@@ -128,10 +132,12 @@ const CreateOrder = withFormik<FormProps, FormValues>({
     // Add a custom validation function (this can be async too!)
     validate: (values: FormValues) => {
         let errors: FormikErrors<FormErrors> = {};
-        if (!values.sellerPrice) {
+        if (isNaN(values.sellerPrice)) {
             errors.sellerPrice = 'Required';
-        } else if (values.sellerPrice < 0) {
-            errors.sellerPrice = "Price can't be negative";
+        }
+
+        if (isNaN(values.deliverPrice)) {
+            errors.deliverPrice = 'Required';
         }
         return errors;
     },
@@ -141,7 +147,6 @@ const CreateOrder = withFormik<FormProps, FormValues>({
             alert(JSON.stringify(values, null, 2));
             setSubmitting(false);
         }, 1000);
-        console.log(values)
     },
 })(CreateForm);
 
