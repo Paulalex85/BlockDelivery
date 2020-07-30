@@ -52,21 +52,24 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                     </Card.Header>
                     <Card.Body>
                         <Form onReset={handleReset} onSubmit={handleSubmit}>
-                            {/*<AccountInfo*/}
-                            {/*    account={buyer}*/}
-                            {/*    actor={"buyer"}*/}
-                            {/*    onChange={(value) => setBuyer(value)}*/}
-                            {/*/>*/}
-                            {/*<AccountInfo*/}
-                            {/*    account={seller}*/}
-                            {/*    actor={"seller"}*/}
-                            {/*    onChange={(value) => setSeller(value)}*/}
-                            {/*/>*/}
-                            {/*<AccountInfo*/}
-                            {/*    account={deliver}*/}
-                            {/*    actor={"deliver"}*/}
-                            {/*    onChange={(value) => setDeliver(value)}*/}
-                            {/*/>*/}
+                            <AccountInfo
+                                setFieldValue={setFieldValue}
+                                name={"buyer"}
+                                touched={touched}
+                                errors={errors}
+                            />
+                            <AccountInfo
+                                setFieldValue={setFieldValue}
+                                name={"seller"}
+                                touched={touched}
+                                errors={errors}
+                            />
+                            <AccountInfo
+                                setFieldValue={setFieldValue}
+                                name={"deliver"}
+                                touched={touched}
+                                errors={errors}
+                            />
                             <EtherInput
                                 currencyPrice={0.5}
                                 label={"Seller price"}

@@ -5,14 +5,15 @@ import {useSelector} from "react-redux";
 import {getUserAddress} from "../../../redux/selectors"
 
 type AccountInfoProps = {
-    actor: string
-    account: string
-    onChange: (account: string) => void
+    setFieldValue: any
+    name: string
+    touched: any
+    errors: any
 }
 
-const AccountInfo = ({actor, account, onChange}: AccountInfoProps) => {
+const AccountInfo = (props: AccountInfoProps) => {
     const [disabled, setDisabled] = useState(false);
-    const [accountState, setAccountState] = useState(account);
+    const [account, setAccount] = useState("");
     const userAddress = useSelector(getUserAddress);
 
     const handleCheckBox = async (event: any) => {
@@ -26,19 +27,19 @@ const AccountInfo = ({actor, account, onChange}: AccountInfoProps) => {
     };
 
     const handleChange = (value: string) => {
-        setAccountState(value);
-        onChange(value)
+        setAccount(value);
+        props.setFieldValue(props.name, value);
     };
 
-    let labelCheckBox = "I'm the " + actor;
+    let labelCheckBox = "I'm the " + props.name;
 
     return (
         <Row>
             <Col>
                 <AddressInput
-                    value={accountState}
+                    value={account}
                     onChange={(value: string) => handleChange(value)}
-                    actor={actor}
+                    actor={props.name}
                     disabled={disabled}
                 />
             </Col>
