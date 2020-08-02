@@ -26,10 +26,13 @@ interface FormProps {
 interface FormErrors {
     sellerPrice: string;
     deliverPrice: string;
+    buyer: string;
+    seller: string;
+    deliver: string;
 }
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
-    const {touched, errors, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
+    const {errors, touched, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
 
     // const [buyer, setBuyer] = useState("");
     // const [seller, setSeller] = useState("");
@@ -55,19 +58,16 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                             <AccountInfo
                                 setFieldValue={setFieldValue}
                                 name={"buyer"}
-                                touched={touched}
                                 errors={errors}
                             />
                             <AccountInfo
                                 setFieldValue={setFieldValue}
                                 name={"seller"}
-                                touched={touched}
                                 errors={errors}
                             />
                             <AccountInfo
                                 setFieldValue={setFieldValue}
                                 name={"deliver"}
-                                touched={touched}
                                 errors={errors}
                             />
                             <EtherInput
@@ -75,7 +75,6 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                 label={"Seller price"}
                                 setFieldValue={setFieldValue}
                                 name={"sellerPrice"}
-                                touched={touched}
                                 errors={errors}
                             />
                             <EtherInput
@@ -83,7 +82,6 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                 label={"Deliver price"}
                                 setFieldValue={setFieldValue}
                                 name={"deliverPrice"}
-                                touched={touched}
                                 errors={errors}
                                 onChangeMode={(mode) => setDeliverPriceMode(mode)}
                             />
@@ -134,13 +132,23 @@ const CreateOrder = withFormik<FormProps, FormValues>({
 
     // Add a custom validation function (this can be async too!)
     validate: (values: FormValues) => {
+        const addressErrorMsg = "Define address";
         let errors: FormikErrors<FormErrors> = {};
         if (isNaN(values.sellerPrice)) {
             errors.sellerPrice = 'Required';
         }
-
         if (isNaN(values.deliverPrice)) {
             errors.deliverPrice = 'Required';
+        }
+
+        if (!values.buyer) {
+            errors.buyer = addressErrorMsg;
+        }
+        if (!values.seller) {
+            errors.seller = addressErrorMsg;
+        }
+        if (!values.deliver) {
+            errors.deliver = addressErrorMsg;
         }
         return errors;
     },

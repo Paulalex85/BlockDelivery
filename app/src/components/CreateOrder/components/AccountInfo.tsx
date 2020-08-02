@@ -1,13 +1,13 @@
 import React, {useState} from 'react';
-import {Form, Col, Row} from 'react-bootstrap';
+import {Col, Form, Row} from 'react-bootstrap';
 import AddressInput from "./AddressInput";
 import {useSelector} from "react-redux";
 import {getUserAddress} from "../../../redux/selectors"
+import {ErrorMessage} from "formik";
 
 type AccountInfoProps = {
     setFieldValue: any
     name: string
-    touched: any
     errors: any
 }
 
@@ -34,22 +34,28 @@ const AccountInfo = (props: AccountInfoProps) => {
     let labelCheckBox = "I'm the " + props.name;
 
     return (
-        <Row>
-            <Col>
-                <AddressInput
-                    value={account}
-                    onChange={(value: string) => handleChange(value)}
-                    actor={props.name}
-                    disabled={disabled}
-                />
-            </Col>
-            <Col sm={4}>
-                <Form.Check
-                    onChange={handleCheckBox}
-                    label={labelCheckBox}
-                />
-            </Col>
-        </Row>
+        <Form.Group>
+            <Row>
+                <Col>
+                    <AddressInput
+                        value={account}
+                        onChange={(value: string) => handleChange(value)}
+                        actor={props.name}
+                        disabled={disabled}
+                    />
+                </Col>
+                <Col sm={4}>
+                    <Form.Check
+                        onChange={handleCheckBox}
+                        label={labelCheckBox}
+                    />
+                </Col>
+            </Row>
+            <Row>
+                <ErrorMessage name={props.name}
+                              render={(msg) => <Form.Label style={{color: "red"}}>{msg}</Form.Label>}/>
+            </Row>
+        </Form.Group>
     )
 };
 

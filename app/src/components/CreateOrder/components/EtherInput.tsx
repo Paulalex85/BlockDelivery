@@ -11,7 +11,6 @@ type EtherInputProps = {
     ethBaseValue?: number
     setFieldValue: any
     name: string
-    touched: any
     errors: any
 }
 
@@ -109,7 +108,8 @@ const EtherInput = (props: EtherInputProps) => {
                     </InputGroup.Append>
                 </InputGroup>
             </Col>
-            <ErrorMessage name={props.name} />
+            <ErrorMessage name={props.name}
+                          render={(msg) => <Form.Label style={{color: "red"}}>{msg}</Form.Label>}/>
         </Form.Group>
     )
 };

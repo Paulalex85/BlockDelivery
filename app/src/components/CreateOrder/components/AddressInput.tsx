@@ -12,38 +12,40 @@ type AddressInputProps = {
     disabled: boolean
 }
 
-const AddressInput = ({value, ensProvider, onChange, actor, disabled}: AddressInputProps) => {
+const AddressInput = (props: AddressInputProps) => {
+    const regexENS = RegExp('[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?');
+    const regexEthAddress = RegExp('^0x[a-fA-F0-9]*$');
 
     const [ens, setEns] = useState("");
-    const [valueState, setValueState] = useState("");
+    const [value, setValue] = useState("");
     const [scan, setScan] = useState(false);
 
     useEffect(() => {
         setEns("");
-        if (value !== undefined) {
-            setValueState(value)
+        if (props.value !== undefined) {
+            setValue(props.value)
         }
-        if (ensProvider) {
+        if (props.ensProvider) {
             getEns().then();
         }
-    }, [ensProvider, value]);
+    }, [props.ensProvider, props.value]);
 
     async function getEns() {
         let newEns;
         try {
-            newEns = await ensProvider.lookupAddress(valueState);
+            newEns = await props.ensProvider.lookupAddress(value);
             setEns(newEns)
         } catch (e) {
         }
         console.log("checking resolve");
-        if (valueState.indexOf(".eth") > 0 || valueState.indexOf(".xyz") > 0) {
+        if (value.indexOf(".eth") > 0 || value.indexOf(".xyz") > 0) {
             try {
                 console.log("resolving");
-                let possibleAddress = await ensProvider.resolveName(valueState);
+                let possibleAddress = await props.ensProvider.resolveName(value);
                 console.log("GOT:L", possibleAddress);
                 if (possibleAddress) {
-                    setEns(valueState);
-                    onChange(possibleAddress)
+                    setEns(value);
+                    props.onChange(possibleAddress)
                 }
             } catch (e) {
             }
@@ -64,16 +66,16 @@ const AddressInput = ({value, ensProvider, onChange, actor, disabled}: AddressIn
             let address = newValue;
             if (address.indexOf(".eth") > 0 || address.indexOf(".xyz") > 0) {
                 try {
-                    let possibleAddress = await ensProvider.resolveName(address);
+                    let possibleAddress = await props.ensProvider.resolveName(address);
                     if (possibleAddress) {
                         address = possibleAddress
                     }
                 } catch (e) {
                 }
             }
-            setValueState(address);
-            if (typeof onChange == "function") {
-                onChange(address)
+            setValue(address);
+            if (typeof props.onChange == "function") {
+                props.onChange(address)
             }
         }
     };
@@ -109,7 +111,7 @@ const AddressInput = ({value, ensProvider, onChange, actor, disabled}: AddressIn
         )
     }
 
-    let label = actor.charAt(0).toUpperCase() + actor.slice(1);
+    let label = props.actor.charAt(0).toUpperCase() + props.actor.slice(1);
 
     return (
         <div>
@@ -119,13 +121,14 @@ const AddressInput = ({value, ensProvider, onChange, actor, disabled}: AddressIn
                     {label}
                 </Form.Label>
                 <Col sm={1}>
-                    <Blockies seed={valueState.toString().toLowerCase()} size={8} scale={4}/>
+                    <Blockies seed={value.toString().toLowerCase()} size={8} scale={4}/>
                 </Col>
                 <Col sm={8}>
                     <Form.Control
-                        disabled={disabled}
+                        isInvalid={value !== "" ? ens ? !regexENS.test(ens.toString()) : !regexEthAddress.test(value.toString()) : false}
+                        disabled={props.disabled}
                         type="text"
-                        value={ens ? ens : valueState}
+                        value={ens ? ens : value}
                         onChange={(e) => updateAddress(e.target.value).then()}/>
                 </Col>
                 <Col sm={1}>
