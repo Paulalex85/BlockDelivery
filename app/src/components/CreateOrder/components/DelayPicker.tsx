@@ -3,18 +3,21 @@ import {Form, Row, Col} from 'react-bootstrap';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import 'react-datepicker/dist/react-datepicker-cssmodules.css';
+import {ErrorMessage} from "formik";
 
 type DelayPickerProps = {
-    onChange: (date: any) => void
+    setFieldValue: any
+    name: string
+    errors: any
 }
 
-const DelayPicker = ({onChange}: DelayPickerProps) => {
+const DelayPicker = (props: DelayPickerProps) => {
 
     const [delay, setDelay] = useState(new Date());
 
     const handleChange = (date: any) => {
         setDelay(date);
-        onChange(date);
+        props.setFieldValue(props.name, date);
     };
 
     return (
@@ -36,6 +39,8 @@ const DelayPicker = ({onChange}: DelayPickerProps) => {
                     minDate={new Date()}
                 />
             </Col>
+            <ErrorMessage name={props.name}
+                          render={(msg) => <Form.Label style={{color: "red"}}>{msg}</Form.Label>}/>
         </Form.Group>
     )
 };

@@ -29,7 +29,7 @@ interface FormErrors {
     buyer: string;
     seller: string;
     deliver: string;
-    sellerDeliveryPay: string;
+    dateDelay: string;
 }
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
@@ -95,7 +95,11 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     name={"sellerDeliveryPay"}
                                 />
                                 : ""}
-                            {/*<DelayPicker onChange={(value) => setDateDelay(value)}/>*/}
+                            <DelayPicker
+                                setFieldValue={setFieldValue}
+                                name={"dateDelay"}
+                                errors={errors}
+                            />
                             {/*<EscrowInput*/}
                             {/*    simpleEscrowValue={deliverPrice + sellerPrice}*/}
                             {/*    currencyPrice={0.5}*/}
@@ -151,6 +155,10 @@ const CreateOrder = withFormik<FormProps, FormValues>({
         }
         if (!values.deliver) {
             errors.deliver = addressErrorMsg;
+        }
+
+        if (values.dateDelay < new Date()) {
+            errors.dateDelay = "The date can't be in the past";
         }
 
         return errors;
