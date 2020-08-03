@@ -29,10 +29,11 @@ interface FormErrors {
     buyer: string;
     seller: string;
     deliver: string;
+    sellerDeliveryPay: string;
 }
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
-    const {errors, touched, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
+    const {values, errors, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
 
     // const [buyer, setBuyer] = useState("");
     // const [seller, setSeller] = useState("");
@@ -85,14 +86,15 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                 errors={errors}
                                 onChangeMode={(mode) => setDeliverPriceMode(mode)}
                             />
-                            {/*{deliverPrice > 0 ?*/}
-                            {/*    <SellerDeliveryPay*/}
-                            {/*        deliveryCost={deliverPrice}*/}
-                            {/*        onChange={(value) => setSellerDeliveryPay(value)}*/}
-                            {/*        currencyMode={deliverPriceMode}*/}
-                            {/*        currencyPrice={0.5}*/}
-                            {/*    />*/}
-                            {/*    : ""}*/}
+                            {values.deliverPrice > 0 ?
+                                <SellerDeliveryPay
+                                    deliveryCost={values.deliverPrice}
+                                    currencyMode={deliverPriceMode}
+                                    currencyPrice={0.5}
+                                    setFieldValue={setFieldValue}
+                                    name={"sellerDeliveryPay"}
+                                />
+                                : ""}
                             {/*<DelayPicker onChange={(value) => setDateDelay(value)}/>*/}
                             {/*<EscrowInput*/}
                             {/*    simpleEscrowValue={deliverPrice + sellerPrice}*/}
@@ -150,6 +152,7 @@ const CreateOrder = withFormik<FormProps, FormValues>({
         if (!values.deliver) {
             errors.deliver = addressErrorMsg;
         }
+
         return errors;
     },
 

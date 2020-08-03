@@ -6,18 +6,19 @@ import {Mode} from "./EtherInput";
 
 type SellerDeliveryPayProps = {
     deliveryCost: number
-    onChange: (pay: number) => void
     currencyMode: Mode
     currencyPrice: number
+    setFieldValue: any
+    name: string
 }
 
-const SellerDeliveryPay = ({deliveryCost, onChange, currencyMode, currencyPrice}: SellerDeliveryPayProps) => {
+const SellerDeliveryPay = (props: SellerDeliveryPayProps) => {
 
     const [pay, setPay] = useState(0);
     const [checked, setChecked] = useState(false);
 
-    let usdValue = currencyPrice * pay * deliveryCost / 100;
-    let ethValue = pay * deliveryCost / 100;
+    let usdValue = props.currencyPrice * pay * props.deliveryCost / 100;
+    let ethValue = pay * props.deliveryCost / 100;
 
     const handleCheck = (event: any) => {
         setChecked(event.target.checked);
@@ -28,7 +29,8 @@ const SellerDeliveryPay = ({deliveryCost, onChange, currencyMode, currencyPrice}
 
     const handleSellerPay = (event: any) => {
         setPay(Number(event.target.value));
-        onChange(Number(event.target.value));
+        console.log(Number(event.target.value));
+        props.setFieldValue(props.name, Number(event.target.value) * props.deliveryCost / 100);
     };
 
     return (
@@ -57,11 +59,11 @@ const SellerDeliveryPay = ({deliveryCost, onChange, currencyMode, currencyPrice}
                             <InputGroup>
                                 <Form.Control
                                     type="text"
-                                    value={currencyMode === Mode.USD ? usdValue : ethValue}
+                                    value={props.currencyMode === Mode.USD ? usdValue : ethValue}
                                     disabled={true}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text id="symbol">{currencyMode}</InputGroup.Text>
+                                    <InputGroup.Text id="symbol">{props.currencyMode}</InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
                         </Col>
