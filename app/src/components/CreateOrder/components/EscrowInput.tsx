@@ -1,16 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {Col, Form, InputGroup, Row} from 'react-bootstrap';
+import {Col, Form, Row} from 'react-bootstrap';
 import {EtherInput} from "./";
 
 type EscrowInputProps = {
     simpleEscrowValue: number
     currencyPrice: number
-    onChangeBuyer: (escrow: number) => void
-    onChangeSeller: (escrow: number) => void
-    onChangeDeliver: (escrow: number) => void
+    setFieldValue: any
+    errors: any
 }
 
-const EscrowInput = ({simpleEscrowValue, currencyPrice}: EscrowInputProps) => {
+const EscrowInput = (props: EscrowInputProps) => {
 
     const [buyerEscrow, setBuyerEscrow] = useState(0);
     const [sellerEscrow, setSellerEscrow] = useState(0);
@@ -22,40 +21,57 @@ const EscrowInput = ({simpleEscrowValue, currencyPrice}: EscrowInputProps) => {
     const handleCheck = (event: any) => {
         setChecked(event.target.checked);
         if (!event.target.checked) {
+            props.setFieldValue("buyerEscrow", 0);
+            props.setFieldValue("sellerEscrow", 0);
+            props.setFieldValue("deliverEscrow", 0);
             setBuyerEscrow(0);
             setDeliverEscrow(0);
             setSellerEscrow(0);
+        } else {
+            setEscrowType("simple");
+            setSimpleEscrow();
         }
     };
 
+    function setSimpleEscrow() {
+        setBuyerEscrow(0);
+        setDeliverEscrow(props.simpleEscrowValue);
+        setSellerEscrow(props.simpleEscrowValue);
+    }
+
+    function setDoubleEscrow() {
+        setBuyerEscrow(props.simpleEscrowValue);
+        setDeliverEscrow(props.simpleEscrowValue * 2);
+        setSellerEscrow(props.simpleEscrowValue * 2);
+    }
+
+    function setCustomEscrow() {
+        setBuyerEscrow(-1);
+        setDeliverEscrow(-1);
+        setSellerEscrow(-1);
+    }
+
     useEffect(() => {
         if (escrowType === "simple") {
-            setBuyerEscrow(0);
-            setDeliverEscrow(simpleEscrowValue);
-            setSellerEscrow(simpleEscrowValue);
+            setSimpleEscrow();
         } else if (escrowType === "double") {
-            setBuyerEscrow(simpleEscrowValue);
-            setDeliverEscrow(simpleEscrowValue * 2);
-            setSellerEscrow(simpleEscrowValue * 2);
+            setDoubleEscrow();
         }
-    }, [simpleEscrowValue]);
+    }, [props.simpleEscrowValue]);
 
     const handleSelectInput = (event: any) => {
         setEscrowType(event.target.value);
         switch (event.target.value) {
             case "simple":
-                setBuyerEscrow(0);
-                setDeliverEscrow(simpleEscrowValue);
-                setSellerEscrow(simpleEscrowValue);
+                setSimpleEscrow();
                 setInputDisabled(true);
                 break;
             case "double":
-                setBuyerEscrow(simpleEscrowValue);
-                setDeliverEscrow(simpleEscrowValue * 2);
-                setSellerEscrow(simpleEscrowValue * 2);
+                setDoubleEscrow();
                 setInputDisabled(true);
                 break;
             case "custom":
+                setCustomEscrow();
                 setInputDisabled(false);
                 break;
         }
@@ -83,24 +99,33 @@ const EscrowInput = ({simpleEscrowValue, currencyPrice}: EscrowInputProps) => {
                             </Form.Control>
                         </Form.Group>
                         <Form.Group>
-                            {/*<EtherInput*/}
-                            {/*    ethBaseValue={buyerEscrow}*/}
-                            {/*    fullDisabled={inputDisabled}*/}
-                            {/*    currencyPrice={currencyPrice}*/}
-                            {/*    label={"Buyer"}*/}
-                            {/*    onChange={(value) => setBuyerEscrow(value)}/>*/}
-                            {/*<EtherInput*/}
-                            {/*    ethBaseValue={sellerEscrow}*/}
-                            {/*    fullDisabled={inputDisabled}*/}
-                            {/*    currencyPrice={currencyPrice}*/}
-                            {/*    label={"Seller"}*/}
-                            {/*    onChange={(value) => setSellerEscrow(value)}/>*/}
-                            {/*<EtherInput*/}
-                            {/*    ethBaseValue={deliverEscrow}*/}
-                            {/*    fullDisabled={inputDisabled}*/}
-                            {/*    currencyPrice={currencyPrice}*/}
-                            {/*    label={"Deliver"}*/}
-                            {/*    onChange={(value) => setDeliverEscrow(value)}/>*/}
+                            <EtherInput
+                                ethBaseValue={buyerEscrow}
+                                fullDisabled={inputDisabled}
+                                currencyPrice={props.currencyPrice}
+                                label={"Buyer"}
+                                setFieldValue={props.setFieldValue}
+                                name={"buyerEscrow"}
+                                errors={props.errors}
+                            />
+                            <EtherInput
+                                ethBaseValue={sellerEscrow}
+                                fullDisabled={inputDisabled}
+                                currencyPrice={props.currencyPrice}
+                                label={"Seller"}
+                                setFieldValue={props.setFieldValue}
+                                name={"sellerEscrow"}
+                                errors={props.errors}
+                            />
+                            <EtherInput
+                                ethBaseValue={deliverEscrow}
+                                fullDisabled={inputDisabled}
+                                currencyPrice={props.currencyPrice}
+                                label={"Deliver"}
+                                setFieldValue={props.setFieldValue}
+                                name={"deliverEscrow"}
+                                errors={props.errors}
+                            />
                         </Form.Group>
                     </div>
                 ) : (

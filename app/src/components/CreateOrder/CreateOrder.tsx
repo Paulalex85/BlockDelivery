@@ -100,13 +100,12 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                 name={"dateDelay"}
                                 errors={errors}
                             />
-                            {/*<EscrowInput*/}
-                            {/*    simpleEscrowValue={deliverPrice + sellerPrice}*/}
-                            {/*    currencyPrice={0.5}*/}
-                            {/*    onChangeBuyer={(value) => setBuyerEscrow(value)}*/}
-                            {/*    onChangeSeller={(value) => setSellerEscrow(value)}*/}
-                            {/*    onChangeDeliver={(value) => setDeliverEscrow(value)}*/}
-                            {/*/>*/}
+                            <EscrowInput
+                                simpleEscrowValue={values.deliverPrice + values.sellerPrice}
+                                currencyPrice={0.5}
+                                setFieldValue={setFieldValue}
+                                errors={errors}
+                            />
                             <Button type="submit" disabled={isSubmitting}>
                                 Create
                             </Button>

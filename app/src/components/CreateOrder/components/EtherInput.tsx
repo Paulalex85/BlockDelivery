@@ -26,9 +26,10 @@ const EtherInput = (props: EtherInputProps) => {
     const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
 
     useEffect(() => {
-        if (props.ethBaseValue !== undefined) {
+        if (props.ethBaseValue !== undefined && props.ethBaseValue !== -1) {
             setEthValue(props.ethBaseValue);
             setUsdValue(props.ethBaseValue * props.currencyPrice);
+            props.setFieldValue(props.name, props.ethBaseValue);
         }
     }, [props.ethBaseValue]);
 
@@ -38,20 +39,20 @@ const EtherInput = (props: EtherInputProps) => {
             newValue = 0;
         }
         if (mode === Mode.USD) {
-            let ethValue = 0;
+            let newEthValue = 0;
             if (newValue > 0) {
-                ethValue = parseFloat(newValue) / props.currencyPrice;
+                newEthValue = parseFloat(newValue) / props.currencyPrice;
             }
-            setEthValue(ethValue);
+            setEthValue(newEthValue);
             setUsdValue(newValue);
-            props.setFieldValue(props.name, ethValue);
+            props.setFieldValue(props.name, newEthValue);
         } else {
             setEthValue(newValue);
-            let usd = 0;
+            let newUsdValue = 0;
             if (newValue > 0) {
-                usd = parseFloat(newValue) * props.currencyPrice;
+                newUsdValue = parseFloat(newValue) * props.currencyPrice;
             }
-            setUsdValue(usd);
+            setUsdValue(newUsdValue);
             props.setFieldValue(props.name, parseFloat(newValue));
         }
     };
