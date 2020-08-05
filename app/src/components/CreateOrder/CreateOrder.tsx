@@ -30,6 +30,9 @@ interface FormErrors {
     seller: string;
     deliver: string;
     dateDelay: string;
+    buyerEscrow: string;
+    sellerEscrow: string;
+    deliverEscrow: string;
 }
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
@@ -138,12 +141,13 @@ const CreateOrder = withFormik<FormProps, FormValues>({
     // Add a custom validation function (this can be async too!)
     validate: (values: FormValues) => {
         const addressErrorMsg = "Define address";
+        const priceErrorMsg = 'Required';
         let errors: FormikErrors<FormErrors> = {};
         if (isNaN(values.sellerPrice)) {
-            errors.sellerPrice = 'Required';
+            errors.sellerPrice = priceErrorMsg;
         }
         if (isNaN(values.deliverPrice)) {
-            errors.deliverPrice = 'Required';
+            errors.deliverPrice = priceErrorMsg;
         }
 
         if (!values.buyer) {
@@ -160,6 +164,15 @@ const CreateOrder = withFormik<FormProps, FormValues>({
             errors.dateDelay = "The date can't be in the past";
         }
 
+        if (isNaN(values.buyerEscrow)) {
+            errors.buyerEscrow = priceErrorMsg;
+        }
+        if (isNaN(values.sellerEscrow)) {
+            errors.sellerEscrow = priceErrorMsg;
+        }
+        if (isNaN(values.deliverEscrow)) {
+            errors.deliverEscrow = priceErrorMsg;
+        }
         return errors;
     },
 
