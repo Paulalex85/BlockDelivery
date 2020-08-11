@@ -2,20 +2,22 @@ import React, {useEffect, useState} from 'react'
 import Blockies from 'react-blockies';
 import {Navbar} from 'react-bootstrap'
 import CopyText from "./CopyText";
+import {useSelector} from "react-redux";
+import {getUserAddress} from "../../../../../redux/selectors";
 
 type AddressProps = {
-    value: string;
     ensProvider?: any;
     size?: string;
     minimized?: boolean;
 }
 
-const Address = ({value, ensProvider, size, minimized}: AddressProps) => {
-
+const Address = ({ensProvider, size, minimized}: AddressProps) => {
     const [ens, setEns] = useState("");
     let blockExplorer = "https://etherscan.io/address/";
+    let value = useSelector(getUserAddress);
 
     useEffect(() => {
+        console.log("Address update in Address component : " + value);
         if (value && ensProvider) {
             getEns().then();
         }
@@ -28,13 +30,6 @@ const Address = ({value, ensProvider, size, minimized}: AddressProps) => {
             setEns(newEns)
         } catch (e) {
         }
-    }
-
-    if (!value) {
-        return (
-            <Navbar.Text>
-            </Navbar.Text>
-        )
     }
 
     let displayAddress = value.substr(0, 6);
@@ -59,17 +54,22 @@ const Address = ({value, ensProvider, size, minimized}: AddressProps) => {
     }
 
     return (
-        <Navbar.Text>
-            <span style={{verticalAlign: "middle", paddingRight: 5}}>
-                <Blockies seed={value.toString().toLowerCase()} size={8} scale={4}/>
-            </span>
-            <Navbar.Text style={{paddingRight: 2}}>
-                <a style={{color: "#222222"}} href={blockExplorer + value}>{displayAddress}</a>
+        value ? (
+                <Navbar.Text>
+                <span style={{verticalAlign: "middle", paddingRight: 5}}>
+                    <Blockies seed={value.toString().toLowerCase()} size={8} scale={4}/>
+                </span>
+                    <Navbar.Text style={{paddingRight: 2}}>
+                        <a style={{color: "#222222"}} href={blockExplorer + value}>{displayAddress}</a>
+                    </Navbar.Text>
+                    <Navbar.Text style={{paddingRight: 5}}>
+                        <CopyText value={value}/>
+                    </Navbar.Text>
+                </Navbar.Text>
+            ) :
+            <Navbar.Text>
+                Connecting...
             </Navbar.Text>
-            <Navbar.Text style={{paddingRight: 5}}>
-                <CopyText value={value}/>
-            </Navbar.Text>
-        </Navbar.Text>
     );
 };
 

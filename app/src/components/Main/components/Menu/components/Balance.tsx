@@ -3,19 +3,21 @@ import * as ethers from "ethers";
 import {usePoller} from "../../../../../hooks";
 import {Navbar} from 'react-bootstrap'
 import {FaEthereum} from "react-icons/fa";
+import {useSelector} from "react-redux";
+import {getUserAddress} from "../../../../../redux/selectors";
 
 type BalanceProps = {
-    address: string;
     balanceProps?: string;
     pollTime?: number;
     dollarMultiplier?: number;
     provider: any;
 }
 
-const Balance = ({address, balanceProps, pollTime, dollarMultiplier, provider}: BalanceProps) => {
+const Balance = ({balanceProps, pollTime, dollarMultiplier, provider}: BalanceProps) => {
 
     const [dollarMode, setDollarMode] = useState(false);
-    const [balance, setBalance] = useState();
+    const [balance, setBalance] = useState("");
+    let address = useSelector(getUserAddress);
 
     usePoller(async () => {
         if (address && provider) {

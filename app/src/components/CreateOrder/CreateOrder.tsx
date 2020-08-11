@@ -3,6 +3,7 @@ import {Card, Col, Row, Form, Button} from 'react-bootstrap';
 import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} from "./components";
 import {Mode} from "./components/EtherInput";
 import {FormikErrors, FormikProps, withFormik} from "formik"
+import DeliveryContract from "../../contracts/DeliveryContract.json"
 
 type CreateOrderProps = {}
 
@@ -38,18 +39,17 @@ interface FormErrors {
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
     const {values, errors, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
 
-    // const [buyer, setBuyer] = useState("");
-    // const [seller, setSeller] = useState("");
-    // const [deliver, setDeliver] = useState("");
-    // const [sellerPrice, setSellerPrice] = useState(0);
-    // const [deliverPrice, setDeliverPrice] = useState(0);
-    // const [sellerDeliveryPay, setSellerDeliveryPay] = useState(0);
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
-    // const [buyerEscrow, setBuyerEscrow] = useState(0);
-    // const [sellerEscrow, setSellerEscrow] = useState(0);
-    // const [deliverEscrow, setDeliverEscrow] = useState(0);
-    // const [dateDelay, setDateDelay] = useState(new Date());
 
+
+    // const deployedNetwork = DeliveryContract.networks[networkId];
+    // const instance = new web3.eth.Contract(
+    //     SimpleStorageContract.abi,
+    //     deployedNetwork && deployedNetwork.address,
+    // );
+    console.log(DeliveryContract);
+
+    // @ts-ignore
     return (
         <Row className="justify-content-md-center mt-5">
             <Col className="col-sm-5">
@@ -58,7 +58,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                         Create Order
                     </Card.Header>
                     <Card.Body>
-                        <Form onReset={handleReset} onSubmit={handleSubmit}>
+                        <Form onReset={handleReset} onSubmit={() => handleSubmit}>
                             <AccountInfo
                                 setFieldValue={setFieldValue}
                                 name={"buyer"}

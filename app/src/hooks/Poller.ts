@@ -22,5 +22,3 @@ export const usePoller = (fn: any, delay: number) => {
         fn()
     }, []);
 };
-
-export default usePoller;

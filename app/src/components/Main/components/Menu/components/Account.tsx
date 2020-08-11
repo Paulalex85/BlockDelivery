@@ -1,16 +1,11 @@
-import React, {useEffect} from 'react'
+import React, {useCallback, useEffect} from 'react'
 import {ethers} from "ethers";
-import BurnerProvider from 'burner-provider';
 import Web3Modal from "web3modal";
-import {usePoller} from "../../../../../hooks";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import {Button, Navbar} from 'react-bootstrap';
 import Balance from "./Balance";
 import Address from "./Address";
-import {useDispatch} from "react-redux";
-import {setUserAddress} from "../../../../../redux/actions"
-
-const INFURA_ID = "c668ee6214a74e1c89726b345a5aed66";
+import {INFURA_ID} from "../../../../../constants"
 
 const web3Modal = new Web3Modal({
     //network: "mainnet", // optional
@@ -26,62 +21,18 @@ const web3Modal = new Web3Modal({
 });
 
 type AccountProps = {
-    address: string;
-    setAddress: any;
-    localProvider: any;
+    userProvider: any;
     mainnetProvider?: any;
-    injectedProvider: any;
     setInjectedProvider: any;
-    pollTime?: number;
-    price: number;
     minimized?: boolean;
 }
 
-const Account = ({address, setAddress, localProvider, mainnetProvider, injectedProvider, setInjectedProvider, pollTime, price, minimized = false}: AccountProps) => {
-    const dispatch = useDispatch();
+const Account = ({userProvider, mainnetProvider, setInjectedProvider, minimized = false}: AccountProps) => {
 
-    const createBurnerIfNoAddress = () => {
-        if (!injectedProvider && localProvider && typeof setInjectedProvider == "function") {
-            if (localProvider.connection && localProvider.connection.url) {
-                setInjectedProvider(new ethers.providers.Web3Provider(new BurnerProvider(localProvider.connection.url)));
-                console.log("________BY URL", localProvider.connection.url)
-            } else if (localProvider._network && localProvider._network.name) {
-                setInjectedProvider(new ethers.providers.Web3Provider(new BurnerProvider("https://" + localProvider._network.name + ".infura.io/v3/" + INFURA_ID)));
-                console.log("________INFURA")
-            } else {
-                console.log("________MAIN");
-                setInjectedProvider(new ethers.providers.Web3Provider(new BurnerProvider("https://mainnet.infura.io/v3/" + INFURA_ID)))
-            }
-        } else {
-            pollInjectedProvider().then();
-        }
-    };
-
-    useEffect(createBurnerIfNoAddress, [injectedProvider]);
-
-    const pollInjectedProvider = async () => {
-        if (injectedProvider) {
-            let accounts = await injectedProvider.listAccounts();
-            if (accounts && accounts[0] && accounts[0] !== address) {
-                if (typeof setAddress === "function") {
-                    setAddress(accounts[0]);
-                    dispatch(setUserAddress(accounts[0]));
-                }
-            }
-        }
-    };
-
-    usePoller(() => {
-        pollInjectedProvider().then();
-    }, pollTime ? pollTime : 1999);
-
-    const loadWeb3Modal = async () => {
+    const loadWeb3Modal = useCallback(async () => {
         const provider = await web3Modal.connect();
-        if (typeof setInjectedProvider === "function") {
-            setInjectedProvider(new ethers.providers.Web3Provider(provider));
-        }
-        await pollInjectedProvider()
-    };
+        setInjectedProvider(new ethers.providers.Web3Provider(provider));
+    }, [setInjectedProvider]);
 
     const logoutOfWeb3Modal = async () => {
         await web3Modal.clearCachedProvider();
@@ -90,34 +41,28 @@ const Account = ({address, setAddress, localProvider, mainnetProvider, injectedP
         }, 1)
     };
 
-    let modalButtons = [];
-    if (typeof setInjectedProvider === "function") {
-        if (web3Modal.cachedProvider) {
-            modalButtons.push(
-                <Button key="logoutbutton" variant="outline-primary" onClick={logoutOfWeb3Modal}>logout</Button>
-            )
-        } else {
-            modalButtons.push(
-                <Button key="loginbutton" variant="primary" onClick={loadWeb3Modal}>connect</Button>
-            )
-        }
-    }
-
-
-    React.useEffect(() => {
+    useEffect(() => {
         if (web3Modal.cachedProvider) {
             loadWeb3Modal().then();
         }
-    }, []);
+    }, [loadWeb3Modal]);
+
+    let modalButtons = undefined;
+    if (web3Modal.cachedProvider) {
+        modalButtons = (
+            <Button key="logoutbutton" variant="outline-primary" onClick={logoutOfWeb3Modal}>Logout</Button>)
+    } else {
+        modalButtons = (
+            <Button key="loginbutton" variant="primary" onClick={loadWeb3Modal}>Connect</Button>
+        )
+    }
 
     let display = undefined;
     if (!minimized) {
         display = (
             <Navbar.Text>
-                {address ? (
-                    <Address value={address} size="short" ensProvider={mainnetProvider}/>
-                ) : "Connecting..."}
-                <Balance address={address} provider={localProvider} dollarMultiplier={price}/>
+                <Address size="short" ensProvider={mainnetProvider}/>
+                <Balance provider={userProvider} dollarMultiplier={1}/>
             </Navbar.Text>
         )
     }
