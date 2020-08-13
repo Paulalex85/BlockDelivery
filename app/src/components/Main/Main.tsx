@@ -1,11 +1,11 @@
-import React, {Component, useState} from "react";
+import React, {useState} from "react";
 import {BrowserRouter, Route} from "react-router-dom";
 import {Menu} from './components';
 import LandingPage from "../LandingPage";
 import CreateOrder from "../CreateOrder";
-import {useUserProvider, useAddress} from "../../hooks";
-import {setUserAddress} from "../../redux/actions";
+import {useAddress, useUserProvider} from "../../hooks";
 import {ethers} from "ethers";
+import user from "../../redux/reducers/user";
 
 
 const Main = () => {
@@ -27,7 +27,10 @@ const Main = () => {
                 <div>
                     <Route exact path="/" render={(props) => <LandingPage {...props} />}/>
                     <div>
-                        <Route path="/create" component={CreateOrder}/>
+                        <Route path="/create">
+                            <CreateOrder
+                                userProvider={userProvider}/>
+                        </Route>
                         {/*<Route path="/orders" component={OrderDashboard}/>*/}
                     </div>
                 </div>

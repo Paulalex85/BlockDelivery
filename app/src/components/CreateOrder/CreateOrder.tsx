@@ -1,11 +1,14 @@
-import React, {useState} from 'react';
-import {Card, Col, Row, Form, Button} from 'react-bootstrap';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Button, Card, Col, Form, Row} from 'react-bootstrap';
 import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} from "./components";
 import {Mode} from "./components/EtherInput";
 import {FormikErrors, FormikProps, withFormik} from "formik"
 import DeliveryContract from "../../contracts/DeliveryContract.json"
+import {ethers} from "ethers";
 
-type CreateOrderProps = {}
+type CreateOrderProps = {
+    userProvider: any;
+}
 
 export interface FormValues {
     buyer: string;
@@ -18,10 +21,6 @@ export interface FormValues {
     sellerEscrow: number;
     deliverEscrow: number;
     dateDelay: object;
-}
-
-interface FormProps {
-    message: string;
 }
 
 interface FormErrors {
@@ -38,16 +37,25 @@ interface FormErrors {
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
     const {values, errors, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
-
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
+    let contract = undefined;
 
+    useEffect(() => {
+        const setup = async () => {
+            const network = await props.userProvider.getNetwork();
+            const contractNetworks: { [k: number]: any } = DeliveryContract.networks;
+            const contractAddress = contractNetworks[network.chainId].address;
 
-    // const deployedNetwork = DeliveryContract.networks[networkId];
-    // const instance = new web3.eth.Contract(
-    //     SimpleStorageContract.abi,
-    //     deployedNetwork && deployedNetwork.address,
-    // );
-    console.log(DeliveryContract);
+            console.log(DeliveryContract);
+            contract = new ethers.Contract(
+                contractAddress,
+                DeliveryContract.abi,
+                props.userProvider.getSigner(),
+            );
+            console.log(contract)
+        };
+        setup().catch(console.error);
+    }, []);
 
     // @ts-ignore
     return (
@@ -120,7 +128,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
     )
 };
 
-const CreateOrder = withFormik<FormProps, FormValues>({
+const CreateOrder = withFormik<CreateOrderProps, FormValues>({
     // Transform outer props into form values
     // mapPropsToValues: props => {
     mapPropsToValues: () => {

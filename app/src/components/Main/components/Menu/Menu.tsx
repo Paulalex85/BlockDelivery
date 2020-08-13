@@ -1,7 +1,6 @@
-import React, {useState} from "react";
-import {ethers} from "ethers";
+import React from "react";
 import {LinkContainer} from "react-router-bootstrap";
-import {Container, Navbar, Nav} from 'react-bootstrap'
+import {Container, Nav, Navbar} from 'react-bootstrap'
 import {Account} from "./components";
 
 type Props = {
