@@ -1,10 +1,10 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Button, Card, Col, Form, Row} from 'react-bootstrap';
+import React, {useState} from 'react';
+import {Button, Card, Col, Form as BootstrapForm, Row} from 'react-bootstrap';
 import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} from "./components";
 import {Mode} from "./components/EtherInput";
-import {FormikErrors, FormikProps, withFormik} from "formik"
-import DeliveryContract from "../../contracts/DeliveryContract.json"
+import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
 import {ethers} from "ethers";
+import DeliveryContract from "../../contracts/DeliveryContract.json"
 
 type CreateOrderProps = {
     userProvider: any;
@@ -20,7 +20,7 @@ export interface FormValues {
     buyerEscrow: number;
     sellerEscrow: number;
     deliverEscrow: number;
-    dateDelay: object;
+    dateDelay: Date;
 }
 
 interface FormErrors {
@@ -36,26 +36,8 @@ interface FormErrors {
 }
 
 const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
-    const {values, errors, isSubmitting, handleReset, handleSubmit, setFieldValue} = props;
+    const {values, errors, isSubmitting, setFieldValue} = props;
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
-    let contract = undefined;
-
-    useEffect(() => {
-        const setup = async () => {
-            const network = await props.userProvider.getNetwork();
-            const contractNetworks: { [k: number]: any } = DeliveryContract.networks;
-            const contractAddress = contractNetworks[network.chainId].address;
-
-            console.log(DeliveryContract);
-            contract = new ethers.Contract(
-                contractAddress,
-                DeliveryContract.abi,
-                props.userProvider.getSigner(),
-            );
-            console.log(contract)
-        };
-        setup().catch(console.error);
-    }, []);
 
     // @ts-ignore
     return (
@@ -66,61 +48,63 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                         Create Order
                     </Card.Header>
                     <Card.Body>
-                        <Form onReset={handleReset} onSubmit={() => handleSubmit}>
-                            <AccountInfo
-                                setFieldValue={setFieldValue}
-                                name={"buyer"}
-                                errors={errors}
-                            />
-                            <AccountInfo
-                                setFieldValue={setFieldValue}
-                                name={"seller"}
-                                errors={errors}
-                            />
-                            <AccountInfo
-                                setFieldValue={setFieldValue}
-                                name={"deliver"}
-                                errors={errors}
-                            />
-                            <EtherInput
-                                currencyPrice={0.5}
-                                label={"Seller price"}
-                                setFieldValue={setFieldValue}
-                                name={"sellerPrice"}
-                                errors={errors}
-                            />
-                            <EtherInput
-                                currencyPrice={0.5}
-                                label={"Deliver price"}
-                                setFieldValue={setFieldValue}
-                                name={"deliverPrice"}
-                                errors={errors}
-                                onChangeMode={(mode) => setDeliverPriceMode(mode)}
-                            />
-                            {values.deliverPrice > 0 ?
-                                <SellerDeliveryPay
-                                    deliveryCost={values.deliverPrice}
-                                    currencyMode={deliverPriceMode}
+                        <BootstrapForm>
+                            <FormikForm>
+                                <AccountInfo
+                                    setFieldValue={setFieldValue}
+                                    name={"buyer"}
+                                    errors={errors}
+                                />
+                                <AccountInfo
+                                    setFieldValue={setFieldValue}
+                                    name={"seller"}
+                                    errors={errors}
+                                />
+                                <AccountInfo
+                                    setFieldValue={setFieldValue}
+                                    name={"deliver"}
+                                    errors={errors}
+                                />
+                                <EtherInput
+                                    currencyPrice={0.5}
+                                    label={"Seller price"}
+                                    setFieldValue={setFieldValue}
+                                    name={"sellerPrice"}
+                                    errors={errors}
+                                />
+                                <EtherInput
+                                    currencyPrice={0.5}
+                                    label={"Deliver price"}
+                                    setFieldValue={setFieldValue}
+                                    name={"deliverPrice"}
+                                    errors={errors}
+                                    onChangeMode={(mode) => setDeliverPriceMode(mode)}
+                                />
+                                {values.deliverPrice > 0 ?
+                                    <SellerDeliveryPay
+                                        deliveryCost={values.deliverPrice}
+                                        currencyMode={deliverPriceMode}
+                                        currencyPrice={0.5}
+                                        setFieldValue={setFieldValue}
+                                        name={"sellerDeliveryPay"}
+                                    />
+                                    : ""}
+                                <DelayPicker
+                                    setFieldValue={setFieldValue}
+                                    name={"dateDelay"}
+                                    errors={errors}
+                                />
+                                <EscrowInput
+                                    simpleEscrowValue={values.deliverPrice + values.sellerPrice}
                                     currencyPrice={0.5}
                                     setFieldValue={setFieldValue}
-                                    name={"sellerDeliveryPay"}
+                                    errors={errors}
                                 />
-                                : ""}
-                            <DelayPicker
-                                setFieldValue={setFieldValue}
-                                name={"dateDelay"}
-                                errors={errors}
-                            />
-                            <EscrowInput
-                                simpleEscrowValue={values.deliverPrice + values.sellerPrice}
-                                currencyPrice={0.5}
-                                setFieldValue={setFieldValue}
-                                errors={errors}
-                            />
-                            <Button type="submit" disabled={isSubmitting}>
-                                Create
-                            </Button>
-                        </Form>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    Create
+                                </Button>
+                            </FormikForm>
+                        </BootstrapForm>
                     </Card.Body>
                 </Card>
             </Col>
@@ -184,10 +168,38 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
         return errors;
     },
 
-    handleSubmit: (values, {setSubmitting}) => {
+    handleSubmit: (values, {props, setSubmitting}) => {
+        let contract: ethers.Contract | undefined = undefined;
+        const setup = async () => {
+            const network = await props.userProvider.getNetwork();
+            const contractNetworks: { [k: number]: any } = DeliveryContract.networks;
+            const contractAddress = contractNetworks[network.chainId].address;
+
+            console.log(DeliveryContract);
+            contract = new ethers.Contract(
+                contractAddress,
+                DeliveryContract.abi
+            );
+
+            console.log(contract)
+        };
         setTimeout(() => {
-            alert(JSON.stringify(values, null, 2));
-            setSubmitting(false);
+            setup().then(() => {
+                if (contract !== undefined) {
+                    let contractWithSigner = contract.connect(props.userProvider.getSigner());
+                    let tx = contractWithSigner.createOrder(
+                        [values.buyer, values.seller, values.deliver],
+                        values.sellerPrice,
+                        values.deliverPrice,
+                        values.sellerDeliveryPay,
+                        values.dateDelay.getTime() / 1000,
+                        [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]);
+                    console.log(tx);
+                } else {
+                    alert(JSON.stringify("Contract undefined", null, 2));
+                }
+                setSubmitting(false);
+            })
         }, 1000);
     },
 })(CreateForm);

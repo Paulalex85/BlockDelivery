@@ -5,7 +5,6 @@ import LandingPage from "../LandingPage";
 import CreateOrder from "../CreateOrder";
 import {useAddress, useUserProvider} from "../../hooks";
 import {ethers} from "ethers";
-import user from "../../redux/reducers/user";
 
 
 const Main = () => {
