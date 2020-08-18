@@ -8,6 +8,7 @@ import DeliveryContract from "../../contracts/DeliveryContract.json"
 
 type CreateOrderProps = {
     userProvider: any;
+    route: any;
 }
 
 export interface FormValues {
@@ -183,24 +184,28 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
 
             console.log(contract)
         };
-        setTimeout(() => {
-            setup().then(() => {
-                if (contract !== undefined) {
-                    let contractWithSigner = contract.connect(props.userProvider.getSigner());
-                    let tx = contractWithSigner.createOrder(
-                        [values.buyer, values.seller, values.deliver],
-                        values.sellerPrice,
-                        values.deliverPrice,
-                        values.sellerDeliveryPay,
-                        values.dateDelay.getTime() / 1000,
-                        [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]);
+        setup().then(() => {
+            if (contract !== undefined) {
+                let contractWithSigner = contract.connect(props.userProvider.getSigner());
+                contractWithSigner.createOrder(
+                    [values.buyer, values.seller, values.deliver],
+                    values.sellerPrice,
+                    values.deliverPrice,
+                    values.sellerDeliveryPay,
+                    values.dateDelay.getTime() / 1000,
+                    [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
                     console.log(tx);
-                } else {
-                    alert(JSON.stringify("Contract undefined", null, 2));
-                }
+                    setSubmitting(false);
+                    props.route.history.push("/orders");
+                }, () => {
+                    console.log("Unable to send the transaction");
+                    setSubmitting(false);
+                });
+            } else {
+                alert(JSON.stringify("Contract undefined", null, 2));
                 setSubmitting(false);
-            })
-        }, 1000);
+            }
+        });
     },
 })(CreateForm);
 

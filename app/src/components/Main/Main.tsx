@@ -6,7 +6,6 @@ import CreateOrder from "../CreateOrder";
 import {useAddress, useUserProvider} from "../../hooks";
 import {ethers} from "ethers";
 
-
 const Main = () => {
     const mainnetProvider = new ethers.providers.InfuraProvider("mainnet", "2717afb6bf164045b5d5468031b93f87");
     const localProvider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER ? process.env.REACT_APP_PROVIDER : "http://localhost:8545");
@@ -26,10 +25,12 @@ const Main = () => {
                 <div>
                     <Route exact path="/" render={(props) => <LandingPage {...props} />}/>
                     <div>
-                        <Route path="/create">
+                        <Route path="/create" render={routeProps => (
                             <CreateOrder
-                                userProvider={userProvider}/>
-                        </Route>
+                                userProvider={userProvider}
+                                route={routeProps}/>
+                        )}/>
+
                         {/*<Route path="/orders" component={OrderDashboard}/>*/}
                     </div>
                 </div>
