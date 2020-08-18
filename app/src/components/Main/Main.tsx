@@ -5,6 +5,7 @@ import LandingPage from "../LandingPage";
 import CreateOrder from "../CreateOrder";
 import {useAddress, useUserProvider} from "../../hooks";
 import {ethers} from "ethers";
+import OrderDashboard from "../OrderDashboard";
 
 const Main = () => {
     const mainnetProvider = new ethers.providers.InfuraProvider("mainnet", "2717afb6bf164045b5d5468031b93f87");
@@ -31,7 +32,7 @@ const Main = () => {
                                 route={routeProps}/>
                         )}/>
 
-                        {/*<Route path="/orders" component={OrderDashboard}/>*/}
+                        <Route path="/orders" component={OrderDashboard}/>
                     </div>
                 </div>
             </div>
