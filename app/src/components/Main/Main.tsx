@@ -3,7 +3,7 @@ import {BrowserRouter, Route} from "react-router-dom";
 import {Menu} from './components';
 import LandingPage from "../LandingPage";
 import CreateOrder from "../CreateOrder";
-import {useAddress, useUserProvider} from "../../hooks";
+import {useAddress, useContractProvider, useUserProvider} from "../../hooks";
 import {ethers} from "ethers";
 import OrderDashboard from "../OrderDashboard";
 
@@ -14,6 +14,7 @@ const Main = () => {
 
     const userProvider = useUserProvider(injectedProvider, localProvider);
     useAddress(userProvider);
+    const deliveryContract = useContractProvider(userProvider);
 
     return (
         <BrowserRouter>
@@ -29,10 +30,15 @@ const Main = () => {
                         <Route path="/create" render={routeProps => (
                             <CreateOrder
                                 userProvider={userProvider}
-                                route={routeProps}/>
+                                route={routeProps}
+                                contract={deliveryContract}/>
                         )}/>
 
-                        <Route path="/orders" component={OrderDashboard}/>
+                        <Route path="/orders">
+                            <OrderDashboard
+                                userProvider={userProvider}
+                                contract={deliveryContract}/>
+                        </Route>
                     </div>
                 </div>
             </div>
