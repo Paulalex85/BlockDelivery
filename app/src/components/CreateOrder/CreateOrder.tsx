@@ -5,10 +5,10 @@ import {Mode} from "./components/EtherInput";
 import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
 import {ethers} from "ethers";
 import DeliveryContract from "../../contracts/DeliveryContract.json"
+import {createEthersContract} from "../../utils/createEthersContract";
 
 type CreateOrderProps = {
     userProvider: any;
-    contract: any;
     route: any;
 }
 
@@ -171,27 +171,28 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
     },
 
     handleSubmit: (values, {props, setSubmitting}) => {
-
-        if (props.contract !== undefined) {
-            let contractWithSigner = props.contract.connect(props.userProvider.getSigner());
-            contractWithSigner.createOrder(
-                [values.buyer, values.seller, values.deliver],
-                values.sellerPrice,
-                values.deliverPrice,
-                values.sellerDeliveryPay,
-                values.dateDelay.getTime() / 1000,
-                [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
-                console.log(tx);
+        createEthersContract(props.userProvider).then((contract) => {
+            if (contract !== undefined) {
+                let contractWithSigner = contract.connect(props.userProvider.getSigner());
+                contractWithSigner.createOrder(
+                    [values.buyer, values.seller, values.deliver],
+                    values.sellerPrice,
+                    values.deliverPrice,
+                    values.sellerDeliveryPay,
+                    values.dateDelay.getTime() / 1000,
+                    [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
+                    console.log(tx);
+                    setSubmitting(false);
+                    props.route.history.push("/orders");
+                }, () => {
+                    console.log("Unable to send the transaction");
+                    setSubmitting(false);
+                });
+            } else {
+                alert(JSON.stringify("Contract undefined", null, 2));
                 setSubmitting(false);
-                props.route.history.push("/orders");
-            }, () => {
-                console.log("Unable to send the transaction");
-                setSubmitting(false);
-            });
-        } else {
-            alert(JSON.stringify("Contract undefined", null, 2));
-            setSubmitting(false);
-        }
+            }
+        });
     },
 })(CreateForm);
 
