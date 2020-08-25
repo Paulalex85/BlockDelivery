@@ -9,7 +9,7 @@ import OrderDashboard from "../OrderDashboard";
 
 const Main = () => {
     const mainnetProvider = new ethers.providers.InfuraProvider("mainnet", "2717afb6bf164045b5d5468031b93f87");
-    const localProvider = new ethers.providers.JsonRpcProvider(process.env.REACT_APP_PROVIDER ? process.env.REACT_APP_PROVIDER : "http://localhost:8545");
+    const localProvider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
     const [injectedProvider, setInjectedProvider] = useState();
 
     const userProvider = useUserProvider(injectedProvider, localProvider);

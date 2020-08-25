@@ -6,9 +6,9 @@ export const createEthersContract = async (userProvider: any) => {
     const contractNetworks: { [k: number]: any } = DeliveryContract.networks;
     const contractAddress = contractNetworks[network.chainId].address;
 
-    console.log(DeliveryContract);
     return new ethers.Contract(
         contractAddress,
-        DeliveryContract.abi
+        DeliveryContract.abi,
+        userProvider
     );
 };

@@ -1,7 +1,7 @@
-// import ListOrder from './ListOrder'
 import NewOrder from './NewOrder'
+import OrderElement from "./OrderElement";
 
 export {
-    // ListOrder,
     NewOrder,
+    OrderElement
 }
