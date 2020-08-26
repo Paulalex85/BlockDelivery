@@ -12,7 +12,7 @@ type Props = {
 }
 
 const OrderDashboard = (props: Props) => {
-    const [orders, setOrders] = useState([<OrderElement orderId={-1}/>]);
+    const [orders, setOrders] = useState([<OrderElement orderId={-1} userProvider={props.userProvider}/>]);
     let userAddress = useSelector(getUserAddress);
 
     useEffect(() => {
@@ -29,6 +29,7 @@ const OrderDashboard = (props: Props) => {
                     console.log("listOrderId : " + listOrderId);
                     setOrders(listOrderId.map(id => (
                         <OrderElement
+                            userProvider={props.userProvider}
                             orderId={id}
                             key={id.toString()}
                         />
