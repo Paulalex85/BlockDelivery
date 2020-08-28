@@ -3,6 +3,7 @@ import {createEthersContract} from "../../../utils/createEthersContract";
 import {ListGroup, Col, Collapse, Row, Badge} from 'react-bootstrap';
 import {BsChevronUp, BsChevronDown} from "react-icons/bs";
 import Blockies from "react-blockies";
+import PriceDisplay from "./PriceDisplay";
 
 type Props = {
     orderId: any;
@@ -107,11 +108,13 @@ const OrderElement = (props: Props) => {
                             <Row className="mb-3">
                                 <Col>
                                     Seller
-                                    : {orderData.sellerPrice !== undefined ? orderData.sellerPrice.toString() : ""}
+                                    : {orderData.sellerPrice !== undefined ? <PriceDisplay dollarMultiplier={2}
+                                                                                           ethAmount={orderData.sellerPrice.toNumber()}/> : ""}
                                 </Col>
                                 <Col>
                                     Deliver
-                                    : {orderData.deliverPrice !== undefined ? orderData.deliverPrice.toString() : ""}
+                                    : {orderData.deliverPrice !== undefined ? <PriceDisplay dollarMultiplier={2}
+                                                                                            ethAmount={orderData.deliverPrice.toNumber()}/> : ""}
                                 </Col>
                             </Row>
                             {/*<h5>Order Validation</h5>*/}

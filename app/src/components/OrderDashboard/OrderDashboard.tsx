@@ -12,7 +12,7 @@ type Props = {
 }
 
 const OrderDashboard = (props: Props) => {
-    const [orders, setOrders] = useState([<OrderElement orderId={-1} userProvider={props.userProvider}/>]);
+    const [orders, setOrders] = useState<any>([]);
     let userAddress = useSelector(getUserAddress);
 
     useEffect(() => {
