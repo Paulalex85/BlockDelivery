@@ -69,7 +69,9 @@ const OrderElement = (props: Props) => {
                             <h5>Users</h5>
                             <Row className="mb-3">
                                 <Col>
-                                    <Badge className="mr-3" variant="info">Buyer</Badge>
+                                    <span style={{fontSize: "1.5em"}}>
+                                        <Badge className="mr-3" variant="info">Buyer</Badge>
+                                    </span>
                                     <span style={{verticalAlign: "middle", paddingRight: 5}}>
                                         <Blockies seed={orderData.buyer.toLowerCase()} size={8} scale={4}/>
                                     </span>
@@ -78,7 +80,9 @@ const OrderElement = (props: Props) => {
                             </Row>
                             <Row className="mb-3">
                                 <Col>
-                                    <Badge className="mr-3" variant="info">Seller</Badge>
+                                    <span style={{fontSize: "1.5em"}}>
+                                        <Badge className="mr-3" variant="info">Seller</Badge>
+                                    </span>
                                     <span style={{verticalAlign: "middle", paddingRight: 5}}>
                                         <Blockies seed={orderData.seller.toLowerCase()} size={8} scale={4}/>
                                     </span>
@@ -87,7 +91,9 @@ const OrderElement = (props: Props) => {
                             </Row>
                             <Row className="mb-3">
                                 <Col>
-                                    <Badge className="mr-3" variant="info">Deliver</Badge>
+                                    <span style={{fontSize: "1.5em"}}>
+                                        <Badge className="mr-3" variant="info">Deliver</Badge>
+                                    </span>
                                     <span style={{verticalAlign: "middle", paddingRight: 5}}>
                                         <Blockies seed={orderData.deliver.toLowerCase()} size={8} scale={4}/>
                                     </span>
@@ -118,30 +124,36 @@ const OrderElement = (props: Props) => {
                                                                                             weiAmount={orderData.deliverPrice}/> : ""}
                                 </Col>
                             </Row>
-                            {/*<h5>Order Validation</h5>*/}
-                            {/*<Row className="mb-3">*/}
-                            {/*    <Col className="sm-1">*/}
-                            {/*        {order.validateBuyer === "1" ?*/}
-                            {/*            <Badge variant="success">Buyer</Badge>*/}
-                            {/*            :*/}
-                            {/*            <Badge variant="danger">Buyer</Badge>*/}
-                            {/*        }*/}
-                            {/*    </Col>*/}
-                            {/*    <Col className="sm-1">*/}
-                            {/*        {order.validateSeller === "1" ?*/}
-                            {/*            <Badge variant="success">Seller</Badge>*/}
-                            {/*            :*/}
-                            {/*            <Badge variant="danger">Seller</Badge>*/}
-                            {/*        }*/}
-                            {/*    </Col>*/}
-                            {/*    <Col className="sm-1">*/}
-                            {/*        {order.validateDeliver === "1" ?*/}
-                            {/*            <Badge variant="success">Deliver</Badge>*/}
-                            {/*            :*/}
-                            {/*            <Badge variant="danger">Deliver</Badge>*/}
-                            {/*        }*/}
-                            {/*    </Col>*/}
-                            {/*</Row>*/}
+                            <h5>Order Validation</h5>
+                            <Row className="mb-3">
+                                <Col className="sm-1">
+                                    <h4>
+                                        {orderData.buyerValidation ?
+                                            <Badge variant="success">Buyer</Badge>
+                                            :
+                                            <Badge variant="danger">Buyer</Badge>
+                                        }
+                                    </h4>
+                                </Col>
+                                <Col className="sm-1">
+                                    <h4>
+                                        {orderData.sellerValidation ?
+                                            <Badge variant="success">Seller</Badge>
+                                            :
+                                            <Badge variant="danger">Seller</Badge>
+                                        }
+                                    </h4>
+                                </Col>
+                                <Col className="sm-1">
+                                    <h4>
+                                        {orderData.deliverValidation ?
+                                            <Badge variant="success">Deliver</Badge>
+                                            :
+                                            <Badge variant="danger">Deliver</Badge>
+                                        }
+                                    </h4>
+                                </Col>
+                            </Row>
                             {/*<h5>Infos</h5>*/}
                             {/*<Row className="mb-3">*/}
                             {/*    <Col>*/}
