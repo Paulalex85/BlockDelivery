@@ -124,6 +124,24 @@ const OrderElement = (props: Props) => {
                                                                                             weiAmount={orderData.deliverPrice}/> : ""}
                                 </Col>
                             </Row>
+                            <h5>Escrows</h5>
+                            <Row className="mb-3">
+                                <Col>
+                                    Buyer
+                                    : {escrowData.escrowBuyer !== undefined ? <PriceDisplay dollarMultiplier={2}
+                                                                                           weiAmount={escrowData.escrowBuyer}/> : ""}
+                                </Col>
+                                <Col>
+                                    Seller
+                                    : {escrowData.escrowSeller !== undefined ? <PriceDisplay dollarMultiplier={2}
+                                                                                            weiAmount={escrowData.escrowSeller}/> : ""}
+                                </Col>
+                                <Col>
+                                    Deliver
+                                    : {escrowData.escrowDeliver !== undefined ? <PriceDisplay dollarMultiplier={2}
+                                                                                            weiAmount={escrowData.escrowDeliver}/> : ""}
+                                </Col>
+                            </Row>
                             <h5>Order Validation</h5>
                             <Row className="mb-3">
                                 <Col className="sm-1">
@@ -154,13 +172,6 @@ const OrderElement = (props: Props) => {
                                     </h4>
                                 </Col>
                             </Row>
-                            {/*<h5>Infos</h5>*/}
-                            {/*<Row className="mb-3">*/}
-                            {/*    <Col>*/}
-                            {/*        {order.details}*/}
-                            {/*    </Col>*/}
-                            {/*</Row>*/}
-
                         </ListGroup.Item>
                     </Collapse>
                 </Col>
