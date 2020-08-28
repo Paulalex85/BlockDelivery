@@ -118,10 +118,19 @@ const OrderElement = (props: Props) => {
                                     : {orderData.sellerPrice !== undefined ? <PriceDisplay dollarMultiplier={2}
                                                                                            weiAmount={orderData.sellerPrice}/> : ""}
                                 </Col>
+                            </Row>
+                            <Row className="mb-3">
                                 <Col>
                                     Deliver
                                     : {orderData.deliverPrice !== undefined ? <PriceDisplay dollarMultiplier={2}
                                                                                             weiAmount={orderData.deliverPrice}/> : ""}
+                                </Col>
+                            </Row>
+                            <Row className="mb-3">
+                                <Col>
+                                    Delivery paid by seller
+                                    : {orderData.sellerDeliveryPay !== undefined ? <PriceDisplay dollarMultiplier={2}
+                                                                                                 weiAmount={orderData.sellerDeliveryPay}/> : ""}
                                 </Col>
                             </Row>
                             <h5>Escrows</h5>
@@ -129,17 +138,17 @@ const OrderElement = (props: Props) => {
                                 <Col>
                                     Buyer
                                     : {escrowData.escrowBuyer !== undefined ? <PriceDisplay dollarMultiplier={2}
-                                                                                           weiAmount={escrowData.escrowBuyer}/> : ""}
+                                                                                            weiAmount={escrowData.escrowBuyer}/> : ""}
                                 </Col>
                                 <Col>
                                     Seller
                                     : {escrowData.escrowSeller !== undefined ? <PriceDisplay dollarMultiplier={2}
-                                                                                            weiAmount={escrowData.escrowSeller}/> : ""}
+                                                                                             weiAmount={escrowData.escrowSeller}/> : ""}
                                 </Col>
                                 <Col>
                                     Deliver
                                     : {escrowData.escrowDeliver !== undefined ? <PriceDisplay dollarMultiplier={2}
-                                                                                            weiAmount={escrowData.escrowDeliver}/> : ""}
+                                                                                              weiAmount={escrowData.escrowDeliver}/> : ""}
                                 </Col>
                             </Row>
                             <h5>Order Validation</h5>

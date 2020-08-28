@@ -184,8 +184,8 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
                     console.log(tx);
                     setSubmitting(false);
                     props.route.history.push("/orders");
-                }, () => {
-                    console.log("Unable to send the transaction");
+                }, (e: any) => {
+                    console.log("Unable to send the transaction : " + e);
                     setSubmitting(false);
                 });
             } else {

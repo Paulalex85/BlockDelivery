@@ -29,8 +29,7 @@ const SellerDeliveryPay = (props: SellerDeliveryPayProps) => {
 
     const handleSellerPay = (event: any) => {
         setPay(Number(event.target.value));
-        console.log(Number(event.target.value));
-        props.setFieldValue(props.name, Number(event.target.value) * props.deliveryCost / 100);
+        props.setFieldValue(props.name, Math.floor(Number(event.target.value) * props.deliveryCost / 100));
     };
 
     return (
