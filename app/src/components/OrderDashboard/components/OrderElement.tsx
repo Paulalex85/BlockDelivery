@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {createEthersContract} from "../../../utils/createEthersContract";
 import {ListGroup, Col, Collapse, Row, Badge} from 'react-bootstrap';
 import {BsChevronUp, BsChevronDown} from "react-icons/bs";
+import Blockies from "react-blockies";
 
 type Props = {
     orderId: any;
@@ -10,14 +11,20 @@ type Props = {
 
 const OrderElement = (props: Props) => {
     const [orderData, setOrderData] = useState<any>();
+    const [escrowData, setEscrowData] = useState<any>();
+    const [disputeData, setDisputeData] = useState<any>();
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [colorListGroup, setColorListGroup] = useState("");
     useEffect(() => {
         createEthersContract(props.userProvider).then((contract) => {
-            contract.getOrder(props.orderId).then((result: any) => {
-                console.log(result);
-                setOrderData(result)
+            contract.getOrder(props.orderId).then((orderResult: any) => {
+                console.log(orderResult);
+                setOrderData(orderResult);
+                contract.getEscrow(props.orderId).then((escrowResult: any) => {
+                    console.log(escrowResult);
+                    setEscrowData(escrowResult);
+                })
             })
         });
     }, [props.userProvider]);
@@ -34,7 +41,7 @@ const OrderElement = (props: Props) => {
 
     return (
         <React.Fragment>
-            {orderData !== undefined ?
+            {orderData !== undefined && escrowData !== undefined ?
                 <Col className="col-sm-6 col-sm-offset-3">
                     <ListGroup.Item
                         action
@@ -61,28 +68,39 @@ const OrderElement = (props: Props) => {
                             <Row className="mb-3">
                                 <Col>
                                     <Badge className="mr-3" variant="info">Buyer</Badge>
+                                    <span style={{verticalAlign: "middle", paddingRight: 5}}>
+                                        <Blockies seed={orderData.buyer.toLowerCase()} size={8} scale={4}/>
+                                    </span>
                                     {orderData.buyer !== undefined ? orderData.buyer : ""}
                                 </Col>
                             </Row>
                             <Row className="mb-3">
                                 <Col>
                                     <Badge className="mr-3" variant="info">Seller</Badge>
+                                    <span style={{verticalAlign: "middle", paddingRight: 5}}>
+                                        <Blockies seed={orderData.seller.toLowerCase()} size={8} scale={4}/>
+                                    </span>
                                     {orderData.seller !== undefined ? orderData.seller : ""}
                                 </Col>
                             </Row>
                             <Row className="mb-3">
                                 <Col>
                                     <Badge className="mr-3" variant="info">Deliver</Badge>
+                                    <span style={{verticalAlign: "middle", paddingRight: 5}}>
+                                        <Blockies seed={orderData.deliver.toLowerCase()} size={8} scale={4}/>
+                                    </span>
                                     {orderData.deliver !== undefined ? orderData.deliver : ""}
                                 </Col>
                             </Row>
-                            <h5>Delay</h5>
+                            <h5>Delay Delivery</h5>
                             <Row className="mb-3">
                                 <Col>
-                                    {/*Creation : {order.date.toLocaleTimeString() + " " + order.date.toLocaleDateString()}*/}
+                                    Start delay
+                                    : {orderData.startDate !== null && orderData.startDate.toNumber() > 0 ? new Date(orderData.startDate.toNumber() * 1000).toLocaleTimeString() + " " + new Date(orderData.startDate.toNumber() * 1000).toLocaleDateString() : "Wait the order to be started"}
                                 </Col>
                                 <Col>
-                                    {/*Max delivery : {order.dateDelay.toLocaleTimeString() + " " + order.dateDelay.toLocaleDateString()}*/}
+                                    Max delay delivery
+                                    : {escrowData.delayEscrow !== undefined ? new Date(escrowData.delayEscrow.toNumber() * 1000).toLocaleTimeString() + " " + new Date(escrowData.delayEscrow.toNumber() * 1000).toLocaleDateString() : ""}
                                 </Col>
                             </Row>
                             <h5>Price</h5>
