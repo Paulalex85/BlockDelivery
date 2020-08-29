@@ -26,6 +26,10 @@ const OrderElement = (props: Props) => {
                 contract.getEscrow(props.orderId).then((escrowResult: any) => {
                     console.log(escrowResult);
                     setEscrowData(escrowResult);
+                    contract.getDispute(props.orderId).then((disputeResult: any) => {
+                        console.log(disputeResult);
+                        setDisputeData(disputeResult);
+                    })
                 })
             })
         });
