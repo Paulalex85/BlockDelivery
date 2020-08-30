@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {createEthersContract} from "../../../utils/createEthersContract";
-import {ListGroup, Col, Collapse, Row, Badge} from 'react-bootstrap';
-import {BsChevronUp, BsChevronDown} from "react-icons/bs";
+import {Badge, ButtonGroup, ButtonToolbar, Col, Collapse, ListGroup, Row} from 'react-bootstrap';
+import {BsChevronDown, BsChevronUp} from "react-icons/bs";
 import Blockies from "react-blockies";
 import {PriceDisplay} from "../../Utils";
-import {BigNumber} from "ethers";
+import {ValidateOrder} from "./components";
 
 type Props = {
-    orderId: any;
+    orderId: number;
     userProvider: any;
 }
 
@@ -185,6 +185,13 @@ const OrderElement = (props: Props) => {
                                     </h4>
                                 </Col>
                             </Row>
+                            <ButtonToolbar className="justify-content-between">
+                                <ButtonGroup>
+                                    <ValidateOrder orderData={orderData}
+                                                   userProvider={props.userProvider}
+                                                   orderId={props.orderId}/>
+                                </ButtonGroup>
+                            </ButtonToolbar>
                         </ListGroup.Item>
                     </Collapse>
                 </Col>
