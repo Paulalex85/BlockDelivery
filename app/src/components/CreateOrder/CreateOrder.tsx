@@ -179,7 +179,7 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
                     values.sellerPrice,
                     values.deliverPrice,
                     values.sellerDeliveryPay,
-                    values.dateDelay.getTime() / 1000,
+                    Math.round(values.dateDelay.getTime() / 1000),
                     [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
                     console.log(tx);
                     setSubmitting(false);

@@ -15,7 +15,7 @@ const DelayPicker = (props: DelayPickerProps) => {
 
     const [delay, setDelay] = useState(new Date());
 
-    const handleChange = (date: any) => {
+    const handleChange = (date: Date) => {
         setDelay(date);
         props.setFieldValue(props.name, date);
     };
