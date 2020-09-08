@@ -3,9 +3,8 @@ import {Button, Card, Col, Form as BootstrapForm, Row} from 'react-bootstrap';
 import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} from "./components";
 import {Mode} from "./components/EtherInput";
 import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
-import {ethers} from "ethers";
-import DeliveryContract from "../../contracts/DeliveryContract.json"
 import {createEthersContract} from "../../utils/createEthersContract";
+import {BigNumber, ethers} from "ethers";
 
 type CreateOrderProps = {
     userProvider: any;
@@ -16,12 +15,12 @@ export interface FormValues {
     buyer: string;
     seller: string;
     deliver: string;
-    sellerPrice: number;
-    deliverPrice: number;
-    sellerDeliveryPay: number;
-    buyerEscrow: number;
-    sellerEscrow: number;
-    deliverEscrow: number;
+    sellerPrice: BigNumber;
+    deliverPrice: BigNumber;
+    sellerDeliveryPay: BigNumber;
+    buyerEscrow: BigNumber;
+    sellerEscrow: BigNumber;
+    deliverEscrow: BigNumber;
     dateDelay: Date;
 }
 
@@ -82,7 +81,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     errors={errors}
                                     onChangeMode={(mode) => setDeliverPriceMode(mode)}
                                 />
-                                {values.deliverPrice > 0 ?
+                                {values.deliverPrice !== undefined && values.deliverPrice.gt(0) ?
                                     <SellerDeliveryPay
                                         deliveryCost={values.deliverPrice}
                                         currencyMode={deliverPriceMode}
@@ -97,7 +96,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     errors={errors}
                                 />
                                 <EscrowInput
-                                    simpleEscrowValue={values.deliverPrice + values.sellerPrice}
+                                    simpleEscrowValue={values.deliverPrice !== undefined && values.sellerPrice !== undefined ? values.deliverPrice.add(values.sellerPrice) : BigNumber.from(0)}
                                     currencyPrice={0.5}
                                     setFieldValue={setFieldValue}
                                     errors={errors}
@@ -122,12 +121,12 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
             buyer: '',
             seller: '',
             deliver: '',
-            sellerPrice: 0.0,
-            deliverPrice: 0.0,
-            sellerDeliveryPay: 0.0,
-            buyerEscrow: 0.0,
-            sellerEscrow: 0.0,
-            deliverEscrow: 0.0,
+            sellerPrice: BigNumber.from(0),
+            deliverPrice: BigNumber.from(0),
+            sellerDeliveryPay: BigNumber.from(0),
+            buyerEscrow: BigNumber.from(0),
+            sellerEscrow: BigNumber.from(0),
+            deliverEscrow: BigNumber.from(0),
             dateDelay: new Date()
         };
     },
@@ -137,10 +136,10 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
         const addressErrorMsg = "Define address";
         const priceErrorMsg = 'Required';
         let errors: FormikErrors<FormErrors> = {};
-        if (isNaN(values.sellerPrice)) {
+        if (values.sellerPrice !== undefined) {
             errors.sellerPrice = priceErrorMsg;
         }
-        if (isNaN(values.deliverPrice)) {
+        if (values.deliverPrice !== undefined) {
             errors.deliverPrice = priceErrorMsg;
         }
 
@@ -158,19 +157,21 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
             errors.dateDelay = "The date can't be in the past";
         }
 
-        if (isNaN(values.buyerEscrow)) {
+        if (values.buyerEscrow !== undefined) {
             errors.buyerEscrow = priceErrorMsg;
         }
-        if (isNaN(values.sellerEscrow)) {
+        if (values.sellerEscrow !== undefined) {
             errors.sellerEscrow = priceErrorMsg;
         }
-        if (isNaN(values.deliverEscrow)) {
+        if (values.deliverEscrow !== undefined) {
             errors.deliverEscrow = priceErrorMsg;
         }
         return errors;
     },
 
     handleSubmit: (values, {props, setSubmitting}) => {
+        console.log(ethers.utils.formatUnits(BigNumber.from(values.sellerPrice), "wei"));
+        console.log(ethers.utils.formatEther(BigNumber.from(values.sellerPrice)));
         createEthersContract(props.userProvider).then((contract) => {
             if (contract !== undefined) {
                 let contractWithSigner = contract.connect(props.userProvider.getSigner());

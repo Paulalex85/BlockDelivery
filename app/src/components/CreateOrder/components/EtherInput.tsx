@@ -2,13 +2,15 @@ import React, {useEffect, useState} from 'react';
 import {Col, Form, InputGroup, Row} from 'react-bootstrap';
 import {IoIosSwap} from "react-icons/io";
 import {ErrorMessage} from "formik";
+import {BigNumber, ethers} from "ethers";
+import {formatEther, formatUnits, parseEther, parseUnits} from "@ethersproject/units";
 
 type EtherInputProps = {
     currencyPrice: number
     label: string
     onChangeMode?: (mode: Mode) => void
     fullDisabled?: boolean
-    ethBaseValue?: number
+    ethBaseValue?: BigNumber
     setFieldValue: any
     name: string
     errors: any
@@ -21,39 +23,47 @@ export enum Mode {
 
 const EtherInput = (props: EtherInputProps) => {
     const [mode, setMode] = useState(Mode.USD);
-    const [ethValue, setEthValue] = useState(0);
-    const [usdValue, setUsdValue] = useState(0);
+    const [ethValue, setEthValue] = useState("0");
+    const [usdValue, setUsdValue] = useState("0");
     const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
 
     useEffect(() => {
-        if (props.ethBaseValue !== undefined && props.ethBaseValue !== -1) {
-            setEthValue(props.ethBaseValue);
-            setUsdValue(props.ethBaseValue * props.currencyPrice);
+        if (props.ethBaseValue !== undefined && !props.ethBaseValue.isNegative()) {
+            setEthValue(formatEther(props.ethBaseValue));
+            setUsdValue(formatUnits(props.ethBaseValue.mul(Math.round(props.currencyPrice * 100)).div(100), 2));
             props.setFieldValue(props.name, props.ethBaseValue);
         }
     }, [props.ethBaseValue]);
 
     const handleChange = (event: any) => {
-        let newValue = (event.target.value);
+        let newValue = event.target.value;
+        let currencyPriceBN = parseUnits(props.currencyPrice.toString(), 2);
         if (newValue === undefined || newValue < 0) {
-            newValue = 0;
-        }
-        if (mode === Mode.USD) {
-            let newEthValue = 0;
-            if (newValue > 0) {
-                newEthValue = parseFloat(newValue) / props.currencyPrice;
-            }
-            setEthValue(newEthValue);
-            setUsdValue(newValue);
-            props.setFieldValue(props.name, newEthValue);
+            setEthValue("0");
+            setUsdValue("0");
         } else {
-            setEthValue(newValue);
-            let newUsdValue = 0;
-            if (newValue > 0) {
-                newUsdValue = parseFloat(newValue) * props.currencyPrice;
+            if (mode === Mode.USD) {
+                try {
+                    let newEthValue = BigNumber.from(parseUnits(newValue, 2)).mul(ethers.constants.WeiPerEther).div(currencyPriceBN);
+                    setEthValue(formatEther(newEthValue));
+                    setUsdValue(newValue);
+                    props.setFieldValue(props.name, newEthValue);
+                } catch (e) {
+                    setUsdValue(newValue);
+                    props.setFieldValue(props.name, undefined);
+                }
+            } else {
+                try {
+                    let newEthValue = BigNumber.from(parseEther(event.target.value));
+                    setEthValue(newValue);
+                    let newUsdValue = formatUnits(newEthValue.mul(currencyPriceBN).div(100), 18);
+                    setUsdValue(newUsdValue);
+                    props.setFieldValue(props.name, newEthValue);
+                } catch (e) {
+                    setEthValue(newValue);
+                    props.setFieldValue(props.name, undefined);
+                }
             }
-            setUsdValue(newUsdValue);
-            props.setFieldValue(props.name, parseFloat(newValue));
         }
     };
 
