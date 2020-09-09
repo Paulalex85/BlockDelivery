@@ -3,9 +3,11 @@ import {Col, Form, InputGroup, Row} from 'react-bootstrap';
 import RangeSlider from 'react-bootstrap-range-slider';
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 import {Mode} from "./EtherInput";
+import {BigNumber} from "ethers";
+import {formatEther, parseUnits} from "ethers/lib/utils";
 
 type SellerDeliveryPayProps = {
-    deliveryCost: number
+    deliveryCost: BigNumber
     currencyMode: Mode
     currencyPrice: number
     setFieldValue: any
@@ -14,22 +16,23 @@ type SellerDeliveryPayProps = {
 
 const SellerDeliveryPay = (props: SellerDeliveryPayProps) => {
 
-    const [pay, setPay] = useState(0);
+    const [pay, setPay] = useState(BigNumber.from(0));
     const [checked, setChecked] = useState(false);
 
-    let usdValue = props.currencyPrice * pay * props.deliveryCost / 100;
-    let ethValue = pay * props.deliveryCost / 100;
+    let currencyPriceBN = parseUnits(props.currencyPrice.toString(), 2);
+    let usdValue = formatEther(BigNumber.from(pay).mul(currencyPriceBN).mul(props.deliveryCost).div(10000));
+    let ethValue = pay.mul(props.deliveryCost).div(100);
 
     const handleCheck = (event: any) => {
         setChecked(event.target.checked);
         if (!event.target.checked) {
-            setPay(0);
+            setPay(BigNumber.from(0));
         }
     };
 
     const handleSellerPay = (event: any) => {
-        setPay(Number(event.target.value));
-        props.setFieldValue(props.name, Math.floor(Number(event.target.value) * props.deliveryCost / 100));
+        setPay(BigNumber.from(event.target.value));
+        props.setFieldValue(props.name, BigNumber.from(event.target.value).mul(props.deliveryCost).div(100));
     };
 
     return (
@@ -58,7 +61,7 @@ const SellerDeliveryPay = (props: SellerDeliveryPayProps) => {
                             <InputGroup>
                                 <Form.Control
                                     type="text"
-                                    value={props.currencyMode === Mode.USD ? usdValue : ethValue}
+                                    value={props.currencyMode === Mode.USD ? usdValue : formatEther(ethValue)}
                                     disabled={true}
                                 />
                                 <InputGroup.Append>
