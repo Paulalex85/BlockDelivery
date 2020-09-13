@@ -188,6 +188,7 @@ const OrderElement = (props: Props) => {
                             <ButtonToolbar className="justify-content-between">
                                 <ButtonGroup>
                                     <ValidateOrder orderData={orderData}
+                                                   escrowData={escrowData}
                                                    userProvider={props.userProvider}
                                                    orderId={props.orderId}/>
                                 </ButtonGroup>

@@ -3,10 +3,14 @@ import {Button} from 'react-bootstrap'
 import {useSelector} from "react-redux";
 import {getUserAddress} from "../../../../redux/selectors";
 import {createEthersContract} from "../../../../utils/createEthersContract";
+import {hashOrderData, signData} from "../../../../utils/KeyGenerator";
+import {keccak256} from "ethers/lib/utils";
+import {BigNumber} from "ethers";
 
 type Props = {
     orderId: number
     orderData: any;
+    escrowData: any;
     userProvider: any
 }
 
@@ -22,13 +26,31 @@ const ValidateOrder = (props: Props) => {
         }
     }, [props.orderData]);
 
+    const getValueToPay = () => {
+        if (address === props.orderData.buyer && !props.orderData.buyerValidation) {
+            return props.orderData.deliverPrice.add(props.orderData.sellerPrice).add(props.escrowData.escrowBuyer);
+        } else if (address === props.orderData.seller && !props.orderData.sellerValidation) {
+            return props.escrowData.escrowSeller;
+        } else if (address === props.orderData.deliver && !props.orderData.deliverValidation) {
+            return props.escrowData.escrowDeliver;
+        }
+        return BigNumber.from(0);
+    };
+
     const handleClick = () => {
         createEthersContract(props.userProvider).then((contract) => {
             let contractWithSigner = contract.connect(props.userProvider.getSigner());
-            contractWithSigner.validateOrder(props.orderId, "0x0").then((tx: any) => {
-                console.log(tx);
+            let hash = hashOrderData(props.orderId, props.orderData, props.escrowData);
+            signData(address, props.userProvider, hash).then(signedHash => {
+                if (signedHash !== undefined) {
+                    contractWithSigner.validateOrder(props.orderId, keccak256(signedHash), {value: getValueToPay()}).then((tx: any) => {
+                        console.log(tx);
+                    }, (e: any) => {
+                        console.log("Unable to send the transaction : " + e);
+                    });
+                }
             }, (e: any) => {
-                console.log("Unable to send the transaction : " + e);
+                console.log("Unable to sign data : " + e);
             });
         });
     };
