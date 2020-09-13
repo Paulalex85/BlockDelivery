@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {Col, Form, Row} from 'react-bootstrap';
 import {EtherInput} from "./";
+import {BigNumber} from "ethers";
 
 type EscrowInputProps = {
-    simpleEscrowValue: number
+    simpleEscrowValue: string
     currencyPrice: number
     setFieldValue: any
     errors: any
@@ -11,9 +12,9 @@ type EscrowInputProps = {
 
 const EscrowInput = (props: EscrowInputProps) => {
 
-    const [buyerEscrow, setBuyerEscrow] = useState(0);
-    const [sellerEscrow, setSellerEscrow] = useState(0);
-    const [deliverEscrow, setDeliverEscrow] = useState(0);
+    const [buyerEscrow, setBuyerEscrow] = useState(BigNumber.from(0));
+    const [sellerEscrow, setSellerEscrow] = useState(BigNumber.from(0));
+    const [deliverEscrow, setDeliverEscrow] = useState(BigNumber.from(0));
     const [checked, setChecked] = useState(false);
     const [inputDisabled, setInputDisabled] = useState(true);
     const [escrowType, setEscrowType] = useState("simple");
@@ -21,12 +22,12 @@ const EscrowInput = (props: EscrowInputProps) => {
     const handleCheck = (event: any) => {
         setChecked(event.target.checked);
         if (!event.target.checked) {
-            props.setFieldValue("buyerEscrow", 0);
-            props.setFieldValue("sellerEscrow", 0);
-            props.setFieldValue("deliverEscrow", 0);
-            setBuyerEscrow(0);
-            setDeliverEscrow(0);
-            setSellerEscrow(0);
+            props.setFieldValue("buyerEscrow", BigNumber.from(0));
+            props.setFieldValue("sellerEscrow", BigNumber.from(0));
+            props.setFieldValue("deliverEscrow", BigNumber.from(0));
+            setBuyerEscrow(BigNumber.from(0));
+            setDeliverEscrow(BigNumber.from(0));
+            setSellerEscrow(BigNumber.from(0));
         } else {
             setEscrowType("simple");
             setSimpleEscrow();
@@ -34,21 +35,21 @@ const EscrowInput = (props: EscrowInputProps) => {
     };
 
     function setSimpleEscrow() {
-        setBuyerEscrow(0);
-        setDeliverEscrow(props.simpleEscrowValue);
-        setSellerEscrow(props.simpleEscrowValue);
+        setBuyerEscrow(BigNumber.from(0));
+        setDeliverEscrow(BigNumber.from(props.simpleEscrowValue));
+        setSellerEscrow(BigNumber.from(props.simpleEscrowValue));
     }
 
     function setDoubleEscrow() {
-        setBuyerEscrow(props.simpleEscrowValue);
-        setDeliverEscrow(props.simpleEscrowValue * 2);
-        setSellerEscrow(props.simpleEscrowValue * 2);
+        setBuyerEscrow(BigNumber.from(props.simpleEscrowValue));
+        setDeliverEscrow(BigNumber.from(props.simpleEscrowValue).mul(2));
+        setSellerEscrow(BigNumber.from(props.simpleEscrowValue).mul(2));
     }
 
     function setCustomEscrow() {
-        setBuyerEscrow(-1);
-        setDeliverEscrow(-1);
-        setSellerEscrow(-1);
+        setBuyerEscrow(BigNumber.from(-1));
+        setDeliverEscrow(BigNumber.from(-1));
+        setSellerEscrow(BigNumber.from(-1));
     }
 
     useEffect(() => {

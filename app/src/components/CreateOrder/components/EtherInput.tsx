@@ -26,18 +26,18 @@ const EtherInput = (props: EtherInputProps) => {
     const [ethValue, setEthValue] = useState("0");
     const [usdValue, setUsdValue] = useState("0");
     const regex = RegExp('^[0-9]*([,.][0-9]*)?$');
+    let currencyPriceBN = parseUnits(props.currencyPrice.toString(), 2);
 
     useEffect(() => {
         if (props.ethBaseValue !== undefined && !props.ethBaseValue.isNegative()) {
             setEthValue(formatEther(props.ethBaseValue));
-            setUsdValue(formatUnits(props.ethBaseValue.mul(Math.round(props.currencyPrice * 100)).div(100), 2));
+            setUsdValue(formatUnits(props.ethBaseValue.mul(currencyPriceBN).div(100), 18));
             props.setFieldValue(props.name, props.ethBaseValue);
         }
-    }, [props.ethBaseValue]);
+    }, [props.ethBaseValue, props.currencyPrice]);
 
     const handleChange = (event: any) => {
         let newValue = event.target.value;
-        let currencyPriceBN = parseUnits(props.currencyPrice.toString(), 2);
         if (newValue === undefined || newValue < 0) {
             setEthValue("0");
             setUsdValue("0");

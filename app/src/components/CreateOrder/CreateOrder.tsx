@@ -4,7 +4,7 @@ import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} fr
 import {Mode} from "./components/EtherInput";
 import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
 import {createEthersContract} from "../../utils/createEthersContract";
-import {BigNumber, ethers} from "ethers";
+import {BigNumber} from "ethers";
 
 type CreateOrderProps = {
     userProvider: any;
@@ -96,7 +96,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     errors={errors}
                                 />
                                 <EscrowInput
-                                    simpleEscrowValue={values.deliverPrice !== undefined && values.sellerPrice !== undefined ? values.deliverPrice.add(values.sellerPrice) : BigNumber.from(0)}
+                                    simpleEscrowValue={values.deliverPrice !== undefined && values.sellerPrice !== undefined ? values.deliverPrice.add(values.sellerPrice).toString() : "0"}
                                     currencyPrice={0.5}
                                     setFieldValue={setFieldValue}
                                     errors={errors}
@@ -136,10 +136,10 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
         const addressErrorMsg = "Define address";
         const priceErrorMsg = 'Required';
         let errors: FormikErrors<FormErrors> = {};
-        if (values.sellerPrice !== undefined) {
+        if (values.sellerPrice === undefined) {
             errors.sellerPrice = priceErrorMsg;
         }
-        if (values.deliverPrice !== undefined) {
+        if (values.deliverPrice === undefined) {
             errors.deliverPrice = priceErrorMsg;
         }
 
@@ -157,21 +157,19 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
             errors.dateDelay = "The date can't be in the past";
         }
 
-        if (values.buyerEscrow !== undefined) {
+        if (values.buyerEscrow === undefined) {
             errors.buyerEscrow = priceErrorMsg;
         }
-        if (values.sellerEscrow !== undefined) {
+        if (values.sellerEscrow === undefined) {
             errors.sellerEscrow = priceErrorMsg;
         }
-        if (values.deliverEscrow !== undefined) {
+        if (values.deliverEscrow === undefined) {
             errors.deliverEscrow = priceErrorMsg;
         }
         return errors;
     },
 
     handleSubmit: (values, {props, setSubmitting}) => {
-        console.log(ethers.utils.formatUnits(BigNumber.from(values.sellerPrice), "wei"));
-        console.log(ethers.utils.formatEther(BigNumber.from(values.sellerPrice)));
         createEthersContract(props.userProvider).then((contract) => {
             if (contract !== undefined) {
                 let contractWithSigner = contract.connect(props.userProvider.getSigner());
