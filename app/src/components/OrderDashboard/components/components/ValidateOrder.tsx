@@ -46,11 +46,11 @@ const ValidateOrder = (props: Props) => {
                     contractWithSigner.validateOrder(props.orderId, keccak256(signedHash), {value: getValueToPay()}).then((tx: any) => {
                         console.log(tx);
                     }, (e: any) => {
-                        console.log("Unable to send the transaction : " + e);
+                        console.log("Unable to send the transaction", e);
                     });
                 }
             }, (e: any) => {
-                console.log("Unable to sign data : " + e);
+                console.log("Unable to sign data", e);
             });
         });
     };

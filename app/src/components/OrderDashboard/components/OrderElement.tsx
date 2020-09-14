@@ -18,6 +18,7 @@ const OrderElement = (props: Props) => {
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [colorListGroup, setColorListGroup] = useState("");
+
     useEffect(() => {
         createEthersContract(props.userProvider).then((contract) => {
             contract.getOrder(props.orderId).then((orderResult: any) => {
@@ -38,8 +39,36 @@ const OrderElement = (props: Props) => {
     useEffect(() => {
         if (orderData !== undefined && orderData.orderStage !== undefined) {
             switch (orderData.orderStage) {
-                case "0":
-                    setTitle("Order initialization");
+                case 0:
+                    setTitle("New order - Wait acceptation");
+                    break;
+                case 1:
+                    setTitle("Accepted - Wait seller preparing order");
+                    setColorListGroup("info");
+                    break;
+                case 2:
+                    setTitle("Prepared - Wait the deliver");
+                    setColorListGroup("info");
+                    break;
+                case 3:
+                    setTitle("Delivered - Wait the buyer validation");
+                    setColorListGroup("info");
+                    break;
+                case 4:
+                    setTitle("Finished");
+                    setColorListGroup("success");
+                    break;
+                case 5:
+                    setTitle("Order cancelled");
+                    setColorListGroup("danger");
+                    break;
+                case 6:
+                    setTitle("Dispute refund determination");
+                    setColorListGroup("danger");
+                    break;
+                case 7:
+                    setTitle("Dispute cost repartition");
+                    setColorListGroup("danger");
                     break;
             }
         }
