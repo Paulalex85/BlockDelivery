@@ -4,7 +4,7 @@ import {Badge, ButtonGroup, ButtonToolbar, Col, Collapse, ListGroup, Row} from '
 import {BsChevronDown, BsChevronUp} from "react-icons/bs";
 import Blockies from "react-blockies";
 import {PriceDisplay} from "../../Utils";
-import {ValidateOrder} from "./components";
+import {UpdateOrder, ValidateOrder} from "./components";
 
 type Props = {
     orderId: number;
@@ -215,12 +215,11 @@ const OrderElement = (props: Props) => {
                                 </Col>
                             </Row>
                             <ButtonToolbar className="justify-content-between">
-                                <ButtonGroup>
-                                    <ValidateOrder orderData={orderData}
-                                                   escrowData={escrowData}
-                                                   userProvider={props.userProvider}
-                                                   orderId={props.orderId}/>
-                                </ButtonGroup>
+                                <ValidateOrder orderData={orderData}
+                                               escrowData={escrowData}
+                                               userProvider={props.userProvider}
+                                               orderId={props.orderId}/>
+                                <UpdateOrder orderData={orderData}/>
                             </ButtonToolbar>
                         </ListGroup.Item>
                     </Collapse>
