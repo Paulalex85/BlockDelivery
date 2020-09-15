@@ -135,6 +135,7 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
     validate: (values: FormValues) => {
         const addressErrorMsg = "Define address";
         const priceErrorMsg = 'Required';
+        const sameAccountErrorMsg = "The same address can't be used for different roles";
         let errors: FormikErrors<FormErrors> = {};
         if (values.sellerPrice === undefined) {
             errors.sellerPrice = priceErrorMsg;
@@ -151,6 +152,19 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
         }
         if (!values.deliver) {
             errors.deliver = addressErrorMsg;
+        }
+
+        if (values.buyer == values.seller) {
+            errors.buyer = sameAccountErrorMsg;
+            errors.seller = sameAccountErrorMsg;
+        }
+        if (values.buyer == values.deliver) {
+            errors.buyer = sameAccountErrorMsg;
+            errors.deliver = sameAccountErrorMsg;
+        }
+        if (values.seller == values.deliver) {
+            errors.seller = sameAccountErrorMsg;
+            errors.deliver = sameAccountErrorMsg;
         }
 
         if (values.dateDelay < new Date()) {
