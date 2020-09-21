@@ -207,7 +207,6 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
     },
 
     handleSubmit: (values, {props, setSubmitting}) => {
-        console.log("pk ca passe pas ca omg ", values);
         createEthersContract(props.userProvider).then((contract) => {
             if (contract !== undefined) {
                 let contractWithSigner = contract.connect(props.userProvider.getSigner());
@@ -227,7 +226,18 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
                         setSubmitting(false);
                     });
                 } else {
-                    console.log("values submit", values)
+                    let id = props.route.match.params.id;
+                    contractWithSigner.updateInitializeOrder(
+                        id,
+                        Math.round(values.dateDelay.getTime() / 1000),
+                        [values.sellerPrice, values.deliverPrice, values.sellerDeliveryPay, values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
+                        console.log(tx);
+                        setSubmitting(false);
+                        props.route.history.push("/orders");
+                    }, (e: any) => {
+                        console.log("Unable to send the transaction : ", e);
+                        setSubmitting(false);
+                    });
                 }
             } else {
                 alert(JSON.stringify("Contract undefined", null, 2));
