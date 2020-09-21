@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {BrowserRouter, Route} from "react-router-dom";
 import {Menu} from './components';
 import LandingPage from "../LandingPage";
-import CreateOrder from "../CreateOrder";
+import CreateUpdateOrder from "../CreateOrder";
 import {useAddress, useUserProvider} from "../../hooks";
 import {ethers} from "ethers";
 import OrderDashboard from "../OrderDashboard";
@@ -27,15 +27,22 @@ const Main = () => {
                     <Route exact path="/" render={(props) => <LandingPage {...props} />}/>
                     <div>
                         <Route path="/create" render={routeProps => (
-                            <CreateOrder
+                            <CreateUpdateOrder
                                 userProvider={userProvider}
                                 route={routeProps}/>
                         )}/>
 
-                        <Route path="/orders">
+                        <Route path="/update/:id" render={routeProps => (
+                            <CreateUpdateOrder
+                                userProvider={userProvider}
+                                route={routeProps}/>
+                        )}/>
+
+                        <Route path="/orders" render={routeProps => (
                             <OrderDashboard
-                                userProvider={userProvider}/>
-                        </Route>
+                                userProvider={userProvider}
+                                route={routeProps}/>
+                        )}/>
                     </div>
                 </div>
             </div>

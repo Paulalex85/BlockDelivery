@@ -9,6 +9,7 @@ import OrderElement from "./components/OrderElement";
 
 type Props = {
     userProvider: any;
+    route: any;
 }
 
 const OrderDashboard = (props: Props) => {
@@ -32,6 +33,7 @@ const OrderDashboard = (props: Props) => {
                             userProvider={props.userProvider}
                             orderId={id}
                             key={id.toString()}
+                            route={props.route}
                         />
                     )));
                 })

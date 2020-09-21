@@ -8,6 +8,13 @@ type EscrowInputProps = {
     currencyPrice: number
     setFieldValue: any
     errors: any
+    initialValue: any
+}
+
+enum EscrowType {
+    Simple,
+    Double,
+    Custom
 }
 
 const EscrowInput = (props: EscrowInputProps) => {
@@ -17,7 +24,7 @@ const EscrowInput = (props: EscrowInputProps) => {
     const [deliverEscrow, setDeliverEscrow] = useState(BigNumber.from(0));
     const [checked, setChecked] = useState(false);
     const [inputDisabled, setInputDisabled] = useState(true);
-    const [escrowType, setEscrowType] = useState("simple");
+    const [escrowType, setEscrowType] = useState(EscrowType.Simple);
 
     const handleCheck = (event: any) => {
         setChecked(event.target.checked);
@@ -29,7 +36,7 @@ const EscrowInput = (props: EscrowInputProps) => {
             setDeliverEscrow(BigNumber.from(0));
             setSellerEscrow(BigNumber.from(0));
         } else {
-            setEscrowType("simple");
+            setEscrowType(EscrowType.Simple);
             setSimpleEscrow();
         }
     };
@@ -53,28 +60,41 @@ const EscrowInput = (props: EscrowInputProps) => {
     }
 
     useEffect(() => {
-        if (escrowType === "simple") {
+        if (escrowType === EscrowType.Simple) {
             setSimpleEscrow();
-        } else if (escrowType === "double") {
+        } else if (escrowType === EscrowType.Double) {
             setDoubleEscrow();
         }
     }, [props.simpleEscrowValue]);
 
+    useEffect(() => {
+        if (props.initialValue !== undefined) {
+            setChecked(true);
+            setEscrowType(EscrowType.Custom);
+            setBuyerEscrow(props.initialValue.escrowBuyer);
+            setSellerEscrow(props.initialValue.escrowSeller);
+            setDeliverEscrow(props.initialValue.escrowDeliver);
+        }
+    }, [props.initialValue]);
+
     const handleSelectInput = (event: any) => {
         setEscrowType(event.target.value);
-        switch (event.target.value) {
-            case "simple":
+        let parsedType: EscrowType = parseInt(event.target.value);
+        switch (parsedType) {
+            case EscrowType.Simple:
                 setSimpleEscrow();
                 setInputDisabled(true);
                 break;
-            case "double":
+            case EscrowType.Double:
                 setDoubleEscrow();
                 setInputDisabled(true);
                 break;
-            case "custom":
+            case EscrowType.Custom:
                 setCustomEscrow();
                 setInputDisabled(false);
                 break;
+            default:
+                console.error("can't parse " + event.target.value)
         }
     };
 
@@ -82,6 +102,7 @@ const EscrowInput = (props: EscrowInputProps) => {
         <Form.Group as={Row}>
             <Col xs={5}>
                 <Form.Check
+                    checked={checked}
                     type="switch"
                     id="escrow-switch"
                     label="Escrow ?"
@@ -93,15 +114,15 @@ const EscrowInput = (props: EscrowInputProps) => {
                     <div>
                         <Form.Group>
                             <Form.Label>Escrow Type</Form.Label>
-                            <Form.Control as="select" onChange={handleSelectInput}>
-                                <option value={"simple"}>Simple</option>
-                                <option value={"double"}>Double</option>
-                                <option value={"custom"}>Custom</option>
+                            <Form.Control as="select" value={escrowType} onChange={handleSelectInput}>
+                                <option value={EscrowType.Simple}>Simple</option>
+                                <option value={EscrowType.Double}>Double</option>
+                                <option value={EscrowType.Custom}>Custom</option>
                             </Form.Control>
                         </Form.Group>
                         <Form.Group>
                             <EtherInput
-                                ethBaseValue={buyerEscrow}
+                                ethBaseValue={buyerEscrow.toString()}
                                 fullDisabled={inputDisabled}
                                 currencyPrice={props.currencyPrice}
                                 label={"Buyer"}
@@ -110,7 +131,7 @@ const EscrowInput = (props: EscrowInputProps) => {
                                 errors={props.errors}
                             />
                             <EtherInput
-                                ethBaseValue={sellerEscrow}
+                                ethBaseValue={sellerEscrow.toString()}
                                 fullDisabled={inputDisabled}
                                 currencyPrice={props.currencyPrice}
                                 label={"Seller"}
@@ -119,7 +140,7 @@ const EscrowInput = (props: EscrowInputProps) => {
                                 errors={props.errors}
                             />
                             <EtherInput
-                                ethBaseValue={deliverEscrow}
+                                ethBaseValue={deliverEscrow.toString()}
                                 fullDisabled={inputDisabled}
                                 currencyPrice={props.currencyPrice}
                                 label={"Deliver"}

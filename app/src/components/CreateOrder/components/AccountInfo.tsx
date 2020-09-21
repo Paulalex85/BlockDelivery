@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Col, Form, Row} from 'react-bootstrap';
 import AddressInput from "./AddressInput";
 import {useSelector} from "react-redux";
@@ -9,12 +9,17 @@ type AccountInfoProps = {
     setFieldValue: any
     name: string
     errors: any
+    initialValue: string
 }
 
 const AccountInfo = (props: AccountInfoProps) => {
     const [disabled, setDisabled] = useState(false);
     const [account, setAccount] = useState("");
     const userAddress = useSelector(getUserAddress);
+
+    useEffect(() => {
+        handleChange(props.initialValue)
+    }, [props.initialValue]);
 
     const handleCheckBox = async (event: any) => {
         if (event.target.checked === true) {

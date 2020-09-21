@@ -6,7 +6,7 @@ import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
 import {createEthersContract} from "../../utils/createEthersContract";
 import {BigNumber} from "ethers";
 
-type CreateOrderProps = {
+type CreateUpdateOrderProps = {
     userProvider: any;
     route: any;
 }
@@ -36,7 +36,7 @@ interface FormErrors {
     deliverEscrow: string;
 }
 
-const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
+const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => {
     const {values, errors, isSubmitting, setFieldValue} = props;
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
 
@@ -55,16 +55,19 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     setFieldValue={setFieldValue}
                                     name={"buyer"}
                                     errors={errors}
+                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.buyer : ''}
                                 />
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
                                     name={"seller"}
                                     errors={errors}
+                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.seller : ''}
                                 />
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
                                     name={"deliver"}
                                     errors={errors}
+                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.deliver : ''}
                                 />
                                 <EtherInput
                                     currencyPrice={0.5}
@@ -72,6 +75,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     setFieldValue={setFieldValue}
                                     name={"sellerPrice"}
                                     errors={errors}
+                                    ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.sellerPrice.toString() : "0"}
                                 />
                                 <EtherInput
                                     currencyPrice={0.5}
@@ -80,6 +84,7 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                     name={"deliverPrice"}
                                     errors={errors}
                                     onChangeMode={(mode) => setDeliverPriceMode(mode)}
+                                    ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.deliverPrice.toString() : "0"}
                                 />
                                 {values.deliverPrice !== undefined && values.deliverPrice.gt(0) ?
                                     <SellerDeliveryPay
@@ -88,21 +93,26 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
                                         currencyPrice={0.5}
                                         setFieldValue={setFieldValue}
                                         name={"sellerDeliveryPay"}
+                                        initialValue={props.route.location.state !== undefined ? props.route.location.state.data.sellerDeliveryPay.toString() : "0"}
                                     />
                                     : ""}
                                 <DelayPicker
                                     setFieldValue={setFieldValue}
                                     name={"dateDelay"}
                                     errors={errors}
+                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.delayEscrow.toString() : undefined}
                                 />
                                 <EscrowInput
                                     simpleEscrowValue={values.deliverPrice !== undefined && values.sellerPrice !== undefined ? values.deliverPrice.add(values.sellerPrice).toString() : "0"}
                                     currencyPrice={0.5}
                                     setFieldValue={setFieldValue}
                                     errors={errors}
+                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data : undefined}
                                 />
                                 <Button type="submit" disabled={isSubmitting}>
-                                    Create
+                                    {props.route.location.pathname.includes("create") ?
+                                        "Create" :
+                                        "Update"}
                                 </Button>
                             </FormikForm>
                         </BootstrapForm>
@@ -113,23 +123,36 @@ const CreateForm = (props: CreateOrderProps & FormikProps<FormValues>) => {
     )
 };
 
-const CreateOrder = withFormik<CreateOrderProps, FormValues>({
+const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
     // Transform outer props into form values
     // mapPropsToValues: props => {
-    mapPropsToValues: () => {
-        return {
-            buyer: '',
-            seller: '',
-            deliver: '',
-            sellerPrice: BigNumber.from(0),
-            deliverPrice: BigNumber.from(0),
-            sellerDeliveryPay: BigNumber.from(0),
-            buyerEscrow: BigNumber.from(0),
-            sellerEscrow: BigNumber.from(0),
-            deliverEscrow: BigNumber.from(0),
-            dateDelay: new Date()
-        };
-    },
+    //     console.log(props.route.match.params);
+    //     let orderData = props.route.location.state.orderData;
+    // if (props.route.location.pathname.includes("update") && orderData === undefined) {
+    //     createEthersContract(props.userProvider).then((contract) => {
+    //         contract.getOrder(id).then((orderResult: any) => {
+    //             contract.getEscrow(id).then((escrowResult: any) => {
+    //                 orderData = {
+    //                     ...orderResult,
+    //                     ...escrowResult
+    //                 }
+    //             })
+    //         })
+    //     })
+    // }
+    // return {
+    //     buyer: orderData.buyer || '',
+    //     seller: orderData.seller || '',
+    //     deliver: orderData.deliver || '',
+    //     sellerPrice: orderData.sellerPrice || BigNumber.from(0),
+    //     deliverPrice: orderData.deliverPrice || BigNumber.from(0),
+    //     sellerDeliveryPay: orderData.sellerDeliveryPay || BigNumber.from(0),
+    //     buyerEscrow: orderData.buyerEscrow || BigNumber.from(0),
+    //     sellerEscrow: orderData.sellerEscrow || BigNumber.from(0),
+    //     deliverEscrow: orderData.deliverEscrow || BigNumber.from(0),
+    //     dateDelay: orderData.dateDelay || new Date()
+    // };
+    // },
 
     // Add a custom validation function (this can be async too!)
     validate: (values: FormValues) => {
@@ -154,15 +177,15 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
             errors.deliver = addressErrorMsg;
         }
 
-        if (values.buyer == values.seller) {
+        if (values.buyer === values.seller) {
             errors.buyer = sameAccountErrorMsg;
             errors.seller = sameAccountErrorMsg;
         }
-        if (values.buyer == values.deliver) {
+        if (values.buyer === values.deliver) {
             errors.buyer = sameAccountErrorMsg;
             errors.deliver = sameAccountErrorMsg;
         }
-        if (values.seller == values.deliver) {
+        if (values.seller === values.deliver) {
             errors.seller = sameAccountErrorMsg;
             errors.deliver = sameAccountErrorMsg;
         }
@@ -184,23 +207,28 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
     },
 
     handleSubmit: (values, {props, setSubmitting}) => {
+        console.log("pk ca passe pas ca omg ", values);
         createEthersContract(props.userProvider).then((contract) => {
             if (contract !== undefined) {
                 let contractWithSigner = contract.connect(props.userProvider.getSigner());
-                contractWithSigner.createOrder(
-                    [values.buyer, values.seller, values.deliver],
-                    values.sellerPrice,
-                    values.deliverPrice,
-                    values.sellerDeliveryPay,
-                    Math.round(values.dateDelay.getTime() / 1000),
-                    [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
-                    console.log(tx);
-                    setSubmitting(false);
-                    props.route.history.push("/orders");
-                }, (e: any) => {
-                    console.log("Unable to send the transaction : " + e);
-                    setSubmitting(false);
-                });
+                if (props.route.location.pathname.includes("create")) {
+                    contractWithSigner.createOrder(
+                        [values.buyer, values.seller, values.deliver],
+                        values.sellerPrice,
+                        values.deliverPrice,
+                        values.sellerDeliveryPay,
+                        Math.round(values.dateDelay.getTime() / 1000),
+                        [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
+                        console.log(tx);
+                        setSubmitting(false);
+                        props.route.history.push("/orders");
+                    }, (e: any) => {
+                        console.log("Unable to send the transaction : ", e);
+                        setSubmitting(false);
+                    });
+                } else {
+                    console.log("values submit", values)
+                }
             } else {
                 alert(JSON.stringify("Contract undefined", null, 2));
                 setSubmitting(false);
@@ -209,4 +237,4 @@ const CreateOrder = withFormik<CreateOrderProps, FormValues>({
     },
 })(CreateForm);
 
-export default CreateOrder;
+export default CreateUpdateOrder;

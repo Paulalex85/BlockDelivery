@@ -10,7 +10,7 @@ type EtherInputProps = {
     label: string
     onChangeMode?: (mode: Mode) => void
     fullDisabled?: boolean
-    ethBaseValue?: BigNumber
+    ethBaseValue?: string
     setFieldValue: any
     name: string
     errors: any
@@ -29,10 +29,13 @@ const EtherInput = (props: EtherInputProps) => {
     let currencyPriceBN = parseUnits(props.currencyPrice.toString(), 2);
 
     useEffect(() => {
-        if (props.ethBaseValue !== undefined && !props.ethBaseValue.isNegative()) {
-            setEthValue(formatEther(props.ethBaseValue));
-            setUsdValue(formatUnits(props.ethBaseValue.mul(currencyPriceBN).div(100), 18));
-            props.setFieldValue(props.name, props.ethBaseValue);
+        if (props.ethBaseValue !== undefined) {
+            let baseValue = BigNumber.from(props.ethBaseValue);
+            if (!baseValue.isNegative()) {
+                setEthValue(formatEther(baseValue));
+                setUsdValue(formatUnits(baseValue.mul(currencyPriceBN).div(100), 18));
+                props.setFieldValue(props.name, baseValue);
+            }
         }
     }, [props.ethBaseValue, props.currencyPrice]);
 

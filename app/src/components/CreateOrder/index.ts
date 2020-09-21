@@ -1,2 +1,2 @@
-import CreateOrder from './CreateOrder'
-export default CreateOrder
+import CreateUpdateOrder from './CreateUpdateOrder'
+export default CreateUpdateOrder

@@ -9,6 +9,7 @@ import {UpdateOrder, ValidateOrder} from "./components";
 type Props = {
     orderId: number;
     userProvider: any;
+    route: any;
 }
 
 const OrderElement = (props: Props) => {
@@ -219,7 +220,10 @@ const OrderElement = (props: Props) => {
                                                escrowData={escrowData}
                                                userProvider={props.userProvider}
                                                orderId={props.orderId}/>
-                                <UpdateOrder orderData={orderData}/>
+                                <UpdateOrder orderData={orderData}
+                                             escrowData={escrowData}
+                                             orderId={props.orderId}
+                                             route={props.route}/>
                             </ButtonToolbar>
                         </ListGroup.Item>
                     </Collapse>
