@@ -39,6 +39,7 @@ interface FormErrors {
 const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => {
     const {values, errors, isSubmitting, setFieldValue} = props;
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
+    const isUpdate = props.route.location.pathname.includes("update");
 
     // @ts-ignore
     return (
@@ -46,7 +47,9 @@ const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => 
             <Col className="col-sm-5">
                 <Card className="text-center">
                     <Card.Header>
-                        Create Order
+                        {isUpdate ?
+                            "Update Order" :
+                            "Create Order"}
                     </Card.Header>
                     <Card.Body>
                         <BootstrapForm>
@@ -56,18 +59,21 @@ const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => 
                                     name={"buyer"}
                                     errors={errors}
                                     initialValue={props.route.location.state !== undefined ? props.route.location.state.data.buyer : ''}
+                                    disabled={isUpdate}
                                 />
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
                                     name={"seller"}
                                     errors={errors}
                                     initialValue={props.route.location.state !== undefined ? props.route.location.state.data.seller : ''}
+                                    disabled={isUpdate}
                                 />
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
                                     name={"deliver"}
                                     errors={errors}
                                     initialValue={props.route.location.state !== undefined ? props.route.location.state.data.deliver : ''}
+                                    disabled={isUpdate}
                                 />
                                 <EtherInput
                                     currencyPrice={0.5}
@@ -110,9 +116,9 @@ const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => 
                                     initialValue={props.route.location.state !== undefined ? props.route.location.state.data : undefined}
                                 />
                                 <Button type="submit" disabled={isSubmitting}>
-                                    {props.route.location.pathname.includes("create") ?
-                                        "Create" :
-                                        "Update"}
+                                    {isUpdate ?
+                                        "Update" :
+                                        "Create"}
                                 </Button>
                             </FormikForm>
                         </BootstrapForm>

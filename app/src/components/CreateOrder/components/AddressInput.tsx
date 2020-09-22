@@ -132,7 +132,7 @@ const AddressInput = (props: AddressInputProps) => {
                         onChange={(e) => updateAddress(e.target.value).then()}/>
                 </Col>
                 <Col sm={1}>
-                    {scannerButton}
+                    {props.disabled ? <React.Fragment/> : scannerButton}
                 </Col>
             </Form.Group>
         </div>

@@ -10,6 +10,7 @@ type AccountInfoProps = {
     name: string
     errors: any
     initialValue: string
+    disabled: boolean
 }
 
 const AccountInfo = (props: AccountInfoProps) => {
@@ -20,6 +21,10 @@ const AccountInfo = (props: AccountInfoProps) => {
     useEffect(() => {
         handleChange(props.initialValue)
     }, [props.initialValue]);
+
+    useEffect(() => {
+        setDisabled(props.disabled)
+    }, [props.disabled]);
 
     const handleCheckBox = async (event: any) => {
         if (event.target.checked === true) {
@@ -49,12 +54,15 @@ const AccountInfo = (props: AccountInfoProps) => {
                         disabled={disabled}
                     />
                 </Col>
-                <Col sm={4}>
-                    <Form.Check
-                        onChange={handleCheckBox}
-                        label={labelCheckBox}
-                    />
-                </Col>
+                {!props.disabled ?
+                    <Col sm={4}>
+                        <Form.Check
+                            onChange={handleCheckBox}
+                            label={labelCheckBox}
+                        />
+                    </Col>
+                    : <React.Fragment/>
+                }
             </Row>
             <Row>
                 <ErrorMessage name={props.name}
