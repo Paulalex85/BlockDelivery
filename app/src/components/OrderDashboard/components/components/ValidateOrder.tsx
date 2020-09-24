@@ -28,9 +28,9 @@ const ValidateOrder = (props: Props) => {
 
     const getValueToPay = () => {
         if (address === props.orderData.buyer && !props.orderData.buyerValidation) {
-            return props.orderData.deliverPrice.add(props.orderData.sellerPrice).add(props.escrowData.escrowBuyer);
+            return props.orderData.deliverPrice.add(props.orderData.sellerPrice).add(props.escrowData.escrowBuyer).sub(props.orderData.sellerDeliveryPay);
         } else if (address === props.orderData.seller && !props.orderData.sellerValidation) {
-            return props.escrowData.escrowSeller;
+            return props.escrowData.escrowSeller.add(props.orderData.sellerDeliveryPay);
         } else if (address === props.orderData.deliver && !props.orderData.deliverValidation) {
             return props.escrowData.escrowDeliver;
         }
