@@ -4,7 +4,7 @@ import {Badge, ButtonGroup, ButtonToolbar, Col, Collapse, ListGroup, Row} from '
 import {BsChevronDown, BsChevronUp} from "react-icons/bs";
 import Blockies from "react-blockies";
 import {PriceDisplay} from "../../Utils";
-import {UpdateOrder, ValidateOrder} from "./components";
+import {InitializeCancel, UpdateOrder, ValidateOrder} from "./components";
 
 type Props = {
     orderId: number;
@@ -216,20 +216,23 @@ const OrderElement = (props: Props) => {
                                 </Col>
                             </Row>
                             <ButtonToolbar className="justify-content-between">
-                                <ValidateOrder orderData={orderData}
-                                               escrowData={escrowData}
-                                               userProvider={props.userProvider}
-                                               orderId={props.orderId}/>
-                                <UpdateOrder orderData={orderData}
-                                             escrowData={escrowData}
-                                             orderId={props.orderId}
-                                             route={props.route}/>
+                                    <ValidateOrder orderData={orderData}
+                                                   escrowData={escrowData}
+                                                   userProvider={props.userProvider}
+                                                   orderId={props.orderId}/>
+                                    <UpdateOrder orderData={orderData}
+                                                 escrowData={escrowData}
+                                                 orderId={props.orderId}
+                                                 route={props.route}/>
+                                    <InitializeCancel orderData={orderData}
+                                                      orderId={props.orderId}
+                                                      userProvider={props.userProvider}/>
                             </ButtonToolbar>
                         </ListGroup.Item>
                     </Collapse>
                 </Col>
 
-                : <div/>
+                : <React.Fragment/>
             }
         </React.Fragment>
     )
