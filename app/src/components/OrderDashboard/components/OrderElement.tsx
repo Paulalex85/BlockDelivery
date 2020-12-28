@@ -4,7 +4,7 @@ import {Badge, ButtonGroup, ButtonToolbar, Col, Collapse, ListGroup, Row} from '
 import {BsChevronDown, BsChevronUp} from "react-icons/bs";
 import Blockies from "react-blockies";
 import {PriceDisplay} from "../../Utils";
-import {InitializeCancel, UpdateOrder, ValidateOrder} from "./components";
+import {InitializeCancel, TakeOrder, UpdateOrder, ValidateOrder} from "./components";
 
 type Props = {
     orderId: number;
@@ -17,6 +17,7 @@ const OrderElement = (props: Props) => {
     const [escrowData, setEscrowData] = useState<any>();
     const [disputeData, setDisputeData] = useState<any>();
     const [open, setOpen] = useState(false);
+    const [userHash, setUserHash] = useState("");
     const [title, setTitle] = useState("");
     const [colorListGroup, setColorListGroup] = useState("");
 
@@ -215,18 +216,22 @@ const OrderElement = (props: Props) => {
                                     </h4>
                                 </Col>
                             </Row>
+                            <TakeOrder orderData={orderData}
+                                       orderId={props.orderId}
+                                       userProvider={props.userProvider}/>
                             <ButtonToolbar className="justify-content-between">
-                                    <ValidateOrder orderData={orderData}
-                                                   escrowData={escrowData}
-                                                   userProvider={props.userProvider}
-                                                   orderId={props.orderId}/>
-                                    <UpdateOrder orderData={orderData}
-                                                 escrowData={escrowData}
-                                                 orderId={props.orderId}
-                                                 route={props.route}/>
-                                    <InitializeCancel orderData={orderData}
-                                                      orderId={props.orderId}
-                                                      userProvider={props.userProvider}/>
+                                <ValidateOrder orderData={orderData}
+                                               escrowData={escrowData}
+                                               userProvider={props.userProvider}
+                                               orderId={props.orderId}
+                                               setUserHash={setUserHash}/>
+                                <UpdateOrder orderData={orderData}
+                                             escrowData={escrowData}
+                                             orderId={props.orderId}
+                                             route={props.route}/>
+                                <InitializeCancel orderData={orderData}
+                                                  orderId={props.orderId}
+                                                  userProvider={props.userProvider}/>
                             </ButtonToolbar>
                         </ListGroup.Item>
                     </Collapse>

@@ -11,7 +11,8 @@ type Props = {
     orderId: number
     orderData: any;
     escrowData: any;
-    userProvider: any
+    userProvider: any;
+    setUserHash: any;
 }
 
 const ValidateOrder = (props: Props) => {
@@ -43,7 +44,9 @@ const ValidateOrder = (props: Props) => {
             let hash = hashOrderData(props.orderId, props.orderData, props.escrowData);
             signData(address, props.userProvider, hash).then(signedHash => {
                 if (signedHash !== undefined) {
-                    contractWithSigner.validateOrder(props.orderId, keccak256(signedHash), {value: getValueToPay()}).then((tx: any) => {
+                    let hashSend = keccak256(signedHash);
+                    contractWithSigner.validateOrder(props.orderId, hashSend, {value: getValueToPay()}).then((tx: any) => {
+                        props.setUserHash(hashSend);
                         console.log(tx);
                     }, (e: any) => {
                         console.log("Unable to send the transaction", e);
@@ -56,7 +59,7 @@ const ValidateOrder = (props: Props) => {
     };
 
     return (
-        <div>
+        <React.Fragment>
             {canValidate &&
             <Button
                 onClick={handleClick}
@@ -65,7 +68,7 @@ const ValidateOrder = (props: Props) => {
                 VALIDATE
             </Button>
             }
-        </div>
+        </React.Fragment>
     );
 };
 

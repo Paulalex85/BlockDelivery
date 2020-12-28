@@ -35,7 +35,7 @@ const InitializeCancel = (props: Props) => {
     };
 
     return (
-        <div>
+        <React.Fragment>
             {canCancel &&
             <Button
                 onClick={handleClick}
@@ -45,7 +45,7 @@ const InitializeCancel = (props: Props) => {
                 INITIALIZATION CANCEL
             </Button>
             }
-        </div>
+        </React.Fragment>
     );
 };
 
