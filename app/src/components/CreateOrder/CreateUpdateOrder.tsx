@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Button, Card, Col, Form as BootstrapForm, Row} from 'react-bootstrap';
-import {AccountInfo, DelayPicker, EscrowInput, EtherInput, SellerDeliveryPay} from "./components";
+import {AccountInfo, DelayPicker, EscrowInput, EtherInput} from "./components";
 import {Mode} from "./components/EtherInput";
 import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
 import {createEthersContract} from "../../utils/createEthersContract";
@@ -27,6 +27,7 @@ export interface FormValues {
 interface FormErrors {
     sellerPrice: string;
     deliverPrice: string;
+    sellerDeliveryPay: string;
     buyer: string;
     seller: string;
     deliver: string;
@@ -93,13 +94,13 @@ const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => 
                                     ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.deliverPrice.toString() : "0"}
                                 />
                                 {values.deliverPrice !== undefined && values.deliverPrice.gt(0) ?
-                                    <SellerDeliveryPay
-                                        deliveryCost={values.deliverPrice}
-                                        currencyMode={deliverPriceMode}
+                                    <EtherInput
                                         currencyPrice={0.5}
+                                        label={"Seller delivery participation"}
                                         setFieldValue={setFieldValue}
                                         name={"sellerDeliveryPay"}
-                                        initialValue={props.route.location.state !== undefined ? props.route.location.state.data.sellerDeliveryPay.toString() : "0"}
+                                        errors={errors}
+                                        ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.sellerDeliveryPay.toString() : "0"}
                                     />
                                     : ""}
                                 <DelayPicker
@@ -171,6 +172,10 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
         }
         if (values.deliverPrice === undefined) {
             errors.deliverPrice = priceErrorMsg;
+        }
+
+        if (values.sellerDeliveryPay !== undefined && values.sellerDeliveryPay.gt(values.deliverPrice)) {
+            errors.sellerDeliveryPay = "Seller delivery participation can't be more than delivery cost";
         }
 
         if (!values.buyer) {
