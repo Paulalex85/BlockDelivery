@@ -29,17 +29,21 @@ const EscrowInput = (props: EscrowInputProps) => {
     const handleCheck = (event: any) => {
         setChecked(event.target.checked);
         if (!event.target.checked) {
-            props.setFieldValue("buyerEscrow", BigNumber.from(0));
-            props.setFieldValue("sellerEscrow", BigNumber.from(0));
-            props.setFieldValue("deliverEscrow", BigNumber.from(0));
-            setBuyerEscrow(BigNumber.from(0));
-            setDeliverEscrow(BigNumber.from(0));
-            setSellerEscrow(BigNumber.from(0));
+            initializeFields();
         } else {
             setEscrowType(EscrowType.Simple);
             setSimpleEscrow();
         }
     };
+
+    function initializeFields() {
+        props.setFieldValue("buyerEscrow", BigNumber.from(0));
+        props.setFieldValue("sellerEscrow", BigNumber.from(0));
+        props.setFieldValue("deliverEscrow", BigNumber.from(0));
+        setBuyerEscrow(BigNumber.from(0));
+        setDeliverEscrow(BigNumber.from(0));
+        setSellerEscrow(BigNumber.from(0));
+    }
 
     function setSimpleEscrow() {
         setBuyerEscrow(BigNumber.from(0));
@@ -74,6 +78,8 @@ const EscrowInput = (props: EscrowInputProps) => {
             setBuyerEscrow(props.initialValue.escrowBuyer);
             setSellerEscrow(props.initialValue.escrowSeller);
             setDeliverEscrow(props.initialValue.escrowDeliver);
+        } else {
+            initializeFields();
         }
     }, [props.initialValue]);
 
