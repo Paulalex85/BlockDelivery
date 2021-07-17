@@ -1,8 +1,9 @@
-import {ethers} from "ethers";
-import {arrayify, hexValue, keccak256, toUtf8Bytes} from "ethers/lib/utils";
+import { ethers } from 'ethers';
+import { arrayify, hexValue, keccak256, toUtf8Bytes } from 'ethers/lib/utils';
 
 export const hashOrderData = (orderId: number, orderData: any, escrowData: any) => {
-    let concatData = hexValue(orderId).concat(hexValue(orderData.buyer),
+    const concatData = hexValue(orderId).concat(
+        hexValue(orderData.buyer),
         hexValue(orderData.seller),
         hexValue(orderData.deliver),
         hexValue(orderData.sellerPrice),
@@ -11,14 +12,34 @@ export const hashOrderData = (orderId: number, orderData: any, escrowData: any) 
         hexValue(escrowData.delayEscrow),
         hexValue(escrowData.escrowBuyer),
         hexValue(escrowData.escrowSeller),
-        hexValue(escrowData.escrowDeliver));
-    return keccak256(toUtf8Bytes(concatData))
+        hexValue(escrowData.escrowDeliver),
+    );
+    return keccak256(toUtf8Bytes(concatData));
 };
 
 export const signData = async (address: string, userProvider: ethers.providers.JsonRpcProvider, data: string) => {
     try {
         return userProvider.getSigner(address).signMessage(arrayify(data));
     } catch (e) {
-        console.log(e)
+        console.log(e);
     }
+};
+
+export const getSignedKey = async (
+    orderId: number,
+    orderData: any,
+    escrowData: any,
+    userProvider: ethers.providers.JsonRpcProvider,
+    address: string,
+) => {
+    const hash = hashOrderData(orderId, orderData, escrowData);
+    try {
+        const signedKey: string | undefined = await signData(address, userProvider, hash);
+        if (signedKey !== undefined) {
+            return keccak256(signedKey);
+        }
+    } catch (e) {
+        console.log('Unable to sign data', e);
+    }
+    return '';
 };
