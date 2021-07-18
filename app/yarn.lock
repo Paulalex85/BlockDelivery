@@ -2010,6 +2010,13 @@
   "resolved" "https://registry.npmjs.org/@types/q/-/q-1.5.4.tgz"
   "version" "1.5.4"
 
+"@types/qrcode.react@^1.0.2":
+  "integrity" "sha512-I9Oq5Cjlkgy3Tw7krCnCXLw2/zMhizkTere49OOcta23tkvH0xBTP0yInimTh0gstLRtb8Ki9NZVujE5UI6ffQ=="
+  "resolved" "https://registry.npmjs.org/@types/qrcode.react/-/qrcode.react-1.0.2.tgz"
+  "version" "1.0.2"
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-bootstrap@^1.0.1":
   "integrity" "sha512-n68SeFrpOFWiSN2DCpyn17ZwTZzY8+mio8E9oCrl7abHytUz3r7ZYIKPxaETHYQxCi8oxF3NultpMAyBxFIjhg=="
   "resolved" "https://registry.npmjs.org/@types/react-bootstrap/-/react-bootstrap-1.0.1.tgz"

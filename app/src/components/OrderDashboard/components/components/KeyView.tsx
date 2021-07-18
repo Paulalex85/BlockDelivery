@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { getUserAddress } from '../../../../redux/selectors';
 import CopyText from '../../../Main/components/Menu/components/CopyText';
 import { getSignedKey } from '../../../../utils/KeyGenerator';
+import QRCode from 'qrcode.react';
 
 type Props = {
     orderId: number;
@@ -36,6 +37,7 @@ const KeyView = (props: Props) => {
             {shouldDisplayKey && (
                 <React.Fragment>
                     <h5>Key to scan when order pickup</h5>
+                    <QRCode value={key} />
                     {key}
                     <CopyText value={key} />
                 </React.Fragment>
