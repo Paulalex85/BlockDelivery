@@ -19,8 +19,10 @@ const KeyView = (props: Props) => {
     const address = useSelector(getUserAddress);
 
     useEffect(() => {
-        if (props.orderData.orderStage === 1 && address === props.orderData.seller) {
-            console.log(props.key);
+        if (
+            (props.orderData.orderStage === 1 && address === props.orderData.seller) ||
+            (props.orderData.orderStage === 2 && address === props.orderData.buyer)
+        ) {
             setShouldDisplayKey(true);
             if (key === '' && (props.key === undefined || props.key === '')) {
                 getSignedKey(props.orderId, props.orderData, props.escrowData, props.userProvider, address).then(

@@ -11,28 +11,48 @@ type Props = {
     userProvider: any;
 };
 
-const TakeOrder = (props: Props) => {
-    const [canTake, setCanTake] = useState(false);
+const ScanAction = (props: Props) => {
+    const [isScanning, setIsScanning] = useState(false);
+    const [isTakingOrder, setIsTakingOrder] = useState(false);
     const [key, setKey] = useState('');
     const address = useSelector(getUserAddress);
 
     useEffect(() => {
-        if (props.orderData.orderStage === 1 && address === props.orderData.deliver) {
-            setCanTake(true);
+        if (props.orderData.orderStage === 1) {
+            setIsTakingOrder(true);
+        } else {
+            setIsTakingOrder(false);
+        }
+        if (
+            (props.orderData.orderStage === 1 || props.orderData.orderStage === 2) &&
+            address === props.orderData.deliver
+        ) {
+            setIsScanning(true);
         }
     }, [props.orderData]);
 
     const handleClick = () => {
         createEthersContract(props.userProvider).then((contract) => {
             const contractWithSigner = contract.connect(props.userProvider.getSigner());
-            contractWithSigner.takeOrder(props.orderId, key).then(
-                (tx: any) => {
-                    console.log(tx);
-                },
-                (e: any) => {
-                    console.log('Unable to send the transaction', e);
-                },
-            );
+            if (isTakingOrder) {
+                contractWithSigner.takeOrder(props.orderId, key).then(
+                    (tx: any) => {
+                        console.log(tx);
+                    },
+                    (e: any) => {
+                        console.log('Unable to send the transaction', e);
+                    },
+                );
+            } else {
+                contractWithSigner.deliverOrder(props.orderId, key).then(
+                    (tx: any) => {
+                        console.log(tx);
+                    },
+                    (e: any) => {
+                        console.log('Unable to send the transaction', e);
+                    },
+                );
+            }
         });
     };
 
@@ -42,7 +62,7 @@ const TakeOrder = (props: Props) => {
 
     return (
         <React.Fragment>
-            {canTake && (
+            {isScanning && (
                 <React.Fragment>
                     <h5>Enter the code for validation or scan QR Code</h5>
                     <HashQRCodeReader onChange={(value) => setKey(value)} />
@@ -59,7 +79,7 @@ const TakeOrder = (props: Props) => {
                         />
                         <InputGroup.Append>
                             <Button onClick={handleClick} variant="primary">
-                                ORDER TAKEN
+                                {isTakingOrder ? 'ORDER TAKEN' : 'ORDER DELIVERED'}
                             </Button>
                         </InputGroup.Append>
                     </InputGroup>
@@ -69,4 +89,4 @@ const TakeOrder = (props: Props) => {
     );
 };
 
-export default TakeOrder;
+export default ScanAction;
