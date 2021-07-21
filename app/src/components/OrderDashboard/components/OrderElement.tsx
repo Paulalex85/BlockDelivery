@@ -4,7 +4,7 @@ import { Badge, ButtonToolbar, Col, Collapse, ListGroup, Row } from 'react-boots
 import { BsChevronDown, BsChevronUp } from 'react-icons/bs';
 import Blockies from 'react-blockies';
 import { PriceDisplay } from '../../Utils';
-import { InitializeCancel, ScanAction, UpdateOrder, ValidateOrder } from './components';
+import { EndOrder, InitializeCancel, ScanAction, UpdateOrder, ValidateOrder } from './components';
 import KeyView from './components/KeyView';
 
 type Props = {
@@ -246,19 +246,24 @@ const OrderElement = (props: Props) => {
                                     </h4>
                                 </Col>
                             </Row>
-                            <ScanAction
-                                orderData={orderData}
-                                orderId={props.orderId}
-                                userProvider={props.userProvider}
-                            />
-                            <KeyView
-                                orderId={props.orderId}
-                                orderData={orderData}
-                                escrowData={escrowData}
-                                userProvider={props.userProvider}
-                                key={userKey}
-                            />
                             <ButtonToolbar className="justify-content-between">
+                                <ScanAction
+                                    orderData={orderData}
+                                    orderId={props.orderId}
+                                    userProvider={props.userProvider}
+                                />
+                                <KeyView
+                                    orderId={props.orderId}
+                                    orderData={orderData}
+                                    escrowData={escrowData}
+                                    userProvider={props.userProvider}
+                                    key={userKey}
+                                />
+                                <EndOrder
+                                    orderId={props.orderId}
+                                    orderData={orderData}
+                                    userProvider={props.userProvider}
+                                />
                                 <ValidateOrder
                                     orderData={orderData}
                                     escrowData={escrowData}
