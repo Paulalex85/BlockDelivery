@@ -6,7 +6,7 @@ import Blockies from 'react-blockies';
 import { PriceDisplay } from '../../Utils';
 import { EndOrder, InitializeCancel, ScanAction, UpdateOrder, ValidateOrder } from './components';
 import KeyView from './components/KeyView';
-import CreateDispute from './components/CreateDispute';
+import CreateUpdateDisputeRefund from './components/CreateUpdateDisputeRefund';
 
 type Props = {
     orderId: number;
@@ -283,9 +283,10 @@ const OrderElement = (props: Props) => {
                                     orderId={props.orderId}
                                     userProvider={props.userProvider}
                                 />
-                                <CreateDispute
+                                <CreateUpdateDisputeRefund
                                     orderId={props.orderId}
                                     orderData={orderData}
+                                    disputeData={disputeData}
                                     userProvider={props.userProvider}
                                 />
                             </ButtonToolbar>
