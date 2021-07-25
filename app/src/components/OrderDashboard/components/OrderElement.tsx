@@ -7,6 +7,8 @@ import { PriceDisplay } from '../../Utils';
 import { EndOrder, InitializeCancel, ScanAction, UpdateOrder, ValidateOrder } from './components';
 import KeyView from './components/KeyView';
 import CreateUpdateDisputeRefund from './components/CreateUpdateDisputeRefund';
+import UsersStatusView from './components/UsersStatusView';
+import { BigNumber } from 'ethers';
 
 type Props = {
     orderId: number;
@@ -14,10 +16,47 @@ type Props = {
     route: any;
 };
 
+interface OrderData {
+    buyer: string;
+    seller: string;
+    deliver: string;
+    deliverPrice: BigNumber;
+    sellerPrice: BigNumber;
+    sellerDeliveryPay: BigNumber;
+    orderStage: number;
+    startDate: BigNumber;
+    buyerValidation: boolean;
+    sellerValidation: boolean;
+    deliverValidation: boolean;
+    sellerHash: string;
+    buyerHash: string;
+}
+
+interface EscrowData {
+    delayEscrow: BigNumber;
+    escrowBuyer: BigNumber;
+    escrowSeller: BigNumber;
+    escrowDeliver: BigNumber;
+}
+
+interface DisputeDate {
+    buyerReceive: BigNumber;
+    sellerBalance: number;
+    buyerAcceptEscrow: boolean;
+    sellerAcceptEscrow: boolean;
+    deliverAcceptEscrow: boolean;
+}
+
 const OrderElement = (props: Props) => {
-    const [orderData, setOrderData] = useState<any>();
-    const [escrowData, setEscrowData] = useState<any>();
-    const [disputeData, setDisputeData] = useState<any>();
+    const [orderData, setOrderData] = useState<OrderData>();
+    const [escrowData, setEscrowData] = useState<EscrowData>();
+    const [disputeData, setDisputeData] = useState<DisputeDate>({
+        buyerReceive: BigNumber.from(0),
+        sellerBalance: 0,
+        buyerAcceptEscrow: false,
+        sellerAcceptEscrow: false,
+        deliverAcceptEscrow: false,
+    });
     const [open, setOpen] = useState(false);
     const [userKey, setUserKey] = useState('');
     const [title, setTitle] = useState('');
@@ -25,13 +64,13 @@ const OrderElement = (props: Props) => {
 
     useEffect(() => {
         createEthersContract(props.userProvider).then((contract) => {
-            contract.getOrder(props.orderId).then((orderResult: any) => {
+            contract.getOrder(props.orderId).then((orderResult: OrderData) => {
                 console.log(orderResult);
                 setOrderData(orderResult);
-                contract.getEscrow(props.orderId).then((escrowResult: any) => {
+                contract.getEscrow(props.orderId).then((escrowResult: EscrowData) => {
                     console.log(escrowResult);
                     setEscrowData(escrowResult);
-                    contract.getDispute(props.orderId).then((disputeResult: any) => {
+                    contract.getDispute(props.orderId).then((disputeResult: DisputeDate) => {
                         console.log(disputeResult);
                         setDisputeData(disputeResult);
                     });
@@ -217,36 +256,22 @@ const OrderElement = (props: Props) => {
                                     )}
                                 </Col>
                             </Row>
-                            <h5>Order Validation</h5>
-                            <Row className="mb-3">
-                                <Col className="sm-1">
-                                    <h4>
-                                        {orderData.buyerValidation ? (
-                                            <Badge variant="success">Buyer</Badge>
-                                        ) : (
-                                            <Badge variant="danger">Buyer</Badge>
-                                        )}
-                                    </h4>
-                                </Col>
-                                <Col className="sm-1">
-                                    <h4>
-                                        {orderData.sellerValidation ? (
-                                            <Badge variant="success">Seller</Badge>
-                                        ) : (
-                                            <Badge variant="danger">Seller</Badge>
-                                        )}
-                                    </h4>
-                                </Col>
-                                <Col className="sm-1">
-                                    <h4>
-                                        {orderData.deliverValidation ? (
-                                            <Badge variant="success">Deliver</Badge>
-                                        ) : (
-                                            <Badge variant="danger">Deliver</Badge>
-                                        )}
-                                    </h4>
-                                </Col>
-                            </Row>
+                            <UsersStatusView
+                                title={'Order Validation'}
+                                buyerStatus={orderData.buyerValidation}
+                                sellerStatus={orderData.sellerValidation}
+                                deliverStatus={orderData.deliverValidation}
+                            />
+                            {orderData.orderStage === 6 ? (
+                                <UsersStatusView
+                                    title={'Dispute Validation'}
+                                    buyerStatus={disputeData.buyerAcceptEscrow}
+                                    sellerStatus={disputeData.sellerAcceptEscrow}
+                                    deliverStatus={disputeData.deliverAcceptEscrow}
+                                />
+                            ) : (
+                                <React.Fragment />
+                            )}
                             <ButtonToolbar className="justify-content-between">
                                 <ScanAction
                                     orderData={orderData}
