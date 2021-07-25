@@ -256,12 +256,16 @@ const OrderElement = (props: Props) => {
                                     )}
                                 </Col>
                             </Row>
-                            <UsersStatusView
-                                title={'Order Validation'}
-                                buyerStatus={orderData.buyerValidation}
-                                sellerStatus={orderData.sellerValidation}
-                                deliverStatus={orderData.deliverValidation}
-                            />
+                            {orderData.orderStage === 0 ? (
+                                <UsersStatusView
+                                    title={'Order Validation'}
+                                    buyerStatus={orderData.buyerValidation}
+                                    sellerStatus={orderData.sellerValidation}
+                                    deliverStatus={orderData.deliverValidation}
+                                />
+                            ) : (
+                                <React.Fragment />
+                            )}
                             {orderData.orderStage === 6 ? (
                                 <UsersStatusView
                                     title={'Dispute Validation'}
