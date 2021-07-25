@@ -9,6 +9,7 @@ import KeyView from './components/KeyView';
 import CreateUpdateDisputeRefund from './components/CreateUpdateDisputeRefund';
 import UsersStatusView from './components/UsersStatusView';
 import { BigNumber } from 'ethers';
+import ValidateDispute from './components/ValidateDispute';
 
 type Props = {
     orderId: number;
@@ -16,7 +17,7 @@ type Props = {
     route: any;
 };
 
-interface OrderData {
+export interface OrderData {
     buyer: string;
     seller: string;
     deliver: string;
@@ -32,14 +33,14 @@ interface OrderData {
     buyerHash: string;
 }
 
-interface EscrowData {
+export interface EscrowData {
     delayEscrow: BigNumber;
     escrowBuyer: BigNumber;
     escrowSeller: BigNumber;
     escrowDeliver: BigNumber;
 }
 
-interface DisputeDate {
+export interface DisputeData {
     buyerReceive: BigNumber;
     sellerBalance: number;
     buyerAcceptEscrow: boolean;
@@ -50,7 +51,7 @@ interface DisputeDate {
 const OrderElement = (props: Props) => {
     const [orderData, setOrderData] = useState<OrderData>();
     const [escrowData, setEscrowData] = useState<EscrowData>();
-    const [disputeData, setDisputeData] = useState<DisputeDate>({
+    const [disputeData, setDisputeData] = useState<DisputeData>({
         buyerReceive: BigNumber.from(0),
         sellerBalance: 0,
         buyerAcceptEscrow: false,
@@ -70,7 +71,7 @@ const OrderElement = (props: Props) => {
                 contract.getEscrow(props.orderId).then((escrowResult: EscrowData) => {
                     console.log(escrowResult);
                     setEscrowData(escrowResult);
-                    contract.getDispute(props.orderId).then((disputeResult: DisputeDate) => {
+                    contract.getDispute(props.orderId).then((disputeResult: DisputeData) => {
                         console.log(disputeResult);
                         setDisputeData(disputeResult);
                     });
@@ -313,6 +314,12 @@ const OrderElement = (props: Props) => {
                                     userProvider={props.userProvider}
                                 />
                                 <CreateUpdateDisputeRefund
+                                    orderId={props.orderId}
+                                    orderData={orderData}
+                                    disputeData={disputeData}
+                                    userProvider={props.userProvider}
+                                />
+                                <ValidateDispute
                                     orderId={props.orderId}
                                     orderData={orderData}
                                     disputeData={disputeData}
