@@ -59,19 +59,11 @@ library DisputeLib {
 
         Dispute storage dispute = disputes[deliveryId];
 
-        if (msg.sender == delivery.order.seller) {
-            dispute.sellerAcceptEscrow = true;
-            dispute.deliverAcceptEscrow = false;
-            dispute.buyerAcceptEscrow = false;
-        } else if (msg.sender == delivery.order.deliver) {
-            dispute.sellerAcceptEscrow = false;
-            dispute.deliverAcceptEscrow = true;
-            dispute.buyerAcceptEscrow = false;
-        } else if (msg.sender == delivery.order.buyer) {
-            dispute.sellerAcceptEscrow = false;
-            dispute.deliverAcceptEscrow = false;
-            dispute.buyerAcceptEscrow = true;
-        } else {
+        if (msg.sender == delivery.order.seller || msg.sender == delivery.order.deliver || msg.sender == delivery.order.buyer) {
+            dispute.sellerAcceptEscrow = msg.sender == delivery.order.seller;
+            dispute.deliverAcceptEscrow = msg.sender == delivery.order.deliver;
+            dispute.buyerAcceptEscrow = msg.sender == delivery.order.buyer;
+        }  else {
             revert("Should be an actor of the order");
         }
 
