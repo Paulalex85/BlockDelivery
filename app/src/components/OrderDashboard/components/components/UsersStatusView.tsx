@@ -3,6 +3,7 @@ import { Badge, Col, Row } from 'react-bootstrap';
 
 type Props = {
     title: string;
+    withBuyerStatus: boolean;
     buyerStatus: boolean;
     sellerStatus: boolean;
     deliverStatus: boolean;
@@ -13,15 +14,19 @@ const UsersStatusView = (props: Props) => {
         <React.Fragment>
             <h5>{props.title}</h5>
             <Row className="mb-3">
-                <Col className="sm-1">
-                    <h4>
-                        {props.buyerStatus ? (
-                            <Badge variant="success">Buyer</Badge>
-                        ) : (
-                            <Badge variant="danger">Buyer</Badge>
-                        )}
-                    </h4>
-                </Col>
+                {props.withBuyerStatus ? (
+                    <Col className="sm-1">
+                        <h4>
+                            {props.buyerStatus ? (
+                                <Badge variant="success">Buyer</Badge>
+                            ) : (
+                                <Badge variant="danger">Buyer</Badge>
+                            )}
+                        </h4>
+                    </Col>
+                ) : (
+                    <React.Fragment />
+                )}
                 <Col className="sm-1">
                     <h4>
                         {props.sellerStatus ? (

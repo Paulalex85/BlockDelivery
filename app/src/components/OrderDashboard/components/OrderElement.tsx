@@ -261,6 +261,7 @@ const OrderElement = (props: Props) => {
                             {orderData.orderStage === 0 ? (
                                 <UsersStatusView
                                     title={'Order Validation'}
+                                    withBuyerStatus={true}
                                     buyerStatus={orderData.buyerValidation}
                                     sellerStatus={orderData.sellerValidation}
                                     deliverStatus={orderData.deliverValidation}
@@ -271,7 +272,19 @@ const OrderElement = (props: Props) => {
                             {orderData.orderStage === 6 ? (
                                 <UsersStatusView
                                     title={'Dispute Validation'}
+                                    withBuyerStatus={true}
                                     buyerStatus={disputeData.buyerAcceptEscrow}
+                                    sellerStatus={disputeData.sellerAcceptEscrow}
+                                    deliverStatus={disputeData.deliverAcceptEscrow}
+                                />
+                            ) : (
+                                <React.Fragment />
+                            )}
+                            {orderData.orderStage === 7 ? (
+                                <UsersStatusView
+                                    title={'Dispute Cost Proposal'}
+                                    withBuyerStatus={false}
+                                    buyerStatus={false}
                                     sellerStatus={disputeData.sellerAcceptEscrow}
                                     deliverStatus={disputeData.deliverAcceptEscrow}
                                 />
