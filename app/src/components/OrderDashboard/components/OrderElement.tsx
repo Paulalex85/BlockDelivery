@@ -10,6 +10,7 @@ import CreateUpdateDisputeRefund from './components/CreateUpdateDisputeRefund';
 import UsersStatusView from './components/UsersStatusView';
 import { BigNumber } from 'ethers';
 import ValidateDispute from './components/ValidateDispute';
+import CostDisputeProposal from './components/CostDisputeProposal';
 
 type Props = {
     orderId: number;
@@ -323,6 +324,13 @@ const OrderElement = (props: Props) => {
                                     orderId={props.orderId}
                                     orderData={orderData}
                                     disputeData={disputeData}
+                                    userProvider={props.userProvider}
+                                />
+                                <CostDisputeProposal
+                                    orderId={props.orderId}
+                                    orderData={orderData}
+                                    disputeData={disputeData}
+                                    escrowData={escrowData}
                                     userProvider={props.userProvider}
                                 />
                             </ButtonToolbar>
