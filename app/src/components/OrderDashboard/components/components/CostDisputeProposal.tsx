@@ -44,16 +44,25 @@ const CostDisputeProposal = (props: Props) => {
 
     useEffect(() => {
         try {
+            const newBigValue = Big(ethValue);
+            setBigEthValue(newBigValue);
+        } catch (e) {
+            setBigEthValue(Big(0));
+        }
+    }, [ethValue]);
+
+    useEffect(() => {
+        try {
             setSellerIncome(
                 Big(props.orderData.sellerPrice.toString())
                     .add(props.escrowData.escrowSeller.toString())
                     .sub(props.disputeData.buyerReceive.div(2).toString())
-                    .add(bigFromEther(Big(ethValue))),
+                    .add(bigFromEther(bigEthValue)),
             );
         } catch (e) {
             setSellerIncome(Big(0));
         }
-    }, [props.orderData.sellerPrice, props.escrowData.escrowSeller, props.disputeData.buyerReceive, ethValue]);
+    }, [props.orderData.sellerPrice, props.escrowData.escrowSeller, props.disputeData.buyerReceive, bigEthValue]);
 
     useEffect(() => {
         try {
@@ -61,12 +70,12 @@ const CostDisputeProposal = (props: Props) => {
                 Big(props.orderData.deliverPrice.toString())
                     .add(props.escrowData.escrowDeliver.toString())
                     .sub(props.disputeData.buyerReceive.div(2).toString())
-                    .add(bigFromEther(Big(-ethValue))),
+                    .add(bigFromEther(bigEthValue.mul(-1))),
             );
         } catch (e) {
             setDeliverIncome(Big(0));
         }
-    }, [props.orderData.deliverPrice, props.escrowData.escrowDeliver, props.disputeData.buyerReceive, ethValue]);
+    }, [props.orderData.deliverPrice, props.escrowData.escrowDeliver, props.disputeData.buyerReceive, bigEthValue]);
 
     useEffect(() => {
         try {
@@ -90,10 +99,6 @@ const CostDisputeProposal = (props: Props) => {
 
     const handleChange = (event: any) => {
         setEthValue(event.target.value);
-        try {
-            const newBigValue = Big(event.target.value);
-            setBigEthValue(newBigValue);
-        } catch (e) {}
     };
 
     //todo handle when actor need to pay more
