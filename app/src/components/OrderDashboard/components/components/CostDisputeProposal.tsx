@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { getUserAddress } from '../../../../redux/selectors';
+import { getUserAddress, getWithdrawBalance } from '../../../../redux/selectors';
 import { Button, Form, InputGroup, Table } from 'react-bootstrap';
 import { bigFromEther, bigToEther, negativePriceRegex } from '../../../../utils/NumberUtils';
 import { createEthersContract } from '../../../../utils/createEthersContract';
@@ -8,6 +8,7 @@ import { formatEther } from '@ethersproject/units';
 import { DisputeData, EscrowData, OrderData } from '../OrderElement';
 import Big from 'big.js';
 import { FaEthereum } from 'react-icons/fa';
+import { BigNumber } from 'ethers';
 
 type Props = {
     orderId: number;
@@ -25,7 +26,9 @@ const CostDisputeProposal = (props: Props) => {
     const [sellerBalance, setSellerBalance] = useState(Big(0));
     const [deliverIncome, setDeliverIncome] = useState(Big(0));
     const [deliverBalance, setDeliverBalance] = useState(Big(0));
-    const address = useSelector(getUserAddress);
+    const [nextBalanceUser, setNextBalanceUser] = useState(Big(0));
+    const address: string = useSelector(getUserAddress);
+    const withdrawBalance: BigNumber = useSelector(getWithdrawBalance);
 
     useEffect(() => {
         if (
@@ -97,22 +100,33 @@ const CostDisputeProposal = (props: Props) => {
         }
     }, [deliverIncome]);
 
+    useEffect(() => {
+        if (address === props.orderData.seller) {
+            setNextBalanceUser(sellerIncome.add(withdrawBalance.toString()));
+        } else if (address === props.orderData.deliver) {
+            setNextBalanceUser(deliverIncome.add(withdrawBalance.toString()));
+        }
+    }, [sellerIncome, deliverIncome]);
+
     const handleChange = (event: any) => {
         setEthValue(event.target.value);
     };
 
-    //todo handle when actor need to pay more
     const handleSubmit = () => {
         createEthersContract(props.userProvider).then((contract) => {
             const contractWithSigner = contract.connect(props.userProvider.getSigner());
-            contractWithSigner.costDisputeProposal(props.orderId, bigFromEther(bigEthValue).toString()).then(
-                (tx: any) => {
-                    console.log(tx);
-                },
-                (e: any) => {
-                    console.log('Unable to send the transaction', e);
-                },
-            );
+            contractWithSigner
+                .costDisputeProposal(props.orderId, bigFromEther(bigEthValue).toString(), {
+                    value: nextBalanceUser.lt(0) ? nextBalanceUser.abs().toString() : 0,
+                })
+                .then(
+                    (tx: any) => {
+                        console.log(tx);
+                    },
+                    (e: any) => {
+                        console.log('Unable to send the transaction', e);
+                    },
+                );
         });
     };
 
@@ -175,6 +189,13 @@ const CostDisputeProposal = (props: Props) => {
                     <Button onClick={handleSubmit} variant="primary">
                         COST PROPOSAL
                     </Button>
+                    {nextBalanceUser.lt(0) ? (
+                        <span>
+                            Need to pay <FaEthereum /> {bigToEther(nextBalanceUser.abs()).toString()}
+                        </span>
+                    ) : (
+                        <React.Fragment />
+                    )}
                 </React.Fragment>
             )}
         </React.Fragment>
