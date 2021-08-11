@@ -11,6 +11,7 @@ import UsersStatusView from './components/UsersStatusView';
 import { BigNumber } from 'ethers';
 import ValidateDispute from './components/ValidateDispute';
 import CostDisputeProposal from './components/CostDisputeProposal';
+import ValidateCostDispute from './components/ValidateCostDispute';
 
 type Props = {
     orderId: number;
@@ -340,6 +341,13 @@ const OrderElement = (props: Props) => {
                                     userProvider={props.userProvider}
                                 />
                                 <CostDisputeProposal
+                                    orderId={props.orderId}
+                                    orderData={orderData}
+                                    disputeData={disputeData}
+                                    escrowData={escrowData}
+                                    userProvider={props.userProvider}
+                                />
+                                <ValidateCostDispute
                                     orderId={props.orderId}
                                     orderData={orderData}
                                     disputeData={disputeData}
