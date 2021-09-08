@@ -12,6 +12,7 @@ import { BigNumber } from 'ethers';
 import ValidateDispute from './components/ValidateDispute';
 import CostDisputeProposal from './components/CostDisputeProposal';
 import ValidateCostDispute from './components/ValidateCostDispute';
+import RevertDispute from './components/RevertDispute';
 
 type Props = {
     orderId: number;
@@ -352,6 +353,11 @@ const OrderElement = (props: Props) => {
                                     orderData={orderData}
                                     disputeData={disputeData}
                                     escrowData={escrowData}
+                                    userProvider={props.userProvider}
+                                />
+                                <RevertDispute
+                                    orderId={props.orderId}
+                                    orderData={orderData}
                                     userProvider={props.userProvider}
                                 />
                             </ButtonToolbar>
