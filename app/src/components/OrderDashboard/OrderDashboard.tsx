@@ -2,16 +2,12 @@ import React, { useEffect, useState } from 'react';
 // Components
 import { NewOrder } from './components';
 import { ListGroup } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { getUserAddress } from '../../redux/selectors';
 import { createEthersContract } from '../../utils/createEthersContract';
 import OrderElement from './components/OrderElement';
 import { RouteComponentProps } from 'react-router-dom';
-import { usePoller } from '../../hooks';
-import { BigNumber } from 'ethers';
-import { setWithdrawBalance } from '../../redux/actions';
-import { FaEthereum } from 'react-icons/fa';
-import { formatEther } from 'ethers/lib/utils';
+import WithdrawBalance from './components/WithdrawBalance';
 
 type Props = {
     userProvider: any;
@@ -19,21 +15,8 @@ type Props = {
 };
 
 const OrderDashboard = (props: Props) => {
-    const dispatch = useDispatch();
     const [orders, setOrders] = useState<any>([]);
-    const [withdraw, setWithdraw] = useState<BigNumber>(BigNumber.from(0));
     const userAddress = useSelector(getUserAddress);
-
-    usePoller(async () => {
-        if (userAddress && props.userProvider) {
-            createEthersContract(props.userProvider).then((contract) => {
-                contract.withdraws(userAddress).then((withdrawValue: BigNumber) => {
-                    setWithdraw(withdrawValue);
-                    dispatch(setWithdrawBalance(withdrawValue));
-                });
-            });
-        }
-    }, 2000);
 
     useEffect(() => {
         if (userAddress) {
@@ -65,9 +48,7 @@ const OrderDashboard = (props: Props) => {
     return (
         <div>
             <NewOrder />
-            <h5 className="text-center mb-5">
-                Currently in contract : <FaEthereum /> {formatEther(withdraw)}
-            </h5>
+            <WithdrawBalance userProvider={props.userProvider} />
             <ListGroup className="align-items-center">{orders}</ListGroup>
         </div>
     );
