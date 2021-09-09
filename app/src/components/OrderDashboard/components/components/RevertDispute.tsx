@@ -43,7 +43,7 @@ const RevertDispute = (props: Props) => {
         <React.Fragment>
             {canRevert && (
                 <React.Fragment>
-                    <Button onClick={handleClick} variant="primary">
+                    <Button onClick={handleClick} variant="danger">
                         REVERT DISPUTE
                     </Button>
                 </React.Fragment>
