@@ -1,5 +1,3 @@
-import PriceDisplay from "./PriceDisplay";
+import PriceDisplay from './PriceDisplay';
 
-export {
-    PriceDisplay
-}
+export { PriceDisplay };

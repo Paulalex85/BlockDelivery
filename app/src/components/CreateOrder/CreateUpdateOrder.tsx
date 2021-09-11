@@ -1,15 +1,15 @@
-import React, {useState} from 'react';
-import {Button, Card, Col, Form as BootstrapForm, Row} from 'react-bootstrap';
-import {AccountInfo, DelayPicker, EscrowInput, EtherInput} from "./components";
-import {Mode} from "./components/EtherInput";
-import {Form as FormikForm, FormikErrors, FormikProps, withFormik} from "formik"
-import {createEthersContract} from "../../utils/createEthersContract";
-import {BigNumber} from "ethers";
+import React, { useState } from 'react';
+import { Button, Card, Col, Form as BootstrapForm, Row } from 'react-bootstrap';
+import { AccountInfo, DelayPicker, EscrowInput, EtherInput } from './components';
+import { Mode } from './components/EtherInput';
+import { Form as FormikForm, FormikErrors, FormikProps, withFormik } from 'formik';
+import { createEthersContract } from '../../utils/createEthersContract';
+import { BigNumber } from 'ethers';
 
 type CreateUpdateOrderProps = {
     userProvider: any;
     route: any;
-}
+};
 
 export interface FormValues {
     buyer: string;
@@ -38,88 +38,120 @@ interface FormErrors {
 }
 
 const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => {
-    const {values, errors, isSubmitting, setFieldValue} = props;
+    const { values, errors, isSubmitting, setFieldValue } = props;
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
-    const isUpdate = props.route.location.pathname.includes("update");
+    const isUpdate = props.route.location.pathname.includes('update');
 
     // @ts-ignore
     return (
         <Row className="justify-content-md-center mt-5">
             <Col className="col-sm-5">
                 <Card className="text-center">
-                    <Card.Header>
-                        {isUpdate ?
-                            "Update Order" :
-                            "Create Order"}
-                    </Card.Header>
+                    <Card.Header>{isUpdate ? 'Update Order' : 'Create Order'}</Card.Header>
                     <Card.Body>
                         <BootstrapForm>
                             <FormikForm>
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
-                                    name={"buyer"}
+                                    name={'buyer'}
                                     errors={errors}
-                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.buyer : ''}
+                                    initialValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data.buyer
+                                            : ''
+                                    }
                                     disabled={isUpdate}
                                 />
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
-                                    name={"seller"}
+                                    name={'seller'}
                                     errors={errors}
-                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.seller : ''}
+                                    initialValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data.seller
+                                            : ''
+                                    }
                                     disabled={isUpdate}
                                 />
                                 <AccountInfo
                                     setFieldValue={setFieldValue}
-                                    name={"deliver"}
+                                    name={'deliver'}
                                     errors={errors}
-                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.deliver : ''}
+                                    initialValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data.deliver
+                                            : ''
+                                    }
                                     disabled={isUpdate}
                                 />
                                 <EtherInput
                                     currencyPrice={0.5}
-                                    label={"Seller price"}
+                                    label={'Seller price'}
                                     setFieldValue={setFieldValue}
-                                    name={"sellerPrice"}
+                                    name={'sellerPrice'}
                                     errors={errors}
-                                    ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.sellerPrice.toString() : "0"}
+                                    ethBaseValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data.sellerPrice.toString()
+                                            : '0'
+                                    }
                                 />
                                 <EtherInput
                                     currencyPrice={0.5}
-                                    label={"Deliver price"}
+                                    label={'Deliver price'}
                                     setFieldValue={setFieldValue}
-                                    name={"deliverPrice"}
+                                    name={'deliverPrice'}
                                     errors={errors}
                                     onChangeMode={(mode) => setDeliverPriceMode(mode)}
-                                    ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.deliverPrice.toString() : "0"}
+                                    ethBaseValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data.deliverPrice.toString()
+                                            : '0'
+                                    }
                                 />
-                                {values.deliverPrice !== undefined && values.deliverPrice.gt(0) ?
+                                {values.deliverPrice !== undefined && values.deliverPrice.gt(0) ? (
                                     <EtherInput
                                         currencyPrice={0.5}
-                                        label={"Seller delivery participation"}
+                                        label={'Seller delivery participation'}
                                         setFieldValue={setFieldValue}
-                                        name={"sellerDeliveryPay"}
+                                        name={'sellerDeliveryPay'}
                                         errors={errors}
-                                        ethBaseValue={props.route.location.state !== undefined ? props.route.location.state.data.sellerDeliveryPay.toString() : "0"}
+                                        ethBaseValue={
+                                            props.route.location.state !== undefined
+                                                ? props.route.location.state.data.sellerDeliveryPay.toString()
+                                                : '0'
+                                        }
                                     />
-                                    : ""}
+                                ) : (
+                                    ''
+                                )}
                                 <DelayPicker
                                     setFieldValue={setFieldValue}
-                                    name={"dateDelay"}
+                                    name={'dateDelay'}
                                     errors={errors}
-                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data.delayEscrow.toString() : undefined}
+                                    initialValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data.delayEscrow.toString()
+                                            : undefined
+                                    }
                                 />
                                 <EscrowInput
-                                    simpleEscrowValue={values.deliverPrice !== undefined && values.sellerPrice !== undefined ? values.deliverPrice.add(values.sellerPrice).toString() : "0"}
+                                    simpleEscrowValue={
+                                        values.deliverPrice !== undefined && values.sellerPrice !== undefined
+                                            ? values.deliverPrice.add(values.sellerPrice).toString()
+                                            : '0'
+                                    }
                                     currencyPrice={0.5}
                                     setFieldValue={setFieldValue}
                                     errors={errors}
-                                    initialValue={props.route.location.state !== undefined ? props.route.location.state.data : undefined}
+                                    initialValue={
+                                        props.route.location.state !== undefined
+                                            ? props.route.location.state.data
+                                            : undefined
+                                    }
                                 />
                                 <Button type="submit" disabled={isSubmitting}>
-                                    {isUpdate ?
-                                        "Update" :
-                                        "Create"}
+                                    {isUpdate ? 'Update' : 'Create'}
                                 </Button>
                             </FormikForm>
                         </BootstrapForm>
@@ -127,7 +159,7 @@ const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => 
                 </Card>
             </Col>
         </Row>
-    )
+    );
 };
 
 const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
@@ -163,7 +195,7 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
 
     // Add a custom validation function (this can be async too!)
     validate: (values: FormValues) => {
-        const addressErrorMsg = "Define address";
+        const addressErrorMsg = 'Define address';
         const priceErrorMsg = 'Required';
         const sameAccountErrorMsg = "The same address can't be used for different roles";
         let errors: FormikErrors<FormErrors> = {};
@@ -217,41 +249,56 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
         return errors;
     },
 
-    handleSubmit: (values, {props, setSubmitting}) => {
+    handleSubmit: (values, { props, setSubmitting }) => {
         createEthersContract(props.userProvider).then((contract) => {
             if (contract !== undefined) {
                 let contractWithSigner = contract.connect(props.userProvider.getSigner());
-                if (props.route.location.pathname.includes("create")) {
-                    contractWithSigner.createOrder(
-                        [values.buyer, values.seller, values.deliver],
-                        values.sellerPrice,
-                        values.deliverPrice,
-                        values.sellerDeliveryPay,
-                        Math.round(values.dateDelay.getTime() / 1000),
-                        [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
-                        console.log(tx);
-                        setSubmitting(false);
-                        props.route.history.push("/orders");
-                    }, (e: any) => {
-                        console.log("Unable to send the transaction : ", e);
-                        setSubmitting(false);
-                    });
+                if (props.route.location.pathname.includes('create')) {
+                    contractWithSigner
+                        .createOrder(
+                            [values.buyer, values.seller, values.deliver],
+                            values.sellerPrice,
+                            values.deliverPrice,
+                            values.sellerDeliveryPay,
+                            Math.round(values.dateDelay.getTime() / 1000),
+                            [values.buyerEscrow, values.sellerEscrow, values.deliverEscrow],
+                        )
+                        .then(
+                            (tx: any) => {
+                                console.log(tx);
+                                setSubmitting(false);
+                                props.route.history.push('/orders');
+                            },
+                            (e: any) => {
+                                console.log('Unable to send the transaction : ', e);
+                                setSubmitting(false);
+                            },
+                        );
                 } else {
                     let id = props.route.match.params.id;
-                    contractWithSigner.updateInitializeOrder(
-                        id,
-                        Math.round(values.dateDelay.getTime() / 1000),
-                        [values.sellerPrice, values.deliverPrice, values.sellerDeliveryPay, values.buyerEscrow, values.sellerEscrow, values.deliverEscrow]).then((tx: any) => {
-                        console.log(tx);
-                        setSubmitting(false);
-                        props.route.history.push("/orders");
-                    }, (e: any) => {
-                        console.log("Unable to send the transaction : ", e);
-                        setSubmitting(false);
-                    });
+                    contractWithSigner
+                        .updateInitializeOrder(id, Math.round(values.dateDelay.getTime() / 1000), [
+                            values.sellerPrice,
+                            values.deliverPrice,
+                            values.sellerDeliveryPay,
+                            values.buyerEscrow,
+                            values.sellerEscrow,
+                            values.deliverEscrow,
+                        ])
+                        .then(
+                            (tx: any) => {
+                                console.log(tx);
+                                setSubmitting(false);
+                                props.route.history.push('/orders');
+                            },
+                            (e: any) => {
+                                console.log('Unable to send the transaction : ', e);
+                                setSubmitting(false);
+                            },
+                        );
                 }
             } else {
-                alert(JSON.stringify("Contract undefined", null, 2));
+                alert(JSON.stringify('Contract undefined', null, 2));
                 setSubmitting(false);
             }
         });

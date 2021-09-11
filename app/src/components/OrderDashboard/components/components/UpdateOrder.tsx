@@ -1,12 +1,12 @@
-import React, {useEffect, useState} from 'react';
-import {Button} from 'react-bootstrap'
+import React, { useEffect, useState } from 'react';
+import { Button } from 'react-bootstrap';
 
 type Props = {
     orderData: any;
     escrowData: any;
     orderId: number;
     route: any;
-}
+};
 
 const UpdateOrder = (props: Props) => {
     const [canUpdate, setCanUpdate] = useState(false);
@@ -18,19 +18,16 @@ const UpdateOrder = (props: Props) => {
     }, [props.orderData]);
 
     const handleClick = () => {
-        props.route.history.push("/update/" + props.orderId, {data: {...props.orderData, ...props.escrowData}});
+        props.route.history.push('/update/' + props.orderId, { data: { ...props.orderData, ...props.escrowData } });
     };
 
     return (
         <div>
-            {canUpdate &&
-            <Button
-                onClick={handleClick}
-                variant='primary'
-            >
-                UPDATE
-            </Button>
-            }
+            {canUpdate && (
+                <Button onClick={handleClick} variant="primary">
+                    UPDATE
+                </Button>
+            )}
         </div>
     );
 };

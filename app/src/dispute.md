@@ -7,6 +7,7 @@ before the dispute validated, locked founds will be lost.
 ### Buyer refunds
 
 The first stage is to determine the amount the buyer will receive. It can't be more than
+
 > Seller price + Delivery price
 
 When the amount is validated, the result and the buyer escrow can be withdrawn. Even if the amount determined is 0, the
@@ -20,9 +21,11 @@ delivery. Or also if the delivery steal the package. The function use a paramete
 determine which actor will pay. Here is the math
 
 For the seller :
+
 > Seller price + Seller escrow + Seller balance - (Buyer receive / 2)
 
 For the delivery :
+
 > Delivery price + Delivery escrow - Seller balance - (Buyer receive / 2)
 
 If the result of the math is negative, the actor need to pay the difference.

@@ -1,27 +1,26 @@
-import React, {useEffect, useState} from 'react';
-import {Form, Row, Col} from 'react-bootstrap';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import React, { useEffect, useState } from 'react';
+import { Form, Row, Col } from 'react-bootstrap';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import 'react-datepicker/dist/react-datepicker-cssmodules.css';
-import {ErrorMessage} from "formik";
-import {BigNumber} from "ethers";
+import { ErrorMessage } from 'formik';
+import { BigNumber } from 'ethers';
 
 type DelayPickerProps = {
-    setFieldValue: any
-    name: string
-    errors: any
-    initialValue: string
-}
+    setFieldValue: any;
+    name: string;
+    errors: any;
+    initialValue: string;
+};
 
 const DelayPicker = (props: DelayPickerProps) => {
-
     const [delay, setDelay] = useState(new Date());
 
     useEffect(() => {
         if (props.initialValue !== undefined) {
-            handleChange(new Date(BigNumber.from(props.initialValue).mul(1000).toNumber()))
+            handleChange(new Date(BigNumber.from(props.initialValue).mul(1000).toNumber()));
         } else {
-            handleChange(new Date())
+            handleChange(new Date());
         }
     }, [props.initialValue]);
 
@@ -33,9 +32,7 @@ const DelayPicker = (props: DelayPickerProps) => {
     return (
         <Form.Group as={Row}>
             <Col sm={4}>
-                <Form.Label>
-                    Max delay of the contract
-                </Form.Label>
+                <Form.Label>Max delay of the contract</Form.Label>
             </Col>
             <Col sm={6}>
                 <DatePicker
@@ -49,10 +46,9 @@ const DelayPicker = (props: DelayPickerProps) => {
                     minDate={new Date()}
                 />
             </Col>
-            <ErrorMessage name={props.name}
-                          render={(msg) => <Form.Label style={{color: "red"}}>{msg}</Form.Label>}/>
+            <ErrorMessage name={props.name} render={(msg) => <Form.Label style={{ color: 'red' }}>{msg}</Form.Label>} />
         </Form.Group>
-    )
+    );
 };
 
 export default DelayPicker;

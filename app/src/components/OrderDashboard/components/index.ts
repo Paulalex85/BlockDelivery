@@ -1,7 +1,4 @@
-import NewOrder from './NewOrder'
-import OrderElement from "./OrderElement";
+import NewOrder from './NewOrder';
+import OrderElement from './OrderElement';
 
-export {
-    NewOrder,
-    OrderElement
-}
+export { NewOrder, OrderElement };

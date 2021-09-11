@@ -1,29 +1,29 @@
-import React, {useEffect, useState} from 'react';
-import {Col, Form, Row} from 'react-bootstrap';
-import AddressInput from "./AddressInput";
-import {useSelector} from "react-redux";
-import {getUserAddress} from "../../../redux/selectors"
-import {ErrorMessage} from "formik";
+import React, { useEffect, useState } from 'react';
+import { Col, Form, Row } from 'react-bootstrap';
+import AddressInput from './AddressInput';
+import { useSelector } from 'react-redux';
+import { getUserAddress } from '../../../redux/selectors';
+import { ErrorMessage } from 'formik';
 
 type AccountInfoProps = {
-    setFieldValue: any
-    name: string
-    errors: any
-    initialValue: string
-    disabled: boolean
-}
+    setFieldValue: any;
+    name: string;
+    errors: any;
+    initialValue: string;
+    disabled: boolean;
+};
 
 const AccountInfo = (props: AccountInfoProps) => {
     const [disabled, setDisabled] = useState(false);
-    const [account, setAccount] = useState("");
+    const [account, setAccount] = useState('');
     const userAddress = useSelector(getUserAddress);
 
     useEffect(() => {
-        handleChange(props.initialValue)
+        handleChange(props.initialValue);
     }, [props.initialValue]);
 
     useEffect(() => {
-        setDisabled(props.disabled)
+        setDisabled(props.disabled);
     }, [props.disabled]);
 
     const handleCheckBox = async (event: any) => {
@@ -54,22 +54,22 @@ const AccountInfo = (props: AccountInfoProps) => {
                         disabled={disabled}
                     />
                 </Col>
-                {!props.disabled ?
+                {!props.disabled ? (
                     <Col sm={4}>
-                        <Form.Check
-                            onChange={handleCheckBox}
-                            label={labelCheckBox}
-                        />
+                        <Form.Check onChange={handleCheckBox} label={labelCheckBox} />
                     </Col>
-                    : <React.Fragment/>
-                }
+                ) : (
+                    <React.Fragment />
+                )}
             </Row>
             <Row>
-                <ErrorMessage name={props.name}
-                              render={(msg) => <Form.Label style={{color: "red"}}>{msg}</Form.Label>}/>
+                <ErrorMessage
+                    name={props.name}
+                    render={(msg) => <Form.Label style={{ color: 'red' }}>{msg}</Form.Label>}
+                />
             </Row>
         </Form.Group>
-    )
+    );
 };
 
 export default AccountInfo;

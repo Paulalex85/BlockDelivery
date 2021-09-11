@@ -1,4 +1,4 @@
-import {useEffect, useRef} from 'react';
+import { useEffect, useRef } from 'react';
 
 export const usePoller = (fn: any, delay: number) => {
     const savedCallback = useRef<any>(null);
@@ -19,6 +19,6 @@ export const usePoller = (fn: any, delay: number) => {
     }, [delay]);
     //run at start too
     useEffect(() => {
-        fn()
+        fn();
     }, []);
 };

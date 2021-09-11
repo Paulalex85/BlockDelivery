@@ -1,2 +1,2 @@
-import CreateUpdateOrder from './CreateUpdateOrder'
-export default CreateUpdateOrder
+import CreateUpdateOrder from './CreateUpdateOrder';
+export default CreateUpdateOrder;

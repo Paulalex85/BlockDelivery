@@ -1,9 +1,8 @@
 import React from 'react';
-import {LinkContainer} from "react-router-bootstrap";
-import {Button, Col, Container, Row} from 'react-bootstrap'
+import { LinkContainer } from 'react-router-bootstrap';
+import { Button, Col, Container, Row } from 'react-bootstrap';
 
 const NewOrder = () => {
-
     return (
         <Container className="mt-4 mb-5">
             <Row className="justify-content-md-center">
@@ -14,10 +13,7 @@ const NewOrder = () => {
             <Row className="justify-content-md-center mt-3">
                 <Col className="col-md-auto">
                     <LinkContainer to="/create">
-                        <Button
-                            variant='primary'>
-                            Create order
-                        </Button>
+                        <Button variant="primary">Create order</Button>
                     </LinkContainer>
                 </Col>
             </Row>
