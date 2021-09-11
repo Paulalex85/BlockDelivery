@@ -23,7 +23,7 @@ module.exports = {
             settings: {
                 optimizer: {
                     enabled: true,
-                    runs: 400   // Optimize for how many times you intend to run the code
+                    runs: 10   // Optimize for how many times you intend to run the code
                 }
             }
         }
