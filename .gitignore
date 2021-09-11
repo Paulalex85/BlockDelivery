@@ -4,3 +4,5 @@ coverage.json
 app/src/contracts
 .DS_Store
 /coverage/
+.idea
+app/.idea
