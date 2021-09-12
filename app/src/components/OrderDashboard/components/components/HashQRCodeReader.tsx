@@ -11,7 +11,7 @@ type Props = {
 const HashQRCodeReader = (props: Props) => {
     const [scan, setScan] = useState(false);
 
-    let scannerButton = (
+    const scannerButton = (
         <div
             onClick={() => {
                 setScan(!scan);

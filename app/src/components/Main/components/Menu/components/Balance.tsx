@@ -16,7 +16,7 @@ type Props = {
 
 const Balance = ({ pollTime, dollarMultiplier, provider }: Props) => {
     const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0));
-    let address = useSelector(getUserAddress);
+    const address = useSelector(getUserAddress);
 
     usePoller(
         async () => {

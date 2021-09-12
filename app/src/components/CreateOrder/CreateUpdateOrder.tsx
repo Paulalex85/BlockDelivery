@@ -42,7 +42,6 @@ const CreateForm = (props: CreateUpdateOrderProps & FormikProps<FormValues>) => 
     const [deliverPriceMode, setDeliverPriceMode] = useState(Mode.USD);
     const isUpdate = props.route.location.pathname.includes('update');
 
-    // @ts-ignore
     return (
         <Row className="justify-content-md-center mt-5">
             <Col className="col-sm-5">
@@ -198,7 +197,7 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
         const addressErrorMsg = 'Define address';
         const priceErrorMsg = 'Required';
         const sameAccountErrorMsg = "The same address can't be used for different roles";
-        let errors: FormikErrors<FormErrors> = {};
+        const errors: FormikErrors<FormErrors> = {};
         if (values.sellerPrice === undefined) {
             errors.sellerPrice = priceErrorMsg;
         }
@@ -252,7 +251,7 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
     handleSubmit: (values, { props, setSubmitting }) => {
         createEthersContract(props.userProvider).then((contract) => {
             if (contract !== undefined) {
-                let contractWithSigner = contract.connect(props.userProvider.getSigner());
+                const contractWithSigner = contract.connect(props.userProvider.getSigner());
                 if (props.route.location.pathname.includes('create')) {
                     contractWithSigner
                         .createOrder(
@@ -275,7 +274,7 @@ const CreateUpdateOrder = withFormik<CreateUpdateOrderProps, FormValues>({
                             },
                         );
                 } else {
-                    let id = props.route.match.params.id;
+                    const id = props.route.match.params.id;
                     contractWithSigner
                         .updateInitializeOrder(id, Math.round(values.dateDelay.getTime() / 1000), [
                             values.sellerPrice,

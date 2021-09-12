@@ -41,7 +41,7 @@ const AccountInfo = (props: AccountInfoProps) => {
         props.setFieldValue(props.name, value);
     };
 
-    let labelCheckBox = "I'm the " + props.name;
+    const labelCheckBox = "I'm the " + props.name;
 
     return (
         <Form.Group>

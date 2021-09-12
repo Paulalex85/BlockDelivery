@@ -13,8 +13,8 @@ type AddressProps = {
 
 const Address = ({ ensProvider, size, minimized }: AddressProps) => {
     const [ens, setEns] = useState('');
-    let blockExplorer = 'https://etherscan.io/address/';
-    let value = useSelector(getUserAddress);
+    const blockExplorer = 'https://etherscan.io/address/';
+    const value = useSelector(getUserAddress);
 
     useEffect(() => {
         console.log('Address update in Address component : ' + value);

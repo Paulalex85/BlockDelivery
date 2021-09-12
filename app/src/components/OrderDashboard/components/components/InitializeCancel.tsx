@@ -12,7 +12,7 @@ type Props = {
 
 const InitializeCancel = (props: Props) => {
     const [canCancel, setCanCancel] = useState(false);
-    let address = useSelector(getUserAddress);
+    const address = useSelector(getUserAddress);
 
     useEffect(() => {
         if (
@@ -27,7 +27,7 @@ const InitializeCancel = (props: Props) => {
 
     const handleClick = () => {
         createEthersContract(props.userProvider).then((contract) => {
-            let contractWithSigner = contract.connect(props.userProvider.getSigner());
+            const contractWithSigner = contract.connect(props.userProvider.getSigner());
             contractWithSigner.initializationCancel(props.orderId).then(
                 (tx: any) => {
                     console.log(tx);

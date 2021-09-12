@@ -84,7 +84,7 @@ const EscrowInput = (props: EscrowInputProps) => {
 
     const handleSelectInput = (event: any) => {
         setEscrowType(event.target.value);
-        let parsedType: EscrowType = parseInt(event.target.value);
+        const parsedType: EscrowType = parseInt(event.target.value);
         switch (parsedType) {
             case EscrowType.Simple:
                 setSimpleEscrow();

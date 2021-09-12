@@ -9,7 +9,7 @@ type CopyTextProps = {
 
 const CopyText = ({ value }: CopyTextProps) => {
     const [copied, setCopied] = useState(false);
-    let size = 25;
+    const size = 25;
     let tooltipText;
 
     const handleCopy = () => {

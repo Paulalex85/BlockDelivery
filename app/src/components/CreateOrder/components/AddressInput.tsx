@@ -40,7 +40,7 @@ const AddressInput = (props: AddressInputProps) => {
         if (value.indexOf('.eth') > 0 || value.indexOf('.xyz') > 0) {
             try {
                 console.log('resolving');
-                let possibleAddress = await props.ensProvider.resolveName(value);
+                const possibleAddress = await props.ensProvider.resolveName(value);
                 console.log('GOT:L', possibleAddress);
                 if (possibleAddress) {
                     setEns(value);
@@ -50,7 +50,7 @@ const AddressInput = (props: AddressInputProps) => {
         }
     }
 
-    let scannerButton = (
+    const scannerButton = (
         <div
             onClick={() => {
                 setScan(!scan);
@@ -65,7 +65,7 @@ const AddressInput = (props: AddressInputProps) => {
             let address = newValue;
             if (address.indexOf('.eth') > 0 || address.indexOf('.xyz') > 0) {
                 try {
-                    let possibleAddress = await props.ensProvider.resolveName(address);
+                    const possibleAddress = await props.ensProvider.resolveName(address);
                     if (possibleAddress) {
                         address = possibleAddress;
                     }
@@ -111,7 +111,7 @@ const AddressInput = (props: AddressInputProps) => {
         );
     }
 
-    let label = props.actor.charAt(0).toUpperCase() + props.actor.slice(1);
+    const label = props.actor.charAt(0).toUpperCase() + props.actor.slice(1);
 
     return (
         <div>
