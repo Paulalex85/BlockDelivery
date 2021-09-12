@@ -3,7 +3,8 @@ language: node_js
 node_js:
   - "lts/dubnium"
 install:
-  - npm ci
+  - cd contracts
+  - yarn install
 script:
-  - npm run test
-  - npm run coverage
+  - yarn run test
+  - yarn run coverage

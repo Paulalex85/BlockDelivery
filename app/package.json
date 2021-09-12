@@ -32,7 +32,7 @@
     },
     "scripts": {
         "start": "react-scripts start",
-        "build": "cd ../contracts && npm run-script compile && cd ../app && react-scripts build",
+        "build": "cd ../contracts && yarn run compile && cd ../app && react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },
