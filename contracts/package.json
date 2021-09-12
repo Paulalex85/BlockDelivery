@@ -9,7 +9,7 @@
   "scripts": {
     "coverage": "truffle run coverage && cat coverage/lcov.info | coveralls",
     "test": "truffle test",
-    "compile": "npm install && truffle compile"
+    "compile": "yarn install && truffle compile"
   },
   "keywords": [],
   "author": "",

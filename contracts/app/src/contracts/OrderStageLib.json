@@ -1,0 +1,249 @@
+{
+  "contractName": "OrderStageLib",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.6.7+commit.b8d736ae\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"project:/contracts/Library/OrderStageLib.sol\":\"OrderStageLib\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":10},\"remappings\":[]},\"sources\":{\"project:/contracts/Library/OrderStageLib.sol\":{\"keccak256\":\"0x1c57843b408bf70425b05a8b4000977948dc9b8909b61828230084913193a511\",\"urls\":[\"bzz-raw://07ee24c01cd5d7fce7a57812c1ed176cbb5c0b1365de304c9f3214c88cd03af0\",\"dweb:/ipfs/QmSuXLMSVMm6Ds68QhTZbZnvPEuxt91pA9EE4qFvASq8dA\"]}},\"version\":1}",
+  "bytecode": "0x60566023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212202d519b211c02076b48eae687b630261fa408ce337560262edeb97250bd249a3e64736f6c63430006070033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212202d519b211c02076b48eae687b630261fa408ce337560262edeb97250bd249a3e64736f6c63430006070033",
+  "immutableReferences": {},
+  "sourceMap": "24:268:8:-:0;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
+  "deployedSourceMap": "24:268:8:-:0;;;;;;12:1:-1;9;2:12",
+  "source": "pragma solidity 0.6.7;\n\nlibrary OrderStageLib {\n    enum OrderStage {\n        Initialization, //0\n        Started, //1\n        Taken, //2\n        Delivered, //3\n        Ended, //4\n        Cancel_Order, //5\n        Dispute_Refund_Determination, //6\n        Dispute_Cost_Repartition //7\n    }\n}",
+  "sourcePath": "/home/jeanjack/BlockDelivery/contracts/contracts/Library/OrderStageLib.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/Library/OrderStageLib.sol",
+    "exportedSymbols": {
+      "OrderStageLib": [
+        3169
+      ]
+    },
+    "id": 3170,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 3159,
+        "literals": [
+          "solidity",
+          "0.6",
+          ".7"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:22:8"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "library",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 3169,
+        "linearizedBaseContracts": [
+          3169
+        ],
+        "name": "OrderStageLib",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "OrderStageLib.OrderStage",
+            "id": 3168,
+            "members": [
+              {
+                "id": 3160,
+                "name": "Initialization",
+                "nodeType": "EnumValue",
+                "src": "78:14:8"
+              },
+              {
+                "id": 3161,
+                "name": "Started",
+                "nodeType": "EnumValue",
+                "src": "106:7:8"
+              },
+              {
+                "id": 3162,
+                "name": "Taken",
+                "nodeType": "EnumValue",
+                "src": "127:5:8"
+              },
+              {
+                "id": 3163,
+                "name": "Delivered",
+                "nodeType": "EnumValue",
+                "src": "146:9:8"
+              },
+              {
+                "id": 3164,
+                "name": "Ended",
+                "nodeType": "EnumValue",
+                "src": "169:5:8"
+              },
+              {
+                "id": 3165,
+                "name": "Cancel_Order",
+                "nodeType": "EnumValue",
+                "src": "188:12:8"
+              },
+              {
+                "id": 3166,
+                "name": "Dispute_Refund_Determination",
+                "nodeType": "EnumValue",
+                "src": "214:28:8"
+              },
+              {
+                "id": 3167,
+                "name": "Dispute_Cost_Repartition",
+                "nodeType": "EnumValue",
+                "src": "256:24:8"
+              }
+            ],
+            "name": "OrderStage",
+            "nodeType": "EnumDefinition",
+            "src": "52:238:8"
+          }
+        ],
+        "scope": 3170,
+        "src": "24:268:8"
+      }
+    ],
+    "src": "0:292:8"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "project:/contracts/Library/OrderStageLib.sol",
+      "exportedSymbols": {
+        "OrderStageLib": [
+          3169
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.6",
+            ".7"
+          ]
+        },
+        "id": 3159,
+        "name": "PragmaDirective",
+        "src": "0:22:8"
+      },
+      {
+        "attributes": {
+          "abstract": false,
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "library",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            3169
+          ],
+          "name": "OrderStageLib",
+          "scope": 3170
+        },
+        "children": [
+          {
+            "attributes": {
+              "canonicalName": "OrderStageLib.OrderStage",
+              "name": "OrderStage"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "Initialization"
+                },
+                "id": 3160,
+                "name": "EnumValue",
+                "src": "78:14:8"
+              },
+              {
+                "attributes": {
+                  "name": "Started"
+                },
+                "id": 3161,
+                "name": "EnumValue",
+                "src": "106:7:8"
+              },
+              {
+                "attributes": {
+                  "name": "Taken"
+                },
+                "id": 3162,
+                "name": "EnumValue",
+                "src": "127:5:8"
+              },
+              {
+                "attributes": {
+                  "name": "Delivered"
+                },
+                "id": 3163,
+                "name": "EnumValue",
+                "src": "146:9:8"
+              },
+              {
+                "attributes": {
+                  "name": "Ended"
+                },
+                "id": 3164,
+                "name": "EnumValue",
+                "src": "169:5:8"
+              },
+              {
+                "attributes": {
+                  "name": "Cancel_Order"
+                },
+                "id": 3165,
+                "name": "EnumValue",
+                "src": "188:12:8"
+              },
+              {
+                "attributes": {
+                  "name": "Dispute_Refund_Determination"
+                },
+                "id": 3166,
+                "name": "EnumValue",
+                "src": "214:28:8"
+              },
+              {
+                "attributes": {
+                  "name": "Dispute_Cost_Repartition"
+                },
+                "id": 3167,
+                "name": "EnumValue",
+                "src": "256:24:8"
+              }
+            ],
+            "id": 3168,
+            "name": "EnumDefinition",
+            "src": "52:238:8"
+          }
+        ],
+        "id": 3169,
+        "name": "ContractDefinition",
+        "src": "24:268:8"
+      }
+    ],
+    "id": 3170,
+    "name": "SourceUnit",
+    "src": "0:292:8"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.6.7+commit.b8d736ae.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.3",
+  "updatedAt": "2021-09-12T23:18:31.384Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
