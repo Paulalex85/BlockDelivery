@@ -242,11 +242,12 @@
       "events": {},
       "links": {},
       "address": "0x146b9b236F2DCAB57Da96C23A0D98886E6C98AD5",
-      "transactionHash": "0xf57bc2e4e3439c4e21fdb1c85e051400f16d92d0e606bc38f8a1067c1d2b2dc5"
+      "transactionHash": "0x55485026a247bc91cbe5c73668e4e9d493bc41cfa8b14dd9d5b0dc36fabeddc8"
     }
   },
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2021-09-12T23:46:21.028Z",
+  "schemaVersion": "3.3.4",
+  "updatedAt": "2021-09-13T15:22:11.019Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },

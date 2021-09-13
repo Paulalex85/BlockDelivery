@@ -51,7 +51,14 @@ class LandingPage extends Component {
                                     <h3>Transparency</h3>
                                     <p className="lead mb-0">
                                         Check the code on{' '}
-                                        <a href={'https://github.com/Paulalex85/BlockDelivery'}>Github</a> !
+                                        <a
+                                            href="https://github.com/Paulalex85/BlockDelivery"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Github
+                                        </a>{' '}
+                                        !
                                     </p>
                                 </div>
                             </Col>
@@ -98,7 +105,7 @@ class LandingPage extends Component {
                                     </li>
                                     <li className="list-inline-item">&sdot;</li>
                                     <li className="list-inline-item">
-                                        <a href="/" className="text-dark">
+                                        <a href="mailto:contact@blockdelivery.io" className="text-dark">
                                             Contact
                                         </a>
                                     </li>
@@ -120,7 +127,11 @@ class LandingPage extends Component {
                             <Col lg={6} className="h-100 text-center text-lg-right my-auto">
                                 <ul className="list-inline mb-0">
                                     <li className="list-inline-item mr-3">
-                                        <a href="https://github.com/Paulalex85/Block-Delivery">
+                                        <a
+                                            href="https://github.com/Paulalex85/BlockDelivery"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             <FontAwesomeIcon
                                                 icon={faGithub}
                                                 className="fab fa-2x fa-fw m-auto text-dark"

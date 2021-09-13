@@ -31941,11 +31941,12 @@
       },
       "links": {},
       "address": "0xc4bF54BBE71307b3e78c18A0b1e1e75bcFd91e5e",
-      "transactionHash": "0x8761d841bce4ee520b17fd3ece54fa240d76eb5571a182a74a78f8f05cc1fc1c"
+      "transactionHash": "0xf10bcd14507f97ee22f6b6709701e17eca0de1963f72d8f1eda2c1edfd79e105"
     }
   },
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2021-09-12T23:46:21.015Z",
+  "schemaVersion": "3.3.4",
+  "updatedAt": "2021-09-13T15:22:11.030Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },

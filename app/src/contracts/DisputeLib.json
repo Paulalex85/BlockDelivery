@@ -33941,11 +33941,12 @@
       },
       "links": {},
       "address": "0x4c64DB13bF22D2AF48750DD6be1700ea11846bD5",
-      "transactionHash": "0x2de26135387fd9618b7d2d50d30d50f034d4b77f22d63b861026791cad7b7e75"
+      "transactionHash": "0x550532fcd682af5911cf98ec43d7e69a342d21559634ca5f293d3ef8fcb4872f"
     }
   },
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2021-09-12T23:46:20.993Z",
+  "schemaVersion": "3.3.4",
+  "updatedAt": "2021-09-13T15:22:11.050Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },

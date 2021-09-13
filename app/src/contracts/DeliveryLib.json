@@ -306,11 +306,12 @@
       "events": {},
       "links": {},
       "address": "0x1e1dc84c74d5DB26B09e161d4DaC444532fD6764",
-      "transactionHash": "0x82cb0ce96c478384797cbbeed1fcbf6a26ec2250e904913ee43a3c12c1061e2c"
+      "transactionHash": "0xe1d9290b1d3340fc97ea2932104304ea9cce20ad0ddd80651909f8583b51bd56"
     }
   },
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2021-09-12T23:46:20.985Z",
+  "schemaVersion": "3.3.4",
+  "updatedAt": "2021-09-13T15:22:11.041Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },

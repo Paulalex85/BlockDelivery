@@ -358,11 +358,12 @@
       "events": {},
       "links": {},
       "address": "0x3e8eA388d866F5643c3E930818A1C7FCDE668EB9",
-      "transactionHash": "0x21d4025f1d37066fac921680a6081d644f7f1f5ee488ac8c3ad77297fb05e38e"
+      "transactionHash": "0x02a8f06d14469d6c85d935896078d6c80c60d316c74e15ca4784fd38dd1637c5"
     }
   },
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2021-09-12T23:46:21.007Z",
+  "schemaVersion": "3.3.4",
+  "updatedAt": "2021-09-13T15:22:11.020Z",
+  "networkType": "ethereum",
   "devdoc": {
     "methods": {}
   },
