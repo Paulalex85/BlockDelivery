@@ -6,6 +6,7 @@ import { Button, Navbar } from 'react-bootstrap';
 import Balance from './Balance';
 import Address from './Address';
 import { INFURA_ID } from '../../../../../constants';
+import Network from './Network';
 
 const web3Modal = new Web3Modal({
     //network: "mainnet", // optional
@@ -67,6 +68,7 @@ const Account = ({ userProvider, mainnetProvider, setInjectedProvider, minimized
             <Navbar.Text>
                 <Address size="short" ensProvider={mainnetProvider} />
                 <Balance provider={userProvider} dollarMultiplier={1} />
+                <Network />
             </Navbar.Text>
         );
     }

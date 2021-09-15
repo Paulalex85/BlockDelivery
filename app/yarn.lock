@@ -1356,7 +1356,7 @@
   dependencies:
     "@ethersproject/bignumber" "^5.4.0"
 
-"@ethersproject/contracts@5.4.1":
+"@ethersproject/contracts@5.4.1", "@ethersproject/contracts@^5.4.0":
   version "5.4.1"
   resolved "https://registry.yarnpkg.com/@ethersproject/contracts/-/contracts-5.4.1.tgz#3eb4f35b7fe60a962a75804ada2746494df3e470"
   integrity sha512-m+z2ZgPy4pyR15Je//dUaymRUZq5MtDajF6GwFbGAVmKz/RF+DNIPwF0k5qEcL3wPGVqUjFg2/krlCRVTU4T5w==
@@ -1436,7 +1436,7 @@
   resolved "https://registry.yarnpkg.com/@ethersproject/logger/-/logger-5.4.1.tgz#503bd33683538b923c578c07d1c2c0dd18672054"
   integrity sha512-DZ+bRinnYLPw1yAC64oRl0QyVZj43QeHIhVKfD/+YwSz4wsv1pfwb5SOFjz+r710YEWzU6LrhuSjpSO+6PeE4A==
 
-"@ethersproject/networks@5.4.2", "@ethersproject/networks@^5.4.0":
+"@ethersproject/networks@5.4.2", "@ethersproject/networks@^5.4.0", "@ethersproject/networks@^5.4.1":
   version "5.4.2"
   resolved "https://registry.yarnpkg.com/@ethersproject/networks/-/networks-5.4.2.tgz#2247d977626e97e2c3b8ee73cd2457babde0ce35"
   integrity sha512-eekOhvJyBnuibfJnhtK46b8HimBc5+4gqpvd1/H9LEl7Q7/qhsIhM81dI9Fcnjpk3jB1aTy6bj0hz3cifhNeYw==
@@ -1458,7 +1458,7 @@
   dependencies:
     "@ethersproject/logger" "^5.4.0"
 
-"@ethersproject/providers@5.4.5":
+"@ethersproject/providers@5.4.5", "@ethersproject/providers@^5.4.1":
   version "5.4.5"
   resolved "https://registry.yarnpkg.com/@ethersproject/providers/-/providers-5.4.5.tgz#eb2ea2a743a8115f79604a8157233a3a2c832928"
   integrity sha512-1GkrvkiAw3Fj28cwi1Sqm8ED1RtERtpdXmRfwIBGmqBSN5MoeRUHuwHPppMtbPayPgpFcvD7/Gdc9doO5fGYgw==
@@ -1520,7 +1520,7 @@
     elliptic "6.5.4"
     hash.js "1.1.7"
 
-"@ethersproject/solidity@5.4.0":
+"@ethersproject/solidity@5.4.0", "@ethersproject/solidity@^5.4.0":
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/solidity/-/solidity-5.4.0.tgz#1305e058ea02dc4891df18b33232b11a14ece9ec"
   integrity sha512-XFQTZ7wFSHOhHcV1DpcWj7VXECEiSrBuv7JErJvB9Uo+KfCdc3QtUZV+Vjh/AAaYgezUEKbCtE6Khjm44seevQ==
@@ -1555,7 +1555,7 @@
     "@ethersproject/rlp" "^5.4.0"
     "@ethersproject/signing-key" "^5.4.0"
 
-"@ethersproject/units@5.4.0":
+"@ethersproject/units@5.4.0", "@ethersproject/units@^5.4.0":
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/units/-/units-5.4.0.tgz#d57477a4498b14b88b10396062c8cbbaf20c79fe"
   integrity sha512-Z88krX40KCp+JqPCP5oPv5p750g+uU6gopDYRTBGcDvOASh6qhiEYCRatuM/suC4S2XW9Zz90QI35MfSrTIaFg==
@@ -2643,6 +2643,11 @@
     "@typescript-eslint/types" "4.31.0"
     eslint-visitor-keys "^2.0.0"
 
+"@uniswap/token-lists@^1.0.0-beta.24":
+  version "1.0.0-beta.25"
+  resolved "https://registry.yarnpkg.com/@uniswap/token-lists/-/token-lists-1.0.0-beta.25.tgz#e4279cf2581b297723d82eafd1bed35273070f07"
+  integrity sha512-XemgUs8YiYP7Xci+Wb8vPSnyxV9aTO6J5XLPzhZmgDFO1RY5JMnB0As8PJFia3Pg9JSRZ7+AahzxowPYhnUVWw==
+
 "@walletconnect/browser-utils@^1.6.5":
   version "1.6.5"
   resolved "https://registry.yarnpkg.com/@walletconnect/browser-utils/-/browser-utils-1.6.5.tgz#01180682e90b95384e820191a1c6ad4a78729439"
@@ -3404,6 +3409,13 @@ axe-core@^4.0.2:
   resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.3.3.tgz#b55cd8e8ddf659fe89b064680e1c6a4dceab0325"
   integrity sha512-/lqqLAmuIPi79WYfRpy2i8z+x+vxU3zX2uAm0gs1q52qTuKwolOj1P8XbufpXcsydrpKx2yGn2wzAnxCMV86QA==
 
+axios@^0.21.1:
+  version "0.21.4"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.4.tgz#c67b90dc0568e5c1cf2b0b858c43ba28e2eda575"
+  integrity sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==
+  dependencies:
+    follow-redirects "^1.14.0"
+
 axobject-query@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/axobject-query/-/axobject-query-2.2.0.tgz#943d47e10c0b704aa42275e20edf3722648989be"
@@ -3982,7 +3994,7 @@ builtin-status-codes@^3.0.0:
   resolved "https://registry.yarnpkg.com/builtin-status-codes/-/builtin-status-codes-3.0.0.tgz#85982878e21b98e1c66425e03d0174788f569ee8"
   integrity sha1-hZgoeOIbmOHGZCXgPQF0eI9Wnug=
 
-burner-provider@^1.0.15:
+burner-provider@^1.0.15, burner-provider@^1.0.38:
   version "1.0.38"
   resolved "https://registry.yarnpkg.com/burner-provider/-/burner-provider-1.0.38.tgz#a610ebfdf13220558bd2b8f3db73bad0eea8954f"
   integrity sha512-ZcZ8wNm380+l4MlVD5qhy5Gsa6Gr0Cftniksyqw6tVi+HmFuy8mvu1+eJR4Vt7NdGNWh9v74zNJVx3HQfQveUw==
@@ -5839,6 +5851,27 @@ eth-block-tracker@^4.4.2:
     pify "^3.0.0"
     safe-event-emitter "^1.0.1"
 
+eth-hooks@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/eth-hooks/-/eth-hooks-2.3.1.tgz#fa0a279cf3dfd95723fa5ec8f4e743582ac0b8df"
+  integrity sha512-WS8ZxeMvkwRlyxTRELX+YoiT6/rFZhZos5gFA2a8gH8D7Y5wqAMen3r8cusyzNY2gaWxoZV5ThifDn8EjJM8PA==
+  dependencies:
+    "@ethersproject/address" "^5.4.0"
+    "@ethersproject/bignumber" "^5.4.0"
+    "@ethersproject/bytes" "^5.4.0"
+    "@ethersproject/contracts" "^5.4.0"
+    "@ethersproject/networks" "^5.4.1"
+    "@ethersproject/providers" "^5.4.1"
+    "@ethersproject/signing-key" "^5.4.0"
+    "@ethersproject/solidity" "^5.4.0"
+    "@ethersproject/units" "^5.4.0"
+    "@uniswap/token-lists" "^1.0.0-beta.24"
+    axios "^0.21.1"
+    burner-provider "^1.0.38"
+    ethers "^5.4.1"
+    observable-hooks "^4.0.5"
+    use-debounce "^7.0.0"
+
 eth-json-rpc-errors@^1.0.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/eth-json-rpc-errors/-/eth-json-rpc-errors-1.1.1.tgz#148377ef55155585981c21ff574a8937f9d6991f"
@@ -6125,7 +6158,7 @@ ethers@^4.0.46:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^5.4.3:
+ethers@^5.4.1, ethers@^5.4.3:
   version "5.4.6"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.4.6.tgz#fe0a023956b5502c947f58e82fbcf9a73e5e75b6"
   integrity sha512-F7LXARyB/Px3AQC6/QKedWZ8eqCkgOLORqL4B/F0Mag/K+qJSFGqsR36EaOZ6fKg3ZonI+pdbhb4A8Knt/43jQ==
@@ -6545,6 +6578,11 @@ follow-redirects@^1.0.0:
   version "1.14.3"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.3.tgz#6ada78118d8d24caee595595accdc0ac6abd022e"
   integrity sha512-3MkHxknWMUtb23apkgz/83fDoe+y+qr0TdgacGIA7bew+QLBo3vdgEN2xEsuXNivpFy4CyDhBBZnNZOtalmenw==
+
+follow-redirects@^1.14.0:
+  version "1.14.4"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.4.tgz#838fdf48a8bbdd79e52ee51fb1c94e3ed98b9379"
+  integrity sha512-zwGkiSXC1MUJG/qmeIFH2HBJx9u0V46QGUe3YR1fXG8bXQxq7fLj0RjLZQ5nubr9qNJUZrH+xUcwXEoXNpfS+g==
 
 for-in@^1.0.2:
   version "1.0.2"
@@ -9506,6 +9544,11 @@ object.values@^1.1.0, object.values@^1.1.4:
     define-properties "^1.1.3"
     es-abstract "^1.18.2"
 
+observable-hooks@^4.0.5:
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/observable-hooks/-/observable-hooks-4.0.5.tgz#00185d17979251ea518e1c7e8fe4c52e8b074b35"
+  integrity sha512-st96cqHEEbRl2wQmAOesptA788HJR46MRhKIpBQDyl6s7sfh2SRgulzzk43DXJUwyYZ6KdaDaUDY4LKJ6Cjw8Q==
+
 obuf@^1.0.0, obuf@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/obuf/-/obuf-1.1.2.tgz#09bea3343d41859ebd446292d11c9d4db619084e"
@@ -10972,7 +11015,7 @@ react-bootstrap-range-slider@^1.0.0:
     classnames "^2.2.6"
     prop-types "^15.7.2"
 
-react-bootstrap@^1.3.0:
+react-bootstrap@^1.6.3:
   version "1.6.3"
   resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-1.6.3.tgz#6c2b27ed320b95a690ac416ddbb11983de1f954d"
   integrity sha512-zsd4l0g68pusOmJ/R5LhTfofT+9RniCwcZsMMNFGJo97d1vT1H2nGlbhLWp/j/pfeXXj9zzR8ugUtKkadcoWnA==
@@ -13008,10 +13051,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@^3.9.7:
-  version "3.9.10"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.10.tgz#70f3910ac7a51ed6bef79da7800690b19bf778b8"
-  integrity sha512-w6fIxVE/H1PkLKcCPsFqKE7Kv7QUwhU8qQY2MueZXWx5cPZdwFupLgKK3vntcK98BtNHZtAF4LA/yl2a7k8R6Q==
+typescript@^4.4.3:
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.3.tgz#bdc5407caa2b109efd4f82fe130656f977a29324"
+  integrity sha512-4xfscpisVgqqDfPaJo5vkd+Qd/ItkoagnHpufr+i2QCHBsNYp+G7UAoyFl8aPtx879u38wPV65rZ8qbGZijalA==
 
 unbox-primitive@^1.0.1:
   version "1.0.1"
@@ -13166,6 +13209,11 @@ url@^0.11.0:
   dependencies:
     punycode "1.3.2"
     querystring "0.2.0"
+
+use-debounce@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/use-debounce/-/use-debounce-7.0.0.tgz#00a67d23d4fe09905e11145a99278da06c01c880"
+  integrity sha512-4fvxEEs7ztdNMh+c497HAgysdq2+Ascem6EaDANGlCIap1JzqfL03Xw8xkYc2lShfXm4uO6PA6V5zcXN7gJdFA==
 
 use@^3.1.0:
   version "3.1.1"
