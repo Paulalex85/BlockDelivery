@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
 import './css/landing-page.css';
 import { Col, Container, Row } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileInvoiceDollar, faLock } from '@fortawesome/free-solid-svg-icons';
-import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import { FaLock, FaFileInvoiceDollar, FaGithub } from 'react-icons/fa';
 
 class LandingPage extends Component {
     render(): JSX.Element {
@@ -26,7 +24,7 @@ class LandingPage extends Component {
                             <Col lg={4}>
                                 <div className="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
                                     <div className="features-icons-icon d-flex">
-                                        <FontAwesomeIcon icon={faLock} className="m-auto text-primary" />
+                                        <FaLock className="m-auto" />
                                     </div>
                                     <h3>Security</h3>
                                     <p className="lead mb-0">
@@ -37,7 +35,7 @@ class LandingPage extends Component {
                             <Col lg={4}>
                                 <div className="features-icons-item mx-auto mb-5 mb-lg-0 mb-lg-3">
                                     <div className="features-icons-icon d-flex">
-                                        <FontAwesomeIcon icon={faFileInvoiceDollar} className="m-auto text-primary" />
+                                        <FaFileInvoiceDollar className="m-auto" />
                                     </div>
                                     <h3>Low fees</h3>
                                     <p className="lead mb-0">Only 1% delivery fee</p>
@@ -46,7 +44,7 @@ class LandingPage extends Component {
                             <Col lg={4}>
                                 <div className="features-icons-item mx-auto mb-0 mb-lg-3">
                                     <div className="features-icons-icon d-flex">
-                                        <FontAwesomeIcon icon={faGithub} className="m-auto text-primary" />
+                                        <FaGithub className="m-auto" />
                                     </div>
                                     <h3>Transparency</h3>
                                     <p className="lead mb-0">
@@ -132,10 +130,7 @@ class LandingPage extends Component {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
-                                            <FontAwesomeIcon
-                                                icon={faGithub}
-                                                className="fab fa-2x fa-fw m-auto text-dark"
-                                            />
+                                            <FaGithub className="fab fa-2x fa-fw m-auto text-dark" />
                                         </a>
                                     </li>
                                 </ul>
