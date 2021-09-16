@@ -3,13 +3,19 @@ import { TListNetwork, TNetwork } from './models/networkTypes';
 export const INFURA_ID = 'c668ee6214a74e1c89726b345a5aed66';
 // export const ETHERSCAN_KEY = "";
 
-export const NETWORK = (chainId: number): TNetwork | undefined => {
+export const NETWORK = (chainId: number): TNetwork => {
     for (const n in NETWORKS) {
         if (NETWORKS[n].chainId === chainId) {
             return NETWORKS[n];
         }
     }
-    return undefined;
+    return {
+        name: 'unknown',
+        color: '#ceb0fa',
+        chainId: 0,
+        rpcUrl: '',
+        blockExplorer: 'https://etherscan.io/',
+    };
 };
 
 export const NETWORKS: TListNetwork = {
@@ -57,7 +63,7 @@ export const NETWORKS: TListNetwork = {
         name: 'localhost',
         color: '#666666',
         // price: 'uniswap', // use mainnet eth price for localhost
-        chainId: 31337,
+        chainId: 1337,
         blockExplorer: '',
         rpcUrl: 'http://localhost:8545',
     },

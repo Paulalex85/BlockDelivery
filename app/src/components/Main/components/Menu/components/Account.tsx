@@ -47,7 +47,7 @@ const Account = ({ userProvider, mainnetProvider, setInjectedProvider, minimized
         }
     }, [loadWeb3Modal]);
 
-    let modalButtons = undefined;
+    let modalButtons;
     if (web3Modal.cachedProvider) {
         modalButtons = (
             <Button key="logoutbutton" variant="outline-primary" onClick={logoutOfWeb3Modal}>
@@ -68,7 +68,7 @@ const Account = ({ userProvider, mainnetProvider, setInjectedProvider, minimized
             <Navbar.Text>
                 <Address size="short" ensProvider={mainnetProvider} />
                 <Balance provider={userProvider} dollarMultiplier={1} />
-                <Network />
+                <Network userProvider={userProvider} />
             </Navbar.Text>
         );
     }
