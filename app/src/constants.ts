@@ -19,14 +19,14 @@ export const NETWORK = (chainId: number): TNetwork => {
 };
 
 export const NETWORKS: TListNetwork = {
-    ethereum: {
-        name: 'ethereum',
-        color: '#ceb0fa',
-        chainId: 1,
-        // price: 'uniswap',
-        rpcUrl: `https://mainnet.infura.io/v3/${INFURA_ID}`,
-        blockExplorer: 'https://etherscan.io/',
-    },
+    // ethereum: {
+    //     name: 'ethereum',
+    //     color: '#ceb0fa',
+    //     chainId: 1,
+    //     // price: 'uniswap',
+    //     rpcUrl: `https://mainnet.infura.io/v3/${INFURA_ID}`,
+    //     blockExplorer: 'https://etherscan.io/',
+    // },
     // kovan: {
     //     name: 'kovan',
     //     color: '#7003DD',
