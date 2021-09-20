@@ -1,40 +1,22 @@
-import React, { useState } from 'react';
-import * as ethers from 'ethers';
-import { usePoller } from '../../../../../hooks';
+import React from 'react';
+import { providers } from 'ethers';
 import { Navbar } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { getUserAddress } from '../../../../../redux/selectors';
 import { PriceDisplay } from '../../../../Utils';
-import { BigNumber } from 'ethers';
+import { useBalance } from 'eth-hooks';
 
 type Props = {
-    balanceProps?: string;
-    pollTime?: number;
-    dollarMultiplier?: number;
-    provider: any;
+    provider: providers.Web3Provider;
 };
 
-const Balance = ({ pollTime, dollarMultiplier, provider }: Props) => {
-    const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0));
+const Balance = (props: Props) => {
     const address = useSelector(getUserAddress);
-
-    usePoller(
-        async () => {
-            if (address && provider) {
-                try {
-                    const newBalance = await provider.getBalance(address);
-                    setBalance(BigNumber.from(newBalance));
-                } catch (e) {
-                    console.log(e);
-                }
-            }
-        },
-        pollTime ? pollTime : 1999,
-    );
+    const balance = useBalance(props.provider, address, 1999);
 
     return (
         <Navbar.Text style={{ paddingRight: 5 }}>
-            <PriceDisplay weiAmount={balance} dollarMultiplier={dollarMultiplier} />
+            <PriceDisplay weiAmount={balance} dollarMultiplier={1} />
         </Navbar.Text>
     );
 };

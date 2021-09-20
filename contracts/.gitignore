@@ -6,3 +6,4 @@ app/src/contracts
 /coverage/
 .idea
 app/.idea
+/.env

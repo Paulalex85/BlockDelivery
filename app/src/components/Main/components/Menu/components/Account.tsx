@@ -23,12 +23,11 @@ const web3Modal = new Web3Modal({
 
 type AccountProps = {
     userProvider: any;
-    mainnetProvider?: any;
     setInjectedProvider: any;
     minimized?: boolean;
 };
 
-const Account = ({ userProvider, mainnetProvider, setInjectedProvider, minimized = false }: AccountProps) => {
+const Account = ({ userProvider, setInjectedProvider, minimized = false }: AccountProps) => {
     const loadWeb3Modal = useCallback(async () => {
         const provider = await web3Modal.connect();
         setInjectedProvider(new ethers.providers.Web3Provider(provider));
@@ -66,8 +65,8 @@ const Account = ({ userProvider, mainnetProvider, setInjectedProvider, minimized
     if (!minimized) {
         display = (
             <Navbar.Text>
-                <Address size="short" ensProvider={mainnetProvider} />
-                <Balance provider={userProvider} dollarMultiplier={1} />
+                <Address size="short" />
+                <Balance provider={userProvider} />
                 <Network userProvider={userProvider} />
             </Navbar.Text>
         );

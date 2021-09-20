@@ -19215,6 +19215,244 @@
     "version": "0.6.7+commit.b8d736ae.Emscripten.clang"
   },
   "networks": {
+    "3": {
+      "events": {
+        "0x04ac2080a41b5ab280908d6a94c2b922f7326fb90aac31c0b7e07dba6c37f470": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "proposalAccepted",
+              "type": "bool"
+            }
+          ],
+          "name": "AcceptProposal",
+          "type": "event"
+        },
+        "0x95c875d096c75259c8d8d3e551136fd8e4c6044548a3ca40c56f4f4f8b0c5c35": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "startedOrder",
+              "type": "bool"
+            }
+          ],
+          "name": "CancelOrder",
+          "type": "event"
+        },
+        "0xb9cf4d21f62e74fbcd3bdf7a831c70ad52b779af27a71828a2fd4798e6cd274b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "int128",
+              "name": "sellerBalance",
+              "type": "int128"
+            }
+          ],
+          "name": "DisputeCostProposal",
+          "type": "event"
+        },
+        "0x8cbedf9e29ca36a421f5028dde3d5a72591e92b7a0bb46f58e301102f6fd0ea5": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint128",
+              "name": "buyerProposal",
+              "type": "uint128"
+            }
+          ],
+          "name": "DisputeRefundProposal",
+          "type": "event"
+        },
+        "0xc359805d0534da704893937470119c9a514aeb481281234e15e39019196868b2": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint128",
+              "name": "buyerProposal",
+              "type": "uint128"
+            }
+          ],
+          "name": "DisputeStarted",
+          "type": "event"
+        },
+        "0x09fdc51b3d22676c7c2655e76d9b7f8fa4883d2b9ecc57b1c2f98cec4e764905": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "name": "RevertDispute",
+          "type": "event"
+        },
+        "0xdfb8bdb0d05b5524b51146d9e6ff6f144bd5dbf0c70601bc1a3e527e66e5c127": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "buyer",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "deliver",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            }
+          ],
+          "name": "NewOrder",
+          "type": "event"
+        },
+        "0xe21fe02c1589242b30be2057f54fd54b7ddc463695d19ffdb54f9ebb0584f24a": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderDelivered",
+          "type": "event"
+        },
+        "0xb01818384bc90c4b4e9b9ced908e16b4588034f81123bdd465e977553ac1ce7f": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderEnded",
+          "type": "event"
+        },
+        "0x9e297e023759374b39b68a9479a7217e6ee56f9fc0af43c4def6ade119a33f4c": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderTaken",
+          "type": "event"
+        },
+        "0xb8b459bc0688c37baf5f735d17f1711684bc14ab7db116f88bc18bf409b9309a": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderUpdated",
+          "type": "event"
+        },
+        "0x1fa23a95f9f163ff707f58070aeb3eed69b9d1f9356e2db5973ac1dfce267b58": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "orderId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "isOrderStarted",
+              "type": "bool"
+            }
+          ],
+          "name": "OrderValidate",
+          "type": "event"
+        }
+      },
+      "links": {
+        "DisputeLib": "0x4c64DB13bF22D2AF48750DD6be1700ea11846bD5",
+        "OrderLib": "0xc4bF54BBE71307b3e78c18A0b1e1e75bcFd91e5e"
+      },
+      "address": "0x9Eeb0330F0D5CCe4840454Aa63b0f7eac0138cEC",
+      "transactionHash": "0x855d91d9786062b1fe9c0e642c87179ba112f4f89a1371f9625f8ede9bcca905"
+    },
     "1337": {
       "events": {
         "0x04ac2080a41b5ab280908d6a94c2b922f7326fb90aac31c0b7e07dba6c37f470": {
@@ -19455,7 +19693,7 @@
     }
   },
   "schemaVersion": "3.3.4",
-  "updatedAt": "2021-09-15T17:38:57.083Z",
+  "updatedAt": "2021-09-19T22:45:01.014Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {

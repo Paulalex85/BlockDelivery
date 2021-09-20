@@ -1,30 +1,31 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { Form, Navbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { NETWORK, NETWORKS } from '../../../../../constants';
-import { TEthersProvider } from 'eth-hooks/models';
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { Network as EthersNetwork } from '@ethersproject/networks';
 import { AiOutlineWarning } from 'react-icons/ai';
+import { providers } from 'ethers';
 
 type Props = {
-    userProvider: TEthersProvider;
+    userProvider: providers.Web3Provider;
 };
 
 const Network = (props: Props) => {
-    const localhost = 'localhost';
+    const defaultNetwork = 'ropsten';
     const [cachedNetwork, setCachedNetwork] = useState(window.localStorage.getItem('network'));
-    const [targetNetwork, setTargetNetwork] = useState(NETWORKS[localhost]);
+    const [targetNetwork, setTargetNetwork] = useState(NETWORKS[defaultNetwork]);
     const [localProvider, setLocalProvider] = useState<StaticJsonRpcProvider>(
-        new StaticJsonRpcProvider(NETWORKS[localhost].rpcUrl),
+        new StaticJsonRpcProvider(NETWORKS[defaultNetwork].rpcUrl),
     );
     const [wrongNetwork, setWrongNetwork] = useState(false);
     const [localChainId, setLocalChainId] = useState(0);
     const [selectedChainId, setSelectedChainId] = useState(0);
 
     useEffect(() => {
-        setTargetNetwork(NETWORKS[cachedNetwork || localhost]);
-        if (!targetNetwork) {
-            setTargetNetwork(NETWORKS.localhost);
+        if (cachedNetwork !== null && NETWORKS[cachedNetwork] !== undefined) {
+            setTargetNetwork(NETWORKS[cachedNetwork]);
+        } else {
+            setTargetNetwork(NETWORKS[defaultNetwork]);
         }
     }, [cachedNetwork]);
 
@@ -75,7 +76,7 @@ const Network = (props: Props) => {
             <Navbar.Text style={{ paddingRight: 10 }}>
                 <Form.Control
                     as="select"
-                    value={cachedNetwork || localhost}
+                    value={cachedNetwork || defaultNetwork}
                     style={{ textAlign: 'left', width: 120 }}
                     onChange={handleSelectInput}
                 >

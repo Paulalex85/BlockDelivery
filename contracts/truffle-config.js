@@ -1,5 +1,8 @@
 const path = require("path");
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+require('dotenv').config()
 
+const INFURA_ID = 'c668ee6214a74e1c89726b345a5aed66';
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
@@ -8,14 +11,22 @@ module.exports = {
         develop: {
             host: "127.0.0.1",
             port: 8545,
-            network_id: "1337", // Match any network id
+            network_id: "1337",
             accounts: 5,
         },
-        // ganache: {
-        //     host: "127.0.0.1",
-        //     port: 7545,
-        //     network_id: "5777", // Match any network id
-        // }
+        ropsten: {
+            provider: () => {
+                return new HDWalletProvider({
+                    mnemonic: {
+                        phrase: process.env.TESTNET_MNEMONIC
+                    },
+                    providerOrUrl: "https://ropsten.infura.io/v3/" + INFURA_ID
+                });
+            },
+            network_id: 3,
+            // gas: 4500000,
+            // gasPrice: 10000000000,
+        }
     },
     compilers: {
         solc: {

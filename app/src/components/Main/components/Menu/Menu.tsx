@@ -5,7 +5,6 @@ import { Account } from './components';
 
 type Props = {
     userProvider: any;
-    mainnetProvider?: any;
     setInjectedProvider: any;
 };
 
@@ -17,11 +16,7 @@ const Menu = (props: Props) => {
                     <Navbar.Brand>Block Delivery</Navbar.Brand>
                 </LinkContainer>
                 <Nav className="ml-auto justify-content-end">
-                    <Account
-                        userProvider={props.userProvider}
-                        mainnetProvider={props.mainnetProvider}
-                        setInjectedProvider={props.setInjectedProvider}
-                    />
+                    <Account userProvider={props.userProvider} setInjectedProvider={props.setInjectedProvider} />
                     <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                     <Navbar.Collapse id="responsive-navbar-nav">
                         <LinkContainer to="/create">

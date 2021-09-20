@@ -9,19 +9,22 @@
   "scripts": {
     "coverage": "truffle run coverage && cat coverage/lcov.info | coveralls",
     "test": "truffle test",
-    "compile": "yarn install && truffle compile"
+    "compile": "yarn install && truffle compile",
+    "test_deploy": "truffle migrate --network ropsten"
   },
   "keywords": [],
   "author": "",
   "dependencies": {
-    "@openzeppelin/contracts": "^3.0.1",
-    "web3": "^1.5.2"
+    "@openzeppelin/contracts": "^3.0.1"
   },
   "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.5.0",
     "coveralls": "^3.1.0",
+    "dotenv": "^10.0.0",
     "eth-gas-reporter": "^0.2.22",
     "solidity-coverage": "^0.7.17",
     "truffle": "^5.4.10",
-    "truffle-assertions": "^0.9.2"
+    "truffle-assertions": "^0.9.2",
+    "web3": "^1.5.2"
   }
 }
