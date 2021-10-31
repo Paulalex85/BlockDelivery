@@ -2,7 +2,6 @@ const path = require("path");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 require('dotenv').config()
 
-const INFURA_ID = 'c668ee6214a74e1c89726b345a5aed66';
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
@@ -20,7 +19,7 @@ module.exports = {
                     mnemonic: {
                         phrase: process.env.TESTNET_MNEMONIC
                     },
-                    providerOrUrl: "https://ropsten.infura.io/v3/" + INFURA_ID
+                    providerOrUrl: process.env.ALCHEMY_KEY
                 });
             },
             network_id: 3,

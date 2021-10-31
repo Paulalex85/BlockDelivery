@@ -1,6 +1,4 @@
 import { TListNetwork, TNetwork } from './models';
-
-export const INFURA_ID = 'c668ee6214a74e1c89726b345a5aed66';
 // export const ETHERSCAN_KEY = "";
 
 export const NETWORK = (chainId: number): TNetwork => {
@@ -49,7 +47,7 @@ export const NETWORKS: TListNetwork = {
         chainId: 3,
         faucet: 'https://faucet.ropsten.be/',
         blockExplorer: 'https://ropsten.etherscan.io/',
-        rpcUrl: `https://ropsten.infura.io/v3/${INFURA_ID}`,
+        rpcUrl: process.env.REACT_APP_ALCHEMY_KEY || '',
     },
     // goerli: {
     //     name: 'goerli',

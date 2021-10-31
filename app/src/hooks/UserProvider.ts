@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { providers } from 'ethers';
 import BurnerProvider from 'burner-provider';
-import { INFURA_ID } from '../constants';
 
 export const useUserProvider = (injectedProvider: any, localProvider: any) =>
     useMemo(() => {
@@ -13,8 +12,6 @@ export const useUserProvider = (injectedProvider: any, localProvider: any) =>
             console.log('Using burner provider');
             return new providers.Web3Provider(new BurnerProvider(localProvider.connection.url));
         }
-        const networkName = localProvider._network && localProvider._network.name;
-        return new providers.Web3Provider(
-            new BurnerProvider(`https://${networkName || 'mainnet'}.infura.io/v3/${INFURA_ID}`),
-        );
+        // const networkName = localProvider._network && localProvider._network.name;
+        return new providers.Web3Provider(new BurnerProvider(process.env.REACT_APP_ALCHEMY_KEY));
     }, [injectedProvider, localProvider]);

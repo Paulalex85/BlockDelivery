@@ -5,7 +5,6 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import { Button, Navbar } from 'react-bootstrap';
 import Balance from './Balance';
 import Address from './Address';
-import { INFURA_ID } from '../../../../../constants';
 import Network from './Network';
 
 const web3Modal = new Web3Modal({
@@ -15,7 +14,8 @@ const web3Modal = new Web3Modal({
         walletconnect: {
             package: WalletConnectProvider, // required
             options: {
-                infuraId: INFURA_ID,
+                apiKey: process.env.REACT_APP_ALCHEMY_KEY,
+                // infuraId: INFURA_ID,
             },
         },
     },
